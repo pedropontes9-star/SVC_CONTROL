@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SVC — Headcount</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<!-- Importação do SDK do Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
@@ -140,9 +139,6 @@
   <button class="tab-btn" onclick="switchTab('anomalias',this)">Anomalias (CIA/COA)</button>
 </nav>
 
-<!-- ══════════════════════════════════════
-     PAGE: TURNOS
-═══════════════════════════════════════ -->
 <div id="page-turnos" class="page active">
 
   <div class="form-card card" style="margin-bottom:24px">
@@ -211,9 +207,6 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════════
-     PAGE: HEADCOUNT
-═══════════════════════════════════════ -->
 <div id="page-headcount" class="page">
 
   <div class="stats-row">
@@ -223,43 +216,6 @@
     <div class="stat-card"><div class="stat-label">3PL Parceiros</div><div class="stat-value" id="stat-3pl">0</div><div class="stat-sub">Mendes / TSI / SRM</div></div>
   </div>
 
-<div id="page-anomalias" class="page">
-  <div class="stats-row">
-    <div class="stat-card"><div class="stat-label">Total de Ofensas</div><div class="stat-value" id="stat-anom-total">0</div><div class="stat-sub">no período filtrado</div></div>
-    <div class="stat-card"><div class="stat-label">CIA (Entrada)</div><div class="stat-value" style="color: var(--warn-text)" id="stat-cia">0</div><div class="stat-sub">Autogerados</div></div>
-    <div class="stat-card"><div class="stat-label">COA (Saída)</div><div class="stat-value" style="color: #7B2FBE" id="stat-coa">0</div><div class="stat-sub">Autogerados</div></div>
-  </div>
-
-  <p class="section-label">Monitoramento de Ponto Autogerado</p>
-  <div class="card">
-    <div class="search-bar">
-      <input type="date" id="filtro-data-anomalia" onchange="renderAnomalias()" style="padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-family: inherit;">
-      
-      <select id="filtro-tipo-anomalia" onchange="renderAnomalias()">
-        <option value="AMBOS">Todos os Tipos (CIA/COA)</option>
-        <option value="CIA">Somente CIA (Entrada)</option>
-        <option value="COA">Somente COA (Saída)</option>
-      </select>
-
-      <div class="search-input-wrap">
-        <span class="search-icon">🔍</span>
-        <input type="text" placeholder="Buscar por colaborador ou EXT..." id="busca-anomalia" oninput="renderAnomalias()">
-      </div>
-      <span class="count-badge" id="anomalia-count">0 registros</span>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr>
-          <th>Data</th><th>Colaborador</th><th>Turno</th><th>Gestor</th><th>Tipo</th><th>Hora da Ofensa</th><th>Causa Raiz (Análise)</th>
-        </tr></thead>
-        <tbody id="tbody-anomalias">
-          <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">⏳</div><p>Carregando dados de ponto...</p></div></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>  
-  
   <div class="form-card card" style="margin-bottom:24px">
     <p class="section-label" id="hc-form-label">Cadastrar colaborador</p>
     <div class="form-grid" id="form-grid-hc">
@@ -307,7 +263,6 @@
         </select>
       </div>
 
-      <!-- Grupo — aparece conforme escala do turno selecionado -->
       <div class="form-group" id="hc-grupo-wrap" style="display:none">
         <label>Grupo</label>
         <select id="hc-grupo">
@@ -358,7 +313,6 @@
         <option value="afastado">Afastado</option>
       </select>
       
-      <!-- Botão para exportar CSV integrado com os filtros atuais -->
       <button class="btn btn-secondary btn-sm" onclick="exportarCSV()" style="height:34px; display:inline-flex; align-items:center; gap:6px;">
         <span>📥 Exportar CSV</span>
       </button>
@@ -378,7 +332,43 @@
   </div>
 </div>
 
-<!-- MODAL EXCLUIR -->
+<div id="page-anomalias" class="page">
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Total de Ofensas</div><div class="stat-value" id="stat-anom-total">0</div><div class="stat-sub">no período filtrado</div></div>
+    <div class="stat-card"><div class="stat-label">CIA (Entrada)</div><div class="stat-value" style="color: var(--warn-text)" id="stat-cia">0</div><div class="stat-sub">Autogerados</div></div>
+    <div class="stat-card"><div class="stat-label">COA (Saída)</div><div class="stat-value" style="color: #7B2FBE" id="stat-coa">0</div><div class="stat-sub">Autogerados</div></div>
+  </div>
+
+  <p class="section-label">Monitoramento de Ponto Autogerado</p>
+  <div class="card">
+    <div class="search-bar">
+      <input type="date" id="filtro-data-anomalia" onchange="renderAnomalias()" style="padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-family: inherit;">
+      
+      <select id="filtro-tipo-anomalia" onchange="renderAnomalias()">
+        <option value="AMBOS">Todos os Tipos (CIA/COA)</option>
+        <option value="CIA">Somente CIA (Entrada)</option>
+        <option value="COA">Somente COA (Saída)</option>
+      </select>
+
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Buscar por colaborador ou EXT..." id="busca-anomalia" oninput="renderAnomalias()">
+      </div>
+      <span class="count-badge" id="anomalia-count">0 registros</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Data</th><th>Colaborador</th><th>Turno</th><th>Gestor</th><th>Tipo</th><th>Hora da Ofensa</th><th>Causa Raiz (Análise)</th>
+        </tr></thead>
+        <tbody id="tbody-anomalias">
+          <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">⏳</div><p>Carregando dados de ponto...</p></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>  
+
 <div class="modal-overlay" id="modal-excluir">
   <div class="modal">
     <h3>Confirmar exclusão</h3>
@@ -583,11 +573,24 @@ async function carregarDadosDoBanco() {
       status: h.status
     }));
 
+    // ====== INÍCIO DO BLOCO NOVO (PUXAR ANOMALIAS) ======
+    const { data: dataAnomalias, error: errAnomalias } = await db.from('marcacoes_auto').select('*').order('data_marcacao', { ascending: false });
+    if (errAnomalias) throw errAnomalias;
+    anomalias = dataAnomalias || [];
+    
+    // Deixar a data de ontem como padrão no filtro logo que a tela abrir
+    const ontem = new Date();
+    ontem.setDate(ontem.getDate() - 1);
+    document.getElementById('filtro-data-anomalia').value = ontem.toISOString().slice(0, 10);
+    // ====== FIM DO BLOCO NOVO ======
+
     // Re-renderizar telas e atualizar seletores dinâmicos
     atualizarSelectTurnos();
     renderTurnos();
     renderHeads();
     atualizarStats();
+    renderAnomalias();
+
   } catch (error) {
     console.error(error);
     toast('Erro ao buscar informações do Supabase: ' + error.message, 'error');
@@ -721,42 +724,6 @@ function renderTurnos() {
   }).join('');
 }
 
-async function carregarDadosDoBanco() {
-  try {
-    const { data: dataTurnos, error: errTurnos } = await db.from('turnos').select('*').order('nome');
-    if (errTurnos) throw errTurnos;
-    turnos = dataTurnos || [];
-
-    const { data: dataHeads, error: errHeads } = await db.from('colaboradores').select('*').order('nome');
-    if (errHeads) throw errHeads;
-    
-    heads = (dataHeads || []).map(h => ({
-      id: h.id, nome: h.nome, groot: h.groot_id, ext: h.ext, tpl: h.tpl, turnoId: h.turno_id, grupo: h.grupo, gestor: h.gestor, status: h.status
-    }));
-
-    // ====== INÍCIO DO BLOCO NOVO (PUXAR ANOMALIAS) ======
-    const { data: dataAnomalias, error: errAnomalias } = await db.from('marcacoes_auto').select('*').order('data_marcacao', { ascending: false });
-    if (errAnomalias) throw errAnomalias;
-    anomalias = dataAnomalias || [];
-    
-    // Deixar a data de ontem como padrão no filtro logo que a tela abrir
-    const ontem = new Date();
-    ontem.setDate(ontem.getDate() - 1);
-    document.getElementById('filtro-data-anomalia').value = ontem.toISOString().slice(0, 10);
-    // ====== FIM DO BLOCO NOVO ======
-
-    atualizarSelectTurnos();
-    renderTurnos();
-    renderHeads();
-    atualizarStats();
-    renderAnomalias(); // Executa o cruzamento e pinta a tela
-
-  } catch (error) {
-    console.error(error);
-    toast('Erro ao buscar informações do Supabase: ' + error.message, 'error');
-  }
-}
-
 // ════════════════════════════════════════
 //  LÓGICA DE ANOMALIAS (CIA / COA)
 // ════════════════════════════════════════
@@ -798,7 +765,7 @@ function renderAnomalias() {
 
   const tbody = document.getElementById('tbody-anomalias');
   if (!lista.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">✅</div><p>Nenhuma ofensa de ponto encontrada</p><span>Nenhum registro para os filtros atuais</span></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">✅</div><p>Nenhuma ofensa de ponto encontrada</p><span>Nenhum registo para os filtros atuais</span></div></td></tr>`;
     return;
   }
 
@@ -835,7 +802,7 @@ function renderAnomalias() {
     </tr>`;
   }).join('');
 }
-  
+
 // ════════════════════════════════════════
 //  LÓGICA DE COLABORADORES / HEADCOUNT
 // ════════════════════════════════════════
@@ -903,13 +870,13 @@ async function salvarHead() {
 
   try {
     if (editingHcId) {
-      // Atualização de registro existente
+      // Atualização de registo existente
       const { error } = await db.from('colaboradores').update(dbData).eq('id', editingHcId);
       if (error) throw error;
       toast('Colaborador atualizado com sucesso!', 'success');
       cancelarEdicaoHC();
     } else {
-      // Criação de novo registro
+      // Criação de novo registo
       const { error } = await db.from('colaboradores').insert([dbData]);
       if (error) throw error;
       toast('Colaborador cadastrado com sucesso!', 'success');
