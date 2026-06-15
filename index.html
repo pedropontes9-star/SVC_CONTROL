@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SVC — Headcount</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Importação do SDK do Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --meli-yellow: #FFE600;
+    --meli-blue: #2D3277;
+    --meli-action: #3483FA;
+    --meli-bg: #EBEBEB;
+    --surface: #FFFFFF;
+    --text: #333333;
+    --text-muted: #666666;
+    --text-hint: #999999;
+    --border: #DDDDDD;
+    --success-fill: #E6F6EF; --success-text: #00A650;
+    --danger-fill: #FEEBEB;  --danger-text: #F23D4F; --danger-border: #F23D4F;
+    --warn-fill: #FFF9E6;    --warn-text: #FFAD00;
+    --radius: 6px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.10);
+    font-size: 14px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--meli-bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; min-height: 100vh; }
+
+  .header { background: var(--meli-yellow); padding: 0 24px; height: 52px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 0 rgba(0,0,0,0.10); position: sticky; top: 0; z-index: 200; }
+  .logo-box { background: var(--meli-blue); color: #fff; padding: 4px 9px; border-radius: 4px; font-size: 12px; font-weight: 700; letter-spacing: .03em; }
+  .header h1 { font-size: 16px; font-weight: 600; color: var(--meli-blue); }
+  .header-divider { width: 1px; height: 20px; background: rgba(45,50,119,.25); }
+  .header-sub { font-size: 12px; color: var(--meli-blue); opacity: .7; font-weight: 500; }
+
+  .nav-tabs { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; }
+  .tab-btn { padding: 12px 18px; font-size: 13px; font-weight: 500; border: none; background: transparent; cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent; transition: all .15s; }
+  .tab-btn:hover { color: var(--meli-blue); }
+  .tab-btn.active { color: var(--meli-blue); border-bottom-color: var(--meli-blue); font-weight: 600; }
+
+  .page { display: none; padding: 24px; max-width: 1280px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  .section-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
+  .card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); }
+  .form-card { padding: 20px 24px; margin-bottom: 24px; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; margin-bottom: 16px; }
+  .form-grid-loading { opacity: 0.5; pointer-events: none; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+  .form-group input, .form-group select { padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; font-family: inherit; color: var(--text); background: var(--surface); transition: border-color .15s; outline: none; }
+  .form-group input:focus, .form-group select:focus { border-color: var(--meli-action); box-shadow: 0 0 0 3px rgba(52,131,250,.1); }
+  .form-group input::placeholder { color: var(--text-hint); }
+  .form-group input:disabled, .form-group select:disabled { background: #f5f5f5; color: var(--text-hint); cursor: not-allowed; }
+  .form-actions { display: flex; gap: 10px; align-items: center; }
+
+  .btn { padding: 8px 18px; border-radius: var(--radius); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; border: none; transition: background .15s, opacity .15s; }
+  .btn-primary { background: var(--meli-action); color: white; }
+  .btn-primary:hover { background: #2968c8; }
+  .btn-secondary { background: transparent; color: var(--meli-action); border: 1px solid var(--meli-action); }
+  .btn-secondary:hover { background: #f0f5ff; }
+  .btn-danger { background: transparent; color: var(--danger-text); border: 1px solid var(--danger-border); }
+  .btn-danger:hover { background: var(--danger-fill); }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+
+  .search-bar { display: flex; gap: 10px; padding: 14px 20px; border-bottom: 1px solid var(--border); align-items: center; flex-wrap: wrap; }
+  .search-input-wrap { position: relative; flex: 1; min-width: 200px; }
+  .search-input-wrap input { width: 100%; padding: 7px 10px 7px 32px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; font-family: inherit; outline: none; }
+  .search-input-wrap input:focus { border-color: var(--meli-action); }
+  .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-hint); pointer-events: none; }
+  .search-bar select { padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; font-family: inherit; color: var(--text); background: var(--surface); outline: none; }
+  .count-badge { font-size: 12px; color: var(--text-muted); margin-left: auto; white-space: nowrap; }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { background: #f7f7f7; padding: 9px 16px; font-size: 11px; font-weight: 600; color: var(--text-muted); text-align: left; text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  tbody td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: #fafbff; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .badge-blue   { background: #e8f0fe; color: var(--meli-blue); }
+  .badge-green  { background: var(--success-fill); color: var(--success-text); }
+  .badge-gray   { background: #f0f0f0; color: var(--text-muted); }
+  .badge-red    { background: var(--danger-fill); color: var(--danger-text); }
+  .badge-purple { background: #f3eaff; color: #7B2FBE; }
+  .badge-orange { background: #fff3e0; color: #e65100; }
+
+  .empty-state { padding: 48px 24px; text-align: center; color: var(--text-muted); }
+  .empty-state .empty-icon { font-size: 32px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; } .empty-state span { font-size: 13px; color: var(--text-hint); }
+
+  .toast { position: fixed; bottom: 24px; right: 24px; z-index: 999; background: #222; color: white; padding: 10px 18px; border-radius: var(--radius); font-size: 13px; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,.2); transform: translateY(80px); opacity: 0; transition: all .25s; pointer-events: none; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { background: var(--success-text); }
+  .toast.error   { background: var(--danger-text); }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 500; display: none; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,.18); width: 100%; max-width: 440px; padding: 24px; }
+  .modal h3 { font-size: 16px; font-weight: 600; color: var(--meli-blue); margin-bottom: 16px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+  .turno-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; flex-shrink: 0; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .stat-card { background: var(--surface); border-radius: var(--radius); padding: 14px 18px; box-shadow: var(--shadow); }
+  .stat-card .stat-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px; }
+  .stat-card .stat-value { font-size: 22px; font-weight: 700; color: var(--text); }
+  .stat-card .stat-sub { font-size: 11px; color: var(--text-hint); margin-top: 2px; }
+
+  /* Escala info box */
+  .escala-info { background: #f0f5ff; border: 1px solid #c8d9fb; border-radius: var(--radius); padding: 10px 14px; margin-top: 4px; font-size: 12px; color: var(--meli-blue); line-height: 1.6; }
+  .escala-info strong { font-weight: 600; }
+
+  /* Folga chip na tabela */
+  .folga-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 12px; font-size: 11px; font-weight: 600; background: var(--warn-fill); color: var(--warn-text); white-space: nowrap; }
+
+  /* Conditional form rows */
+  .form-row-escala { display: none; }
+  .form-row-escala.visible { display: contents; }
+
+  /* Hint text */
+  .field-hint { font-size: 11px; color: var(--text-hint); margin-top: 3px; }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo-box">SVC</div>
+  <h1>Gestão Operacional</h1>
+  <div class="header-divider"></div>
+  <span class="header-sub">CD SRJ2 — DHL / Meli</span>
+</header>
+
+<nav class="nav-tabs">
+  <button class="tab-btn active" onclick="switchTab('turnos',this)">Turnos</button>
+  <button class="tab-btn" onclick="switchTab('headcount',this)">Headcount</button>
+</nav>
+
+<!-- ══════════════════════════════════════
+     PAGE: TURNOS
+═══════════════════════════════════════ -->
+<div id="page-turnos" class="page active">
+
+  <div class="form-card card" style="margin-bottom:24px">
+    <p class="section-label">Cadastrar turno</p>
+    <div class="form-grid" id="form-grid-turnos">
+
+      <div class="form-group" style="grid-column:span 2">
+        <label>Nome do Turno</label>
+        <input type="text" id="turno-nome" placeholder="Ex: Manhã 03:30" maxlength="60">
+      </div>
+
+      <div class="form-group">
+        <label>Início</label>
+        <input type="time" id="turno-inicio">
+      </div>
+
+      <div class="form-group">
+        <label>Fim</label>
+        <input type="time" id="turno-fim">
+      </div>
+
+      <div class="form-group">
+        <label>Cor identificadora</label>
+        <input type="color" id="turno-cor" value="#3483FA" style="height:36px;padding:3px 6px;cursor:pointer">
+      </div>
+
+      <div class="form-group" style="grid-column:span 2">
+        <label>Tipo de Escala</label>
+        <select id="turno-escala" onchange="onEscalaChange()">
+          <option value="">— Selecionar —</option>
+          <option value="espanhola">Espanhola (4 semanas rotativas — grupos A/B)</option>
+          <option value="0430">04:30 — Folga fixa + rodízio domingo (grupos A/B/C/D/E)</option>
+          <option value="6x1_dom">6x1 — Folga fixa domingo</option>
+          <option value="5x2_fds">5x2 — Folga sábado e domingo</option>
+          <option value="5x2_qqi">5x2 especial — Folga qua/qui + 4º domingo</option>
+        </select>
+        <div id="escala-descricao" class="escala-info" style="display:none"></div>
+      </div>
+
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" id="btn-salvar-turno" onclick="salvarTurno()">Salvar Turno</button>
+      <button class="btn btn-secondary" onclick="limparFormTurno()">Limpar</button>
+    </div>
+  </div>
+
+  <p class="section-label">Turnos cadastrados</p>
+  <div class="card">
+    <div class="search-bar">
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Buscar turno..." id="busca-turno" oninput="renderTurnos()">
+      </div>
+      <span class="count-badge" id="turno-count">0 turnos</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Turno</th><th>Horário</th><th>Escala</th><th>Folga</th><th>Heads ativos</th><th style="text-align:right">Ações</th>
+        </tr></thead>
+        <tbody id="tbody-turnos">
+          <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🕐</div><p>Nenhum turno cadastrado</p><span>Preencha o formulário acima para começar</span></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PAGE: HEADCOUNT
+═══════════════════════════════════════ -->
+<div id="page-headcount" class="page">
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Total Ativo</div><div class="stat-value" id="stat-total">0</div><div class="stat-sub">colaboradores</div></div>
+    <div class="stat-card"><div class="stat-label">Turnos</div><div class="stat-value" id="stat-turnos">0</div><div class="stat-sub">configurados</div></div>
+    <div class="stat-card"><div class="stat-label">DHL</div><div class="stat-value" id="stat-dhl">0</div><div class="stat-sub">colaboradores</div></div>
+    <div class="stat-card"><div class="stat-label">3PL Parceiros</div><div class="stat-value" id="stat-3pl">0</div><div class="stat-sub">Mendes / TSI / SRM</div></div>
+  </div>
+
+  <div class="form-card card" style="margin-bottom:24px">
+    <p class="section-label" id="hc-form-label">Cadastrar colaborador</p>
+    <div class="form-grid" id="form-grid-hc">
+
+      <div class="form-group" style="grid-column:span 2">
+        <label>Nome completo</label>
+        <input type="text" id="hc-nome" placeholder="Nome do colaborador" maxlength="100">
+      </div>
+
+      <div class="form-group">
+        <label>Groot ID</label>
+        <input type="text" id="hc-groot" placeholder="Ex: 123456" maxlength="30">
+      </div>
+
+      <div class="form-group">
+        <label>EXT (Usuário)</label>
+        <div style="display:flex;align-items:center;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color .15s,box-shadow .15s" id="ext-wrap">
+          <span style="padding:8px 8px 8px 10px;background:#f5f5f5;color:var(--text-muted);font-size:13px;border-right:1px solid var(--border);white-space:nowrap;user-select:none">ext_</span>
+          <input type="text" id="hc-ext" placeholder="nickname" maxlength="60"
+            style="border:none;border-radius:0;flex:1;padding:8px 10px;font-size:13px;font-family:inherit;outline:none;color:var(--text)"
+            onfocus="document.getElementById('ext-wrap').style.cssText+='border-color:var(--meli-action);box-shadow:0 0 0 3px rgba(52,131,250,.1)'"
+            onblur="document.getElementById('ext-wrap').style.borderColor='var(--border)';document.getElementById('ext-wrap').style.boxShadow='none'">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>3PL</label>
+        <select id="hc-3pl">
+          <option value="DHL">DHL</option>
+          <option value="Mendes">Mendes</option>
+          <option value="TSI">TSI</option>
+          <option value="SRM">SRM</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Gestor</label>
+        <input type="text" id="hc-gestor" placeholder="Nome do gestor" maxlength="100">
+      </div>
+
+      <div class="form-group">
+        <label>Turno</label>
+        <select id="hc-turno" onchange="onHcTurnoChange()">
+          <option value="">— Selecionar —</option>
+        </select>
+      </div>
+
+      <!-- Grupo — aparece conforme escala do turno selecionado -->
+      <div class="form-group" id="hc-grupo-wrap" style="display:none">
+        <label>Grupo</label>
+        <select id="hc-grupo">
+          <option value="">— Selecionar —</option>
+        </select>
+        <span class="field-hint" id="hc-grupo-hint"></span>
+      </div>
+
+      <div class="form-group">
+        <label>Status</label>
+        <select id="hc-status">
+          <option value="ativo">Ativo</option>
+          <option value="inativo">Inativo</option>
+          <option value="ferias">Férias</option>
+          <option value="afastado">Afastado</option>
+        </select>
+      </div>
+
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" id="btn-salvar-hc" onclick="salvarHead()">Salvar Colaborador</button>
+      <button class="btn btn-secondary" onclick="cancelarEdicaoHC()">Limpar</button>
+    </div>
+  </div>
+
+  <p class="section-label">Colaboradores</p>
+  <div class="card">
+    <div class="search-bar">
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Buscar por nome, Groot ID ou gestor..." id="busca-hc" oninput="renderHeads()">
+      </div>
+      <select id="filtro-turno-hc" onchange="renderHeads()" style="min-width:140px">
+        <option value="">Todos os turnos</option>
+      </select>
+      <select id="filtro-3pl-hc" onchange="renderHeads()">
+        <option value="">Todos os 3PL</option>
+        <option value="DHL">DHL</option>
+        <option value="Mendes">Mendes</option>
+        <option value="TSI">TSI</option>
+        <option value="SRM">SRM</option>
+      </select>
+      <select id="filtro-status-hc" onchange="renderHeads()">
+        <option value="">Todos os status</option>
+        <option value="ativo">Ativo</option>
+        <option value="inativo">Inativo</option>
+        <option value="ferias">Férias</option>
+        <option value="afastado">Afastado</option>
+      </select>
+      
+      <!-- Botão para exportar CSV integrado com os filtros atuais -->
+      <button class="btn btn-secondary btn-sm" onclick="exportarCSV()" style="height:34px; display:inline-flex; align-items:center; gap:6px;">
+        <span>📥 Exportar CSV</span>
+      </button>
+
+      <span class="count-badge" id="hc-count">0 colaboradores</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Nome</th><th>Groot ID</th><th>EXT</th><th>3PL</th><th>Turno</th><th>Grupo</th><th>Folga esta semana</th><th>Gestor</th><th>Status</th><th style="text-align:right">Ações</th>
+        </tr></thead>
+        <tbody id="tbody-headcount">
+          <tr><td colspan="10"><div class="empty-state"><div class="empty-icon">👤</div><p>Nenhum colaborador cadastrado</p><span>Preencha o formulário acima para começar</span></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EXCLUIR -->
+<div class="modal-overlay" id="modal-excluir">
+  <div class="modal">
+    <h3>Confirmar exclusão</h3>
+    <p id="modal-msg" style="font-size:14px;color:var(--text-muted)"></p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-danger btn-sm" id="btn-confirmar-excluir">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════
+//  CONFIGURAÇÃO E CONEXÃO SUPABASE
+// ════════════════════════════════════════
+const { createClient } = supabase;
+
+// Substitua estas strings pelas credenciais do seu painel do Supabase (Settings > API)
+const supabaseUrl = 'https://SEU_PROJETO.supabase.co';
+const supabaseKey = 'SUA_CHAVE_ANON_PUBLICA';
+const db = createClient(supabaseUrl, supabaseKey);
+
+// ════════════════════════════════════════
+//  ESCALAS — definições e cálculo de folga
+// ════════════════════════════════════════
+
+const ESCALAS = {
+  espanhola: {
+    label: 'Espanhola',
+    grupos: ['A','B'],
+    descricao: 'Ciclo de 4 semanas rotativas. Grupos A e B se complementam — todo sábado, domingo e segunda sempre tem alguém folgando.',
+    refDate: new Date(2025, 5, 14), // sábado 14/jun/2025
+    ciclo: {
+      A: [
+        ['sab'],           // semana 1
+        ['dom'],           // semana 2
+        ['dom','seg'],     // semana 3
+        ['sab','seg'],     // semana 4
+      ],
+      B: [
+        ['dom','seg'],     // semana 1
+        ['sab','seg'],     // semana 2
+        ['sab'],           // semana 3
+        ['dom'],           // semana 4
+      ]
+    }
+  },
+  '0430': {
+    label: '04:30',
+    grupos: ['A','B','C','D','E'],
+    descricao: 'Grupos A/B: folga fixa sábado + rodízio de domingo (A→B→C→D). Grupos C/D: folga fixa segunda + mesmo rodízio. Grupo E: folga fixa domingo.',
+    refDate: new Date(2025, 5, 14),
+    ciclo: null
+  },
+  '6x1_dom': {
+    label: '6x1',
+    grupos: [],
+    descricao: '6 dias trabalhados, 1 de folga. Folga fixa no domingo.',
+    ciclo: null
+  },
+  '5x2_fds': {
+    label: '5x2',
+    grupos: [],
+    descricao: '5 dias trabalhados, folga fixa sábado e domingo.',
+    ciclo: null
+  },
+  '5x2_qqi': {
+    label: '5x2 Esp.',
+    grupos: [],
+    descricao: '5 dias trabalhados, folga fixa quarta e quinta + 4º domingo do mês.',
+    ciclo: null
+  }
+};
+
+const DIAS_LABEL = { sab:'Sábado', dom:'Domingo', seg:'Segunda', qua:'Quarta', qui:'Quinta' };
+
+function inicioSemanaEspanhola(date) {
+  const d = new Date(date);
+  const dow = d.getDay();
+  const diff = (dow === 6) ? 0 : -(dow + 1);
+  d.setDate(d.getDate() + diff);
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function semanaEspanhola(date) {
+  const ref = inicioSemanaEspanhola(ESCALAS.espanhola.refDate);
+  const alvo = inicioSemanaEspanhola(date);
+  const diff = Math.round((alvo - ref) / (7 * 86400000));
+  return ((diff % 4) + 4) % 4;
+}
+
+function calcFolgaSemana(head, turno, dataRef) {
+  const data = dataRef || new Date();
+  if (!turno) return null;
+
+  const escala = turno.escala;
+
+  if (escala === 'espanhola') {
+    const sem = semanaEspanhola(data);
+    const grupo = head.grupo;
+    if (!grupo) return null;
+    const dias = ESCALAS.espanhola.ciclo[grupo][sem];
+    return dias.map(d => DIAS_LABEL[d]).join(' + ');
+  }
+
+  if (escala === '0430') {
+    const grupo = head.grupo;
+    if (!grupo) return null;
+    if (grupo === 'E') return 'Domingo';
+
+    const fixo = (grupo === 'A' || group === 'B') ? 'Sábado' : 'Segunda';
+    const ref = new Date(2025, 5, 14);
+    const hoje = new Date(data); hoje.setHours(0,0,0,0);
+    const dow = hoje.getDay();
+    const domSemana = new Date(hoje);
+    domSemana.setDate(hoje.getDate() + (7 - dow) % 7);
+    const diffSem = Math.round((domSemana - ref) / (7 * 86400000));
+    const ordemGrupos = ['A','B','C','D'];
+    const idxGrupo = ordemGrupos.indexOf(grupo);
+    const semNorm = ((diffSem % 4) + 4) % 4;
+    const folgaDom = semNorm === idxGrupo;
+
+    return folgaDom ? `${fixo} + Domingo` : fixo;
+  }
+
+  if (escala === '6x1_dom') return 'Domingo';
+  if (escala === '5x2_fds') return 'Sábado + Domingo';
+  if (escala === '5x2_qqi') {
+    const d = new Date(data);
+    const quartosDom = [];
+    const mes = d.getMonth(); const ano = d.getFullYear();
+    for (let dia = 1; dia <= 31; dia++) {
+      const t = new Date(ano, mes, dia);
+      if (t.getMonth() !== mes) break;
+      if (t.getDay() === 0) quartosDom.push(t);
+    }
+    const quartoDom = quartosDom[3];
+    if (quartoDom) {
+      const inicioSem = new Date(d);
+      inicioSem.setDate(d.getDate() - d.getDay());
+      const fimSem = new Date(inicioSem);
+      fimSem.setDate(inicioSem.getDate() + 6);
+      if (quartoDom >= inicioSem && quartoDom <= fimSem) {
+        return 'Quarta + Quinta + Domingo';
+      }
+    }
+    return 'Quarta + Quinta';
+  }
+
+  return null;
+}
+
+// ════════════════════════════════════════
+//  ESTADO LOCAL (Sincronizado com Supabase)
+// ════════════════════════════════════════
+let turnos = [];
+let heads  = [];
+let editingHcId = null;
+let pendingDelete = null;
+
+function toast(msg, tipo='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = `toast show ${tipo}`;
+  setTimeout(() => el.className = 'toast', 2800);
+}
+
+// Bloqueio visual para requisições assíncronas
+function setCarregando(elementoId, status) {
+  const el = document.getElementById(elementoId);
+  if (el) {
+    if (status) el.classList.add('form-grid-loading');
+    else el.classList.remove('form-grid-loading');
+  }
+}
+
+// Carregar dados de forma assíncrona do Supabase
+async function carregarDadosDoBanco() {
+  try {
+    // Buscar todos os turnos cadastrados
+    const { data: dataTurnos, error: errTurnos } = await db.from('turnos').select('*').order('nome');
+    if (errTurnos) throw errTurnos;
+    turnos = dataTurnos || [];
+
+    // Buscar todos os colaboradores
+    const { data: dataHeads, error: errHeads } = await db.from('colaboradores').select('*').order('nome');
+    if (errHeads) throw errHeads;
+    
+    // Mapear colunas do banco (snake_case) de volta para o padrão esperado no front-end
+    heads = (dataHeads || []).map(h => ({
+      id: h.id,
+      nome: h.nome,
+      groot: h.groot_id,
+      ext: h.ext,
+      tpl: h.tpl,
+      turnoId: h.turno_id,
+      grupo: h.grupo,
+      gestor: h.gestor,
+      status: h.status
+    }));
+
+    // Re-renderizar telas e atualizar seletores dinâmicos
+    atualizarSelectTurnos();
+    renderTurnos();
+    renderHeads();
+    atualizarStats();
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao buscar informações do Supabase: ' + error.message, 'error');
+  }
+}
+
+// ════════════════════════════════════════
+//  NAVEGAÇÃO / ABAS
+// ════════════════════════════════════════
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('page-' + tab).classList.add('active');
+}
+
+// ════════════════════════════════════════
+//  LÓGICA DE TURNOS (Supabase)
+// ════════════════════════════════════════
+const ESCALA_DESCRICOES = {
+  espanhola: '📋 Ciclo 4 semanas · Grupos A e B · Sáb / Dom / Dom+Seg / Sáb+Seg (alternados)',
+  '0430':    '📋 Grupos A/B: folga fixa Sáb + rodízio Dom mensal · Grupos C/D: folga fixa Seg + rodízio Dom · Grupo E: folga fixa Dom',
+  '6x1_dom': '📋 6x1 · Folga fixa domingo',
+  '5x2_fds': '📋 5x2 · Folga fixa sábado e domingo',
+  '5x2_qqi': '📋 5x2 Especial · Folga fixa quarta e quinta + 4º domingo do mês',
+};
+
+function onEscalaChange() {
+  const val = document.getElementById('turno-escala').value;
+  const box = document.getElementById('escala-descricao');
+  if (val && ESCALA_DESCRICOES[val]) {
+    box.innerHTML = ESCALA_DESCRICOES[val]; box.style.display = 'block';
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+async function salvarTurno() {
+  const nome   = document.getElementById('turno-nome').value.trim();
+  const inicio = document.getElementById('turno-inicio').value;
+  const fim    = document.getElementById('turno-fim').value;
+  const cor    = document.getElementById('turno-cor').value;
+  const escala = document.getElementById('turno-escala').value;
+
+  if (!nome)   { toast('Informe o nome do turno.', 'error'); return; }
+  if (!escala) { toast('Selecione o tipo de escala.', 'error'); return; }
+
+  const btn = document.getElementById('btn-salvar-turno');
+  btn.disabled = true;
+  setCarregando('form-grid-turnos', true);
+
+  try {
+    const { error } = await db.from('turnos').insert([{
+      nome,
+      inicio: inicio || null,
+      fim: fim || null,
+      cor,
+      escala
+    }]);
+
+    if (error) throw error;
+
+    toast('Turno cadastrado com sucesso!', 'success');
+    limparFormTurno();
+    await carregarDadosDoBanco();
+  } catch (error) {
+    toast('Erro ao salvar no Supabase: ' + error.message, 'error');
+  } finally {
+    btn.disabled = false;
+    setCarregando('form-grid-turnos', false);
+  }
+}
+
+function limparFormTurno() {
+  ['turno-nome','turno-inicio','turno-fim'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('turno-cor').value = '#3483FA';
+  document.getElementById('turno-escala').value = '';
+  document.getElementById('escala-descricao').style.display = 'none';
+}
+
+function confirmarExcluirTurno(id) {
+  const t = turnos.find(t => t.id === id);
+  const uso = heads.filter(h => h.turnoId === id).length;
+  if (uso > 0) { toast(`Não é possível excluir: ${uso} colaborador(es) associado(s) a este turno.`, 'error'); return; }
+  pendingDelete = { type:'turno', id };
+  document.getElementById('modal-msg').textContent = `Excluir o turno "${t.nome}"? Esta ação não pode ser desfeita.`;
+  document.getElementById('btn-confirmar-excluir').onclick = executarExclusao;
+  document.getElementById('modal-excluir').classList.add('open');
+}
+
+function folgaResumoTurno(escala) {
+  const map = {
+    espanhola: 'Rotativa 4 sem. (grupos A/B)',
+    '0430':    'Fixa + rodízio Dom (grupos A–E)',
+    '6x1_dom': 'Domingo fixo',
+    '5x2_fds': 'Sáb + Dom fixo',
+    '5x2_qqi': 'Qua + Qui + 4º Dom',
+  };
+  return map[escala] || '—';
+}
+
+function escalaBadge(escala) {
+  if (!escala) return '<span class="badge badge-gray">—</span>';
+  const e = ESCALAS[escala];
+  const label = e ? e.label : escala;
+  const cores = { espanhola:'badge-purple', '0430':'badge-orange', '6x1_dom':'badge-blue', '5x2_fds':'badge-green', '5x2_qqi':'badge-blue' };
+  return `<span class="badge ${cores[escala]||'badge-gray'}">${label}</span>`;
+}
+
+function renderTurnos() {
+  const busca = document.getElementById('busca-turno').value.toLowerCase();
+  const lista = turnos.filter(t => t.nome.toLowerCase().includes(busca));
+  document.getElementById('turno-count').textContent = `${lista.length} turno${lista.length!==1?'s':''}`;
+
+  const tbody = document.getElementById('tbody-turnos');
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🕐</div><p>${turnos.length?'Nenhum turno encontrado':'Nenhum turno cadastrado'}</p><span>${turnos.length?'Tente outros termos':'Preencha o formulário acima para começar'}</span></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = lista.map(t => {
+    const ativ = heads.filter(h => h.turnoId === t.id && h.status === 'ativo').length;
+    const hor  = (t.inicio && t.fim) ? `${t.inicio.substring(0,5)} – ${t.fim.substring(0,5)}` : '<span style="color:var(--text-hint)">—</span>';
+    return `<tr>
+      <td><span class="turno-dot" style="background:${t.cor}"></span><strong>${t.nome}</strong></td>
+      <td style="font-variant-numeric:tabular-nums">${hor}</td>
+      <td>${escalaBadge(t.escala)}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${folgaResumoTurno(t.escala)}</td>
+      <td>${ativ>0?`<span class="badge badge-green">${ativ} ativos</span>`:'<span style="color:var(--text-hint);font-size:12px">—</span>'}</td>
+      <td style="text-align:right"><button class="btn btn-danger btn-sm" onclick="confirmarExcluirTurno('${t.id}')">Excluir</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════
+//  LÓGICA DE COLABORADORES / HEADCOUNT
+// ════════════════════════════════════════
+function atualizarSelectTurnos() {
+  const opts = turnos.map(t => `<option value="${t.id}">${t.nome}</option>`).join('');
+  document.getElementById('hc-turno').innerHTML = '<option value="">— Selecionar —</option>' + opts;
+  document.getElementById('filtro-turno-hc').innerHTML = '<option value="">Todos os turnos</option>' + opts;
+}
+
+function onHcTurnoChange() {
+  const turnoId = document.getElementById('hc-turno').value;
+  const turno   = turnos.find(t => t.id === turnoId);
+  const wrap    = document.getElementById('hc-grupo-wrap');
+  const sel     = document.getElementById('hc-grupo');
+  const hint    = document.getElementById('hc-grupo-hint');
+
+  if (!turno || !ESCALAS[turno.escala] || !ESCALAS[turno.escala].grupos.length) {
+    wrap.style.display = 'none'; sel.value = ''; return;
+  }
+
+  const grupos = ESCALAS[turno.escala].grupos;
+  sel.innerHTML = '<option value="">— Selecionar —</option>' + grupos.map(g => `<option value="${g}">Grupo ${g}</option>`).join('');
+
+  const hints = {
+    espanhola: 'A e B se complementam no ciclo de 4 semanas.',
+    '0430':    'A/B: folga Sáb · C/D: folga Seg · E: folga Dom (sem rodízio)',
+  };
+  hint.textContent = hints[turno.escala] || '';
+  wrap.style.display = 'flex';
+}
+
+async function salvarHead() {
+  const nome    = document.getElementById('hc-nome').value.trim();
+  const groot   = document.getElementById('hc-groot').value.trim();
+  const ext     = document.getElementById('hc-ext').value.trim();
+  const tpl     = document.getElementById('hc-3pl').value;
+  const gestor  = document.getElementById('hc-gestor').value.trim();
+  const turnoId = document.getElementById('hc-turno').value;
+  const grupo   = document.getElementById('hc-grupo').value;
+  const status  = document.getElementById('hc-status').value;
+
+  if (!nome)  { toast('Informe o nome do colaborador.', 'error'); return; }
+  if (!groot) { toast('Informe o Groot ID.', 'error'); return; }
+
+  const turno = turnos.find(t => t.id === turnoId);
+  if (turno && ESCALAS[turno.escala] && ESCALAS[turno.escala].grupos.length && !grupo) {
+    toast('Selecione o grupo para esta escala.', 'error'); return;
+  }
+
+  const btn = document.getElementById('btn-salvar-hc');
+  btn.disabled = true;
+  setCarregando('form-grid-hc', true);
+
+  // Mapear dados para as colunas exatas da tabela do banco de dados (snake_case)
+  const dbData = {
+    nome,
+    groot_id: groot,
+    ext: ext || null,
+    tpl,
+    gestor: gestor || null,
+    turno_id: turnoId || null,
+    grupo: grupo || null,
+    status
+  };
+
+  try {
+    if (editingHcId) {
+      // Atualização de registro existente
+      const { error } = await db.from('colaboradores').update(dbData).eq('id', editingHcId);
+      if (error) throw error;
+      toast('Colaborador atualizado com sucesso!', 'success');
+      cancelarEdicaoHC();
+    } else {
+      // Criação de novo registro
+      const { error } = await db.from('colaboradores').insert([dbData]);
+      if (error) throw error;
+      toast('Colaborador cadastrado com sucesso!', 'success');
+      limparFormHC();
+    }
+    await carregarDadosDoBanco();
+  } catch (error) {
+    toast('Erro ao salvar no Supabase: ' + error.message, 'error');
+  } finally {
+    btn.disabled = false;
+    setCarregando('form-grid-hc', false);
+  }
+}
+
+function limparFormHC() {
+  ['hc-nome','hc-groot','hc-ext','hc-gestor'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('hc-turno').value  = '';
+  document.getElementById('hc-3pl').value    = 'DHL';
+  document.getElementById('hc-status').value = 'ativo';
+  document.getElementById('hc-grupo-wrap').style.display = 'none';
+  document.getElementById('hc-grupo').value = '';
+}
+
+function editarHead(id) {
+  const h = heads.find(h => h.id === id);
+  if (!h) return;
+  editingHcId = id;
+  document.getElementById('hc-nome').value   = h.nome;
+  document.getElementById('hc-groot').value  = h.groot;
+  document.getElementById('hc-ext').value    = h.ext || '';
+  document.getElementById('hc-3pl').value    = h.tpl || 'DHL';
+  document.getElementById('hc-gestor').value = h.gestor || '';
+  document.getElementById('hc-turno').value  = h.turnoId || '';
+  document.getElementById('hc-status').value = h.status;
+  onHcTurnoChange();
+  document.getElementById('hc-grupo').value  = h.grupo || '';
+  document.getElementById('hc-form-label').textContent = 'Editar colaborador';
+  document.getElementById('btn-salvar-hc').textContent = 'Atualizar';
+  document.getElementById('hc-nome').focus();
+  document.getElementById('page-headcount').scrollIntoView({ behavior:'smooth' });
+}
+
+function cancelarEdicaoHC() {
+  editingHcId = null;
+  document.getElementById('hc-form-label').textContent = 'Cadastrar colaborador';
+  document.getElementById('btn-salvar-hc').textContent = 'Salvar Colaborador';
+  limparFormHC();
+}
+
+function confirmarExcluirHead(id) {
+  const h = heads.find(h => h.id === id);
+  pendingDelete = { type:'head', id };
+  document.getElementById('modal-msg').textContent = `Excluir "${h.nome}" do headcount? Esta ação não pode ser desfeita.`;
+  document.getElementById('btn-confirmar-excluir').onclick = executarExclusao;
+  document.getElementById('modal-excluir').classList.add('open');
+}
+
+async function executarExclusao() {
+  if (!pendingDelete) return;
+  
+  try {
+    if (pendingDelete.type === 'turno') {
+      const { error } = await db.from('turnos').delete().eq('id', pendingDelete.id);
+      if (error) throw error;
+      toast('Turno excluído com sucesso.');
+    } else {
+      const { error } = await db.from('colaboradores').delete().eq('id', pendingDelete.id);
+      if (error) throw error;
+      toast('Colaborador excluído com sucesso.');
+    }
+    fecharModal();
+    await carregarDadosDoBanco();
+  } catch (error) {
+    toast('Erro ao excluir no Supabase: ' + error.message, 'error');
+  }
+}
+
+function fecharModal() {
+  document.getElementById('modal-excluir').classList.remove('open');
+  pendingDelete = null;
+}
+
+function tplBadge(tpl) {
+  const map = { DHL:'badge-blue', Mendes:'badge-purple', TSI:'badge-orange', SRM:'badge-green' };
+  return `<span class="badge ${map[tpl]||'badge-gray'}">${tpl||'—'}</span>`;
+}
+
+function statusBadge(s) {
+  const map = { ativo:['badge-green','Ativo'], inativo:['badge-gray','Inativo'], ferias:['badge-blue','Férias'], afastado:['badge-red','Afastado'] };
+  const [cls, label] = map[s] || ['badge-gray', s];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function turnoBadge(id) {
+  const t = turnos.find(t => t.id === id);
+  if (!t) return '<span style="color:var(--text-hint);font-size:12px">—</span>';
+  return `<span class="badge" style="background:${t.cor}22;color:${t.cor};border:1px solid ${t.cor}44"><span class="turno-dot" style="background:${t.cor}"></span>${t.nome}</span>`;
+}
+
+function folgaBadge(head) {
+  const turno = turnos.find(t => t.id === head.turnoId);
+  const folga = calcFolgaSemana(head, turno);
+  if (!folga) return '<span style="color:var(--text-hint);font-size:12px">—</span>';
+  return `<span class="folga-chip">📅 ${folga}</span>`;
+}
+
+function obterListaFiltradaHC() {
+  const busca      = document.getElementById('busca-hc').value.toLowerCase();
+  const filtTurno  = document.getElementById('filtro-turno-hc').value;
+  const filtTpl    = document.getElementById('filtro-3pl-hc').value;
+  const filtStatus = document.getElementById('filtro-status-hc').value;
+
+  return heads.filter(h => {
+    const mb = !busca  || h.nome.toLowerCase().includes(busca) || h.groot.toLowerCase().includes(busca) || (h.gestor||'').toLowerCase().includes(busca);
+    const mt = !filtTurno  || h.turnoId === filtTurno;
+    const mp = !filtTpl    || h.tpl     === filtTpl;
+    const ms = !filtStatus || h.status  === filtStatus;
+    return mb && mt && mp && ms;
+  });
+}
+
+function renderHeads() {
+  const lista = obterListaFiltradaHC();
+  document.getElementById('hc-count').textContent = `${lista.length} colaborador${lista.length!==1?'es':''}`;
+
+  const tbody = document.getElementById('tbody-headcount');
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">👤</div><p>${heads.length?'Nenhum resultado para os filtros':'Nenhum colaborador cadastrado'}</p><span>${heads.length?'Tente outros filtros':'Preencha o formulário acima para começar'}</span></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = lista.map(h => `<tr>
+    <td><strong>${h.nome}</strong></td>
+    <td style="font-family:monospace;font-size:12px">${h.groot}</td>
+    <td style="font-family:monospace;font-size:12px">${h.ext?`<span style="color:var(--text-hint)">ext_</span>${h.ext}`:'<span style="color:var(--text-hint)">—</span>'}</td>
+    <td>${tplBadge(h.tpl)}</td>
+    <td>${turnoBadge(h.turnoId)}</td>
+    <td style="font-size:12px;color:var(--text-muted)">${h.grupo?`Grupo ${h.grupo}`:'—'}</td>
+    <td>${folgaBadge(h)}</td>
+    <td style="color:var(--text-muted);font-size:12px">${h.gestor||'—'}</td>
+    <td>${statusBadge(h.status)}</td>
+    <td style="text-align:right;white-space:nowrap">
+      <button class="btn btn-secondary btn-sm" onclick="editarHead('${h.id}')" style="margin-right:6px">Editar</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmarExcluirHead('${h.id}')">Excluir</button>
+    </td>
+  </tr>`).join('');
+}
+
+function atualizarStats() {
+  const ativos = heads.filter(h => h.status === 'ativo');
+  document.getElementById('stat-total').textContent  = ativos.length;
+  document.getElementById('stat-turnos').textContent = turnos.length;
+  document.getElementById('stat-dhl').textContent    = ativos.filter(h => h.tpl === 'DHL').length;
+  document.getElementById('stat-3pl').textContent    = ativos.filter(h => h.tpl !== 'DHL').length;
+}
+
+// ════════════════════════════════════════
+//  COMANDO: EXPORTAR PARA CSV
+// ════════════════════════════════════════
+function exportarCSV() {
+  const listaParaExportar = obterListaFiltradaHC();
+
+  if (!listaParaExportar.length) {
+    toast('Nenhum dado disponível para exportar nos filtros atuais.', 'error');
+    return;
+  }
+
+  // Cabeçalho estruturado com ponto e vírgula (padrão regional para o Excel do Brasil)
+  let csvContent = "Nome Completo;Groot ID;Usuário EXT;Parceiro 3PL;Turno Associado;Grupo de Escala;Previsão de Folga;Gestor Direto;Status Atual
+";
+
+  listaParaExportar.forEach(h => {
+    const turno = turnos.find(t => t.id === h.turnoId);
+    const nomeTurno = turno ? turno.nome : '—';
+    const folga = calcFolgaSemana(h, turno) || '—';
+    
+    // Tratamento de aspas e campos nulos para evitar quebras estruturais no arquivo
+    const linha = [
+      h.nome,
+      h.groot,
+      h.ext ? `ext_${h.ext}` : '—',
+      h.tpl || '—',
+      nomeTurno,
+      h.grupo ? `Grupo ${h.grupo}` : '—',
+      folga,
+      h.gestor || '—',
+      h.status
+    ].map(texto => `"${texto.replace(/"/g, '""')}"`).join(";");
+
+    csvContent += linha + "
+";
+  });
+
+  // Geração do arquivo com o Byte Order Mark (BOM) do UTF-8 para garantir a acentuação correta no Microsoft Excel
+  const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  
+  const dataFormatada = new Date().toISOString().slice(0, 10);
+  link.setAttribute("href", url);
+  link.setAttribute("download", `headcount_srj2_${dataFormatada}.csv`);
+  
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  toast('Base de dados exportada com sucesso!', 'success');
+}
+
+// Event listener para fechar modal clicando fora dele
+document.getElementById('modal-excluir').addEventListener('click', function(e) {
+  if (e.target === this) fecharModal();
+});
+
+// EVENTO DE INICIALIZAÇÃO DA PÁGINA
+window.addEventListener('DOMContentLoaded', carregarDadosDoBanco);
+</script>
+</body>
+</html>
