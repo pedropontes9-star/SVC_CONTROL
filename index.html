@@ -174,7 +174,7 @@
           <option value="6x1_dom">6x1 — Folga fixa domingo</option>
           <option value="5x2_fds">5x2 — Folga sábado e domingo</option>
           <option value="5x2_qqi">5x2 especial — Folga qua/qui + 4º domingo</option>
-          <option value="Consolidação">Consolidação (Mista - Grupos A/B)</option>
+          <option value="consolidacao">Consolidação (Mista - Grupos A/B)</option>
         </select>
         <div id="escala-descricao" class="escala-info" style="display:none"></div>
       </div>
@@ -450,6 +450,7 @@ const ESCALAS = {
     descrição: 'Revesamento de 2 semanas: Semana 1 Grupo A (6x1 folga Dom) e B (5x2 folga Sáb/Dom). Semana 2: Inverte',
     RefDate: new Date(2025,5,15),
     ciclo:null
+  }
 };
 
 const DIAS_LABEL = { sab:'Sábado', dom:'Domingo', seg:'Segunda', qua:'Quarta', qui:'Quinta' };
@@ -544,7 +545,7 @@ if (escala === 'consolidacao') {
     
     // Calcular a diferença de semanas
     const diffSem = Math.round((domSemana - ref) / (7 * 86400000));
-    const semNormalizada = ((diffSem % 2) + 2) % 2; // Retorna 0 (semana par) ou 1 (semana ímpar)
+    const semNormalizada = ((diffSem % 2) + 2) % 2; // Retorna 0 ou 1
     
     if (grupo === 'A') {
       return semNormalizada === 0 ? 'Domingo' : 'Sábado + Domingo';
