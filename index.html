@@ -174,6 +174,7 @@
           <option value="6x1_dom">6x1 — Folga fixa domingo</option>
           <option value="5x2_fds">5x2 — Folga sábado e domingo</option>
           <option value="5x2_qqi">5x2 especial — Folga qua/qui + 4º domingo</option>
+          <option value="Consolidação">Consolidação (Mista - Grupos A/B)</option>
         </select>
         <div id="escala-descricao" class="escala-info" style="display:none"></div>
       </div>
@@ -442,7 +443,13 @@ const ESCALAS = {
     grupos: [],
     descricao: '5 dias trabalhados, folga fixa quarta e quinta + 4º domingo do mês.',
     ciclo: null
-  }
+  },
+  'Consolidação':{
+    label: 'Consolid.',
+    grupos: ['A','B'],
+    descrição: 'Revesamento de 2 semanas: Semana 1 Grupo A (6x1 folga Dom) e B (5x2 folga Sáb/Dom). Semana 2: Inverte',
+    RefDate: new Date(2025,5,15),
+    ciclo:null
 };
 
 const DIAS_LABEL = { sab:'Sábado', dom:'Domingo', seg:'Segunda', qua:'Quarta', qui:'Quinta' };
@@ -520,7 +527,32 @@ function calcFolgaSemana(head, turno, dataRef) {
     }
     return 'Quarta + Quinta';
   }
+  
+if (escala === 'consolidacao') {
+    const grupo = head.grupo;
+    if (!grupo) return null;
 
+    // Referência: Domingo 15/jun/2025 (Semana Par = Grupo A 6x1 / Grupo B 5x2)
+    const ref = new Date(2025, 5, 15); 
+    const hoje = new Date(data);
+    hoje.setHours(0,0,0,0);
+    
+    // Descobrir o domingo da semana consultada
+    const dow = hoje.getDay();
+    const domSemana = new Date(hoje);
+    domSemana.setDate(hoje.getDate() - dow); 
+    
+    // Calcular a diferença de semanas
+    const diffSem = Math.round((domSemana - ref) / (7 * 86400000));
+    const semNormalizada = ((diffSem % 2) + 2) % 2; // Retorna 0 (semana par) ou 1 (semana ímpar)
+    
+    if (grupo === 'A') {
+      return semNormalizada === 0 ? 'Domingo' : 'Sábado + Domingo';
+    } else if (grupo === 'B') {
+      return semNormalizada === 0 ? 'Sábado + Domingo' : 'Domingo';
+    }
+  }
+  
   return null;
 }
 
@@ -616,6 +648,7 @@ const ESCALA_DESCRICOES = {
   '6x1_dom': '📋 6x1 · Folga fixa domingo',
   '5x2_fds': '📋 5x2 · Folga fixa sábado e domingo',
   '5x2_qqi': '📋 5x2 Especial · Folga fixa quarta e quinta + 4º domingo do mês',
+  'consolidacao': '📋 Revezamento 2 semanas · Grupos A/B alternam entre 6x1 (folga Dom) e 5x2 (folga Sáb/Dom)',
 };
 
 function onEscalaChange() {
@@ -688,6 +721,7 @@ function folgaResumoTurno(escala) {
     '6x1_dom': 'Domingo fixo',
     '5x2_fds': 'Sáb + Dom fixo',
     '5x2_qqi': 'Qua + Qui + 4º Dom',
+    'consolidacao': 'Mista 6x1 e 5x2 (Grupos A/B)',
   };
   return map[escala] || '—';
 }
@@ -696,7 +730,7 @@ function escalaBadge(escala) {
   if (!escala) return '<span class="badge badge-gray">—</span>';
   const e = ESCALAS[escala];
   const label = e ? e.label : escala;
-  const cores = { espanhola:'badge-purple', '0430':'badge-orange', '6x1_dom':'badge-blue', '5x2_fds':'badge-green', '5x2_qqi':'badge-blue' };
+  const cores = { espanhola:'badge-purple', '0430':'badge-orange', '6x1_dom':'badge-blue', '5x2_fds':'badge-green', '5x2_qqi':'badge-blue', 'consolidacao':'badge-purple' };
   return `<span class="badge ${cores[escala]||'badge-gray'}">${label}</span>`;
 }
 
@@ -829,6 +863,7 @@ function onHcTurnoChange() {
   const hints = {
     espanhola: 'A e B se complementam no ciclo de 4 semanas.',
     '0430':    'A/B: folga Sáb · C/D: folga Seg · E: folga Dom (sem rodízio)',
+    consolidacao: 'A e B revezam entre 6x1 e 5x2 a cada semana.'
   };
   hint.textContent = hints[turno.escala] || '';
   wrap.style.display = 'flex';
