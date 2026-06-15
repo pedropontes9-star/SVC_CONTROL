@@ -539,6 +539,7 @@ function calcFolgaSemana(head, turno, dataRef) {
 // ════════════════════════════════════════
 let turnos = [];
 let heads  = [];
+let anomalias = [];
 let editingHcId = null;
 let pendingDelete = null;
 
@@ -720,6 +721,121 @@ function renderTurnos() {
   }).join('');
 }
 
+async function carregarDadosDoBanco() {
+  try {
+    const { data: dataTurnos, error: errTurnos } = await db.from('turnos').select('*').order('nome');
+    if (errTurnos) throw errTurnos;
+    turnos = dataTurnos || [];
+
+    const { data: dataHeads, error: errHeads } = await db.from('colaboradores').select('*').order('nome');
+    if (errHeads) throw errHeads;
+    
+    heads = (dataHeads || []).map(h => ({
+      id: h.id, nome: h.nome, groot: h.groot_id, ext: h.ext, tpl: h.tpl, turnoId: h.turno_id, grupo: h.grupo, gestor: h.gestor, status: h.status
+    }));
+
+    // ====== INÍCIO DO BLOCO NOVO (PUXAR ANOMALIAS) ======
+    const { data: dataAnomalias, error: errAnomalias } = await db.from('marcacoes_auto').select('*').order('data_marcacao', { ascending: false });
+    if (errAnomalias) throw errAnomalias;
+    anomalias = dataAnomalias || [];
+    
+    // Deixar a data de ontem como padrão no filtro logo que a tela abrir
+    const ontem = new Date();
+    ontem.setDate(ontem.getDate() - 1);
+    document.getElementById('filtro-data-anomalia').value = ontem.toISOString().slice(0, 10);
+    // ====== FIM DO BLOCO NOVO ======
+
+    atualizarSelectTurnos();
+    renderTurnos();
+    renderHeads();
+    atualizarStats();
+    renderAnomalias(); // Executa o cruzamento e pinta a tela
+
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao buscar informações do Supabase: ' + error.message, 'error');
+  }
+}
+
+// ════════════════════════════════════════
+//  LÓGICA DE ANOMALIAS (CIA / COA)
+// ════════════════════════════════════════
+function renderAnomalias() {
+  const filtDataInput = document.getElementById('filtro-data-anomalia').value; // Formato YYYY-MM-DD
+  const filtTipo = document.getElementById('filtro-tipo-anomalia').value;
+  const buscaText = document.getElementById('busca-anomalia').value.toLowerCase();
+
+  let lista = anomalias;
+
+  // Converter data YYYY-MM-DD do input para DD/MM/YYYY que vem do Apps Script
+  if (filtDataInput) {
+    const [ano, mes, dia] = filtDataInput.split('-');
+    const dataBr = `${dia}/${mes}/${ano}`;
+    lista = lista.filter(a => a.data_marcacao === dataBr);
+  }
+
+  // Filtrar Tipo
+  if (filtTipo !== 'AMBOS') {
+    lista = lista.filter(a => a.tipo === filtTipo);
+  }
+
+  // Estatísticas no Topo
+  document.getElementById('stat-anom-total').textContent = lista.length;
+  document.getElementById('stat-cia').textContent = lista.filter(a => a.tipo === 'CIA').length;
+  document.getElementById('stat-coa').textContent = lista.filter(a => a.tipo === 'COA').length;
+
+  // Filtrar pela Busca de Texto
+  if (buscaText) {
+    lista = lista.filter(a => {
+      // Procura o operador correspondente para permitir buscar pelo nome completo
+      const head = heads.find(h => h.ext && h.ext.toLowerCase() === a.ext.toLowerCase()) || {};
+      const nomeOp = (head.nome || '').toLowerCase();
+      return a.ext.toLowerCase().includes(buscaText) || nomeOp.includes(buscaText);
+    });
+  }
+
+  document.getElementById('anomalia-count').textContent = `${lista.length} ofensa${lista.length !== 1 ? 's' : ''}`;
+
+  const tbody = document.getElementById('tbody-anomalias');
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">✅</div><p>Nenhuma ofensa de ponto encontrada</p><span>Nenhum registro para os filtros atuais</span></div></td></tr>`;
+    return;
+  }
+
+  // Pinta as linhas cruzando dados da Ofensa (Supabase) com Dados do Colaborador (Local)
+  tbody.innerHTML = lista.map(a => {
+    const head = heads.find(h => h.ext && h.ext.toLowerCase() === a.ext.toLowerCase()) || {};
+    
+    // Tratamento visual para o caso de a marcação ser de alguém que não está cadastrado no Headcount
+    const nomeVisual = head.nome ? `<strong>${head.nome}</strong>` : `<span style="color:var(--danger-text)">Colaborador não cadastrado</span>`;
+    const turnoVisual = turnoBadge(head.turnoId);
+    const gestorVisual = head.gestor || '—';
+    const tipoBadge = a.tipo === 'CIA' 
+        ? `<span class="badge badge-orange">CIA</span>` 
+        : `<span class="badge badge-purple">COA</span>`;
+
+    return `<tr>
+      <td style="color:var(--text-muted);font-size:13px">${a.data_marcacao}</td>
+      <td>
+        ${nomeVisual}<br>
+        <span style="font-family:monospace;font-size:11px;color:var(--text-hint)">ext_${a.ext}</span>
+      </td>
+      <td>${turnoVisual}</td>
+      <td style="color:var(--text-muted);font-size:12px">${gestorVisual}</td>
+      <td>${tipoBadge}</td>
+      <td style="font-weight:700">${a.hora}</td>
+      <td>
+        <select style="padding:4px 8px; border:1px solid var(--border); border-radius:4px; font-size:12px; color:var(--text-hint); background:transparent;">
+          <option value="">Aguardando tratativa...</option>
+          <option value="esquecimento">Esquecimento Operacional</option>
+          <option value="sistema">Falha no Relógio/Sistema</option>
+          <option value="dispensa">Dispensa Antecipada</option>
+        </select>
+      </td>
+    </tr>`;
+  }).join('');
+}
+  
 // ════════════════════════════════════════
 //  LÓGICA DE COLABORADORES / HEADCOUNT
 // ════════════════════════════════════════
