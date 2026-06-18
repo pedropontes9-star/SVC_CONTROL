@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SVC — Headcount</title>
+<title>SVC — Gestão Operacional</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -214,15 +214,15 @@
       <div class="logo-box">SVC</div>
       <div>
         <div class="auth-title">Acesso Operacional</div>
-        <div style="font-size:12px;color:var(--text-muted);font-weight:600">CD SRJ2 — 3PL / Meli</div>
+        <div style="font-size:12px;color:var(--text-muted);font-weight:600">CD SRJ2 — DHL / Meli</div>
       </div>
     </div>
     <p class="auth-subtitle">Entre com seu usuário e senha para acessar as áreas liberadas para o seu perfil.</p>
 
-    <form onsubmit="entrarSistema(event)">
+    <form id="auth-form" method="post" action="javascript:void(0)" onsubmit="entrarSistema(event)" novalidate>
       <div class="form-group" style="margin-bottom:12px">
         <label>Usuário</label>
-        <input type="text" id="auth-usuario" placeholder="Ex: Admin.srj2" autocomplete="username" required>
+        <input type="text" id="auth-usuario" placeholder="Ex: Admin.srj2" autocomplete="username" autocapitalize="none" spellcheck="false" required>
       </div>
       <div class="form-group">
         <label>Senha</label>
@@ -246,7 +246,7 @@
   <div class="logo-box">SVC</div>
   <h1>Gestão Operacional</h1>
   <div class="header-divider"></div>
-  <span class="header-sub">CD SRJ2 — 3PL / Meli</span>
+  <span class="header-sub">CD SRJ2 — DHL / Meli</span>
   <div class="header-user">
     <span class="user-pill" title="Usuário logado"><span id="user-display">—</span> <small id="user-profile">—</small></span>
     <button class="btn-logout" onclick="sairSistema()">Sair</button>
@@ -336,7 +336,7 @@
   <div class="stats-row">
     <div class="stat-card"><div class="stat-label">Total Ativo</div><div class="stat-value" id="stat-total">0</div><div class="stat-sub">colaboradores</div></div>
     <div class="stat-card"><div class="stat-label">Turnos</div><div class="stat-value" id="stat-turnos">0</div><div class="stat-sub">configurados</div></div>
-    <div class="stat-card"><div class="stat-label">3PL</div><div class="stat-value" id="stat-3PL">0</div><div class="stat-sub">colaboradores</div></div>
+    <div class="stat-card"><div class="stat-label">DHL</div><div class="stat-value" id="stat-dhl">0</div><div class="stat-sub">colaboradores</div></div>
     <div class="stat-card"><div class="stat-label">3PL Parceiros</div><div class="stat-value" id="stat-3pl">0</div><div class="stat-sub">Mendes / TSI / SRM</div></div>
   </div>
 
@@ -368,7 +368,7 @@
       <div class="form-group">
         <label>3PL</label>
         <select id="hc-3pl">
-          <option value="3PL">3PL</option>
+          <option value="DHL">DHL</option>
           <option value="Mendes">Mendes</option>
           <option value="TSI">TSI</option>
           <option value="SRM">SRM</option>
@@ -424,7 +424,7 @@
       </select>
       <select id="filtro-3pl-hc" onchange="renderHeads()">
         <option value="">Todos os 3PL</option>
-        <option value="3PL">3PL</option>
+        <option value="DHL">DHL</option>
         <option value="Mendes">Mendes</option>
         <option value="TSI">TSI</option>
         <option value="SRM">SRM</option>
@@ -601,9 +601,22 @@ const db = createClient(supabaseUrl, supabaseKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true
+    // Login por usuário/senha não precisa ler sessão pela URL.
+    // Deixar false evita limpeza/alteração automática de URL como /?.
+    detectSessionInUrl: false
   }
 });
+
+// Remove somente query string vazia criada por submit padrão do navegador, ex: /?
+function limparQueryVaziaDaUrl() {
+  try {
+    if (window.location.search === '?') {
+      const limpa = window.location.pathname + window.location.hash;
+      window.history.replaceState(null, document.title, limpa || '/');
+    }
+  } catch (_) {}
+}
+limparQueryVaziaDaUrl();
 
 // Opcional: cole aqui a URL do Web App do Google Apps Script, caso a aba Anomalias deva ler direto do Sheets.
 // Se ficar vazio, o sistema usa a tabela Supabase `marcacoes_auto`, que pode ser abastecida pelo Apps Script.
@@ -1722,7 +1735,7 @@ async function salvarHead() {
 function limparFormHC() {
   ['hc-nome','hc-groot','hc-ext','hc-gestor'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('hc-turno').value  = '';
-  document.getElementById('hc-3pl').value    = '3PL';
+  document.getElementById('hc-3pl').value    = 'DHL';
   document.getElementById('hc-status').value = 'ativo';
   document.getElementById('hc-grupo-wrap').style.display = 'none';
   document.getElementById('hc-grupo').innerHTML = '<option value="">— Selecionar —</option>';
@@ -1738,7 +1751,7 @@ function editarHead(id) {
   document.getElementById('hc-nome').value   = h.nome || '';
   document.getElementById('hc-groot').value  = h.groot || '';
   document.getElementById('hc-ext').value    = normalizeExt(h.ext);
-  document.getElementById('hc-3pl').value    = h.tpl || '3PL';
+  document.getElementById('hc-3pl').value    = h.tpl || 'DHL';
   document.getElementById('hc-gestor').value = h.gestor || '';
   document.getElementById('hc-turno').value  = h.turnoId || '';
   document.getElementById('hc-status').value = h.status || 'ativo';
@@ -1798,7 +1811,7 @@ function fecharModal() {
 }
 
 function tplBadge(tpl) {
-  const map = { 3PL:'badge-blue', Mendes:'badge-purple', TSI:'badge-orange', SRM:'badge-green' };
+  const map = { DHL:'badge-blue', Mendes:'badge-purple', TSI:'badge-orange', SRM:'badge-green' };
   const val = asText(tpl) || '—';
   return `<span class="badge ${map[val] || 'badge-gray'}">${escapeHtml(val)}</span>`;
 }
@@ -1874,8 +1887,8 @@ function atualizarStats() {
   const ativos = heads.filter(h => h.status === 'ativo');
   document.getElementById('stat-total').textContent  = ativos.length;
   document.getElementById('stat-turnos').textContent = turnos.length;
-  document.getElementById('stat-3PL').textContent    = ativos.filter(h => h.tpl === '3PL').length;
-  document.getElementById('stat-3pl').textContent    = ativos.filter(h => h.tpl !== '3PL').length;
+  document.getElementById('stat-dhl').textContent    = ativos.filter(h => h.tpl === 'DHL').length;
+  document.getElementById('stat-3pl').textContent    = ativos.filter(h => h.tpl !== 'DHL').length;
 }
 
 // ════════════════════════════════════════
@@ -2063,7 +2076,22 @@ function imprimirCrachasLms() {
 }
 
 window.addEventListener('DOMContentLoaded', async function() {
-  await inicializarAuth();
+  limparQueryVaziaDaUrl();
+
+  const authForm = document.getElementById('auth-form');
+  if (authForm) {
+    authForm.addEventListener('submit', entrarSistema);
+  }
+
+  try {
+    if (!window.supabase) {
+      throw new Error('Biblioteca Supabase não carregou. Verifique conexão/CDN.');
+    }
+    await inicializarAuth();
+  } catch (error) {
+    console.error(error);
+    mostrarLogin('Erro ao inicializar o login: ' + (error.message || error));
+  }
 });
 </script>
 
