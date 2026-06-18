@@ -122,6 +122,22 @@
 
   /* Hint text */
   .field-hint { font-size: 11px; color: var(--text-hint); margin-top: 3px; }
+
+
+  .btn:disabled { opacity: .55; cursor: not-allowed; }
+  .table-wrap td, .table-wrap th { max-width: 260px; }
+  .text-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  @media (max-width: 760px) {
+    .header { padding: 0 14px; }
+    .header-sub { display: none; }
+    .nav-tabs { padding: 0 8px; overflow-x: auto; }
+    .tab-btn { white-space: nowrap; padding: 12px 14px; }
+    .page { padding: 14px; }
+    .form-card { padding: 16px; }
+    .search-bar { padding: 12px; }
+    .count-badge { margin-left: 0; }
+  }
+
 </style>
 </head>
 <body>
@@ -142,7 +158,7 @@
 <div id="page-turnos" class="page active">
 
   <div class="form-card card" style="margin-bottom:24px">
-    <p class="section-label">Cadastrar turno</p>
+    <p class="section-label" id="turno-form-label">Cadastrar turno</p>
     <div class="form-grid" id="form-grid-turnos">
 
       <div class="form-group" style="grid-column:span 2">
@@ -182,7 +198,7 @@
     </div>
     <div class="form-actions">
       <button class="btn btn-primary" id="btn-salvar-turno" onclick="salvarTurno()">Salvar Turno</button>
-      <button class="btn btn-secondary" onclick="limparFormTurno()">Limpar</button>
+      <button class="btn btn-secondary" onclick="cancelarEdicaoTurno()">Limpar</button>
     </div>
   </div>
 
@@ -389,15 +405,109 @@
 // ════════════════════════════════════════
 const { createClient } = supabase;
 
-// Substitua estas strings pelas credenciais do seu painel do Supabase (Settings > API)
+// Observação: a chave anon pode ficar no front-end somente se o Supabase estiver com RLS/policies configuradas.
 const supabaseUrl = 'https://xzdpdmvjpokseaiwcnxu.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh6ZHBkbXZqcG9rc2VhaXdjbnh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNzM5NTAsImV4cCI6MjA5Njg0OTk1MH0.3lXv4HLEEtkRNB6z8hWtXkzC-aZqKZIT3uWgiOd4N_w';
 const db = createClient(supabaseUrl, supabaseKey);
 
 // ════════════════════════════════════════
+//  HELPERS GERAIS — segurança, normalização e datas
+// ════════════════════════════════════════
+function asText(value) {
+  return value === null || value === undefined ? '' : String(value);
+}
+
+function lower(value) {
+  return asText(value).toLowerCase();
+}
+
+function escapeHtml(value) {
+  return asText(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function normalizeExt(value) {
+  return asText(value).trim().replace(/^ext_/i, '').toLowerCase();
+}
+
+function safeId(value) {
+  return asText(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+function toCsvCell(value) {
+  const texto = asText(value) || '—';
+  return `"${texto.replace(/"/g, '""')}"`;
+}
+
+function hojeIsoLocal() {
+  const d = new Date();
+  const offset = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - offset * 60000);
+  return local.toISOString().slice(0, 10);
+}
+
+function ontemIsoLocal() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  const offset = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - offset * 60000);
+  return local.toISOString().slice(0, 10);
+}
+
+function brToIso(dataBr) {
+  const partes = asText(dataBr).split('/');
+  if (partes.length !== 3) return '';
+  const [dia, mes, ano] = partes;
+  return `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+}
+
+function dataMarcacaoMatchesFiltro(dataMarcacao, filtroIso) {
+  if (!filtroIso) return true;
+  const raw = asText(dataMarcacao).trim();
+  if (!raw) return false;
+
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) return brToIso(raw) === filtroIso;
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10) === filtroIso;
+
+  const parsed = new Date(raw);
+  if (!Number.isNaN(parsed.getTime())) {
+    const offset = parsed.getTimezoneOffset();
+    const local = new Date(parsed.getTime() - offset * 60000);
+    return local.toISOString().slice(0, 10) === filtroIso;
+  }
+  return false;
+}
+
+function formatarDataMarcacao(dataMarcacao) {
+  const raw = asText(dataMarcacao).trim();
+  if (!raw) return '—';
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) return raw;
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
+    const [ano, mes, dia] = raw.slice(0, 10).split('-');
+    return `${dia}/${mes}/${ano}`;
+  }
+  return raw;
+}
+
+function setButtonLoading(btn, loading, textoLoading = 'Salvando...') {
+  if (!btn) return;
+  if (loading) {
+    btn.dataset.originalText = btn.textContent;
+    btn.textContent = textoLoading;
+    btn.disabled = true;
+  } else {
+    btn.textContent = btn.dataset.originalText || btn.textContent;
+    btn.disabled = false;
+  }
+}
+
+// ════════════════════════════════════════
 //  ESCALAS — definições e cálculo de folga
 // ════════════════════════════════════════
-
 const ESCALAS = {
   espanhola: {
     label: 'Espanhola',
@@ -406,23 +516,23 @@ const ESCALAS = {
     refDate: new Date(2025, 5, 14), // sábado 14/jun/2025
     ciclo: {
       A: [
-        ['sab'],           // semana 1
-        ['dom'],           // semana 2
-        ['dom','seg'],     // semana 3
-        ['sab','seg'],     // semana 4
+        ['sab'],
+        ['dom'],
+        ['dom','seg'],
+        ['sab','seg'],
       ],
       B: [
-        ['dom','seg'],     // semana 1
-        ['sab','seg'],     // semana 2
-        ['sab'],           // semana 3
-        ['dom'],           // semana 4
+        ['dom','seg'],
+        ['sab','seg'],
+        ['sab'],
+        ['dom'],
       ]
     }
   },
   '0430': {
     label: '04:30',
     grupos: ['A','B','C','D','E'],
-    descricao: 'Grupos A/B: folga fixa sábado + rodízio de domingo (A→B→C→D). Grupos C/D: folga fixa segunda + mesmo rodízio. Grupo E: folga fixa domingo.',
+    descricao: 'Grupos A/B: folga fixa sábado + rodízio de domingo. Grupos C/D: folga fixa segunda + mesmo rodízio. Grupo E: folga fixa domingo.',
     refDate: new Date(2025, 5, 14),
     ciclo: null
   },
@@ -444,12 +554,12 @@ const ESCALAS = {
     descricao: '5 dias trabalhados, folga fixa quarta e quinta + 4º domingo do mês.',
     ciclo: null
   },
-  'Consolidação':{
+  consolidacao: {
     label: 'Consolid.',
     grupos: ['A','B'],
-    descrição: 'Revesamento de 2 semanas: Semana 1 Grupo A (6x1 folga Dom) e B (5x2 folga Sáb/Dom). Semana 2: Inverte',
-    RefDate: new Date(2025,5,15),
-    ciclo:null
+    descricao: 'Revezamento de 2 semanas. Grupo A e B alternam entre 6x1 com folga domingo e 5x2 com folga sábado/domingo.',
+    refDate: new Date(2025, 5, 15), // domingo 15/jun/2025
+    ciclo: null
   }
 };
 
@@ -480,9 +590,9 @@ function calcFolgaSemana(head, turno, dataRef) {
   if (escala === 'espanhola') {
     const sem = semanaEspanhola(data);
     const grupo = head.grupo;
-    if (!grupo) return null;
-    const dias = ESCALAS.espanhola.ciclo[grupo][sem];
-    return dias.map(d => DIAS_LABEL[d]).join(' + ');
+    if (!grupo || !ESCALAS.espanhola.ciclo[grupo]) return null;
+    const dias = ESCALAS.espanhola.ciclo[grupo][sem] || [];
+    return dias.map(d => DIAS_LABEL[d] || d).join(' + ');
   }
 
   if (escala === '0430') {
@@ -490,8 +600,8 @@ function calcFolgaSemana(head, turno, dataRef) {
     if (!grupo) return null;
     if (grupo === 'E') return 'Domingo';
 
-    const fixo = (grupo === 'A' || group === 'B') ? 'Sábado' : 'Segunda';
-    const ref = new Date(2025, 5, 14);
+    const fixo = (grupo === 'A' || grupo === 'B') ? 'Sábado' : 'Segunda';
+    const ref = ESCALAS['0430'].refDate;
     const hoje = new Date(data); hoje.setHours(0,0,0,0);
     const dow = hoje.getDay();
     const domSemana = new Date(hoje);
@@ -509,51 +619,43 @@ function calcFolgaSemana(head, turno, dataRef) {
   if (escala === '5x2_fds') return 'Sábado + Domingo';
   if (escala === '5x2_qqi') {
     const d = new Date(data);
-    const quartosDom = [];
-    const mes = d.getMonth(); const ano = d.getFullYear();
+    const domingos = [];
+    const mes = d.getMonth();
+    const ano = d.getFullYear();
     for (let dia = 1; dia <= 31; dia++) {
       const t = new Date(ano, mes, dia);
       if (t.getMonth() !== mes) break;
-      if (t.getDay() === 0) quartosDom.push(t);
+      if (t.getDay() === 0) domingos.push(t);
     }
-    const quartoDom = quartosDom[3];
+    const quartoDom = domingos[3];
     if (quartoDom) {
       const inicioSem = new Date(d);
       inicioSem.setDate(d.getDate() - d.getDay());
+      inicioSem.setHours(0,0,0,0);
       const fimSem = new Date(inicioSem);
       fimSem.setDate(inicioSem.getDate() + 6);
-      if (quartoDom >= inicioSem && quartoDom <= fimSem) {
-        return 'Quarta + Quinta + Domingo';
-      }
+      fimSem.setHours(23,59,59,999);
+      if (quartoDom >= inicioSem && quartoDom <= fimSem) return 'Quarta + Quinta + Domingo';
     }
     return 'Quarta + Quinta';
   }
-  
-if (escala === 'consolidacao') {
+
+  if (escala === 'consolidacao') {
     const grupo = head.grupo;
     if (!grupo) return null;
 
-    // Referência: Domingo 15/jun/2025 (Semana Par = Grupo A 6x1 / Grupo B 5x2)
-    const ref = new Date(2025, 5, 15); 
-    const hoje = new Date(data);
-    hoje.setHours(0,0,0,0);
-    
-    // Descobrir o domingo da semana consultada
+    const ref = ESCALAS.consolidacao.refDate;
+    const hoje = new Date(data); hoje.setHours(0,0,0,0);
     const dow = hoje.getDay();
     const domSemana = new Date(hoje);
-    domSemana.setDate(hoje.getDate() - dow); 
-    
-    // Calcular a diferença de semanas
+    domSemana.setDate(hoje.getDate() - dow);
     const diffSem = Math.round((domSemana - ref) / (7 * 86400000));
-    const semNormalizada = ((diffSem % 2) + 2) % 2; // Retorna 0 ou 1
-    
-    if (grupo === 'A') {
-      return semNormalizada === 0 ? 'Domingo' : 'Sábado + Domingo';
-    } else if (grupo === 'B') {
-      return semNormalizada === 0 ? 'Sábado + Domingo' : 'Domingo';
-    }
+    const semNormalizada = ((diffSem % 2) + 2) % 2;
+
+    if (grupo === 'A') return semNormalizada === 0 ? 'Domingo' : 'Sábado + Domingo';
+    if (grupo === 'B') return semNormalizada === 0 ? 'Sábado + Domingo' : 'Domingo';
   }
-  
+
   return null;
 }
 
@@ -563,37 +665,39 @@ if (escala === 'consolidacao') {
 let turnos = [];
 let heads  = [];
 let anomalias = [];
+let editingTurnoId = null;
 let editingHcId = null;
 let pendingDelete = null;
 
 function toast(msg, tipo='') {
   const el = document.getElementById('toast');
-  el.textContent = msg; el.className = `toast show ${tipo}`;
+  if (!el) return;
+  el.textContent = msg;
+  el.className = `toast show ${tipo}`;
   setTimeout(() => el.className = 'toast', 2800);
 }
 
-// Bloqueio visual para requisições assíncronas
 function setCarregando(elementoId, status) {
   const el = document.getElementById(elementoId);
-  if (el) {
-    if (status) el.classList.add('form-grid-loading');
-    else el.classList.remove('form-grid-loading');
-  }
+  if (!el) return;
+  el.classList.toggle('form-grid-loading', !!status);
 }
 
-// Carregar dados de forma assíncrona do Supabase
 async function carregarDadosDoBanco() {
   try {
-    // Buscar todos os turnos cadastrados
     const { data: dataTurnos, error: errTurnos } = await db.from('turnos').select('*').order('nome');
     if (errTurnos) throw errTurnos;
-    turnos = dataTurnos || [];
+    turnos = (dataTurnos || []).map(t => ({
+      id: t.id,
+      nome: t.nome,
+      inicio: t.inicio,
+      fim: t.fim,
+      cor: t.cor || '#3483FA',
+      escala: t.escala
+    }));
 
-    // Buscar todos os colaboradores
     const { data: dataHeads, error: errHeads } = await db.from('colaboradores').select('*').order('nome');
     if (errHeads) throw errHeads;
-    
-    // Mapear colunas do banco (snake_case) de volta para o padrão esperado no front-end
     heads = (dataHeads || []).map(h => ({
       id: h.id,
       nome: h.nome,
@@ -603,30 +707,24 @@ async function carregarDadosDoBanco() {
       turnoId: h.turno_id,
       grupo: h.grupo,
       gestor: h.gestor,
-      status: h.status
+      status: h.status || 'ativo'
     }));
 
-    // ====== INÍCIO DO BLOCO NOVO (PUXAR ANOMALIAS) ======
     const { data: dataAnomalias, error: errAnomalias } = await db.from('marcacoes_auto').select('*').order('data_marcacao', { ascending: false });
     if (errAnomalias) throw errAnomalias;
     anomalias = dataAnomalias || [];
-    
-    // Deixar a data de ontem como padrão no filtro logo que a tela abrir
-    const ontem = new Date();
-    ontem.setDate(ontem.getDate() - 1);
-    document.getElementById('filtro-data-anomalia').value = ontem.toISOString().slice(0, 10);
-    // ====== FIM DO BLOCO NOVO ======
 
-    // Re-renderizar telas e atualizar seletores dinâmicos
+    const filtroData = document.getElementById('filtro-data-anomalia');
+    if (filtroData && !filtroData.value) filtroData.value = ontemIsoLocal();
+
     atualizarSelectTurnos();
     renderTurnos();
     renderHeads();
     atualizarStats();
     renderAnomalias();
-
   } catch (error) {
     console.error(error);
-    toast('Erro ao buscar informações do Supabase: ' + error.message, 'error');
+    toast('Erro ao buscar informações do Supabase: ' + (error.message || error), 'error');
   }
 }
 
@@ -636,28 +734,32 @@ async function carregarDadosDoBanco() {
 function switchTab(tab, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('page-' + tab).classList.add('active');
+  if (btn) btn.classList.add('active');
+  const page = document.getElementById('page-' + tab);
+  if (page) page.classList.add('active');
 }
 
 // ════════════════════════════════════════
 //  LÓGICA DE TURNOS (Supabase)
 // ════════════════════════════════════════
 const ESCALA_DESCRICOES = {
-  espanhola: '📋 Ciclo 4 semanas · Grupos A e B · Sáb / Dom / Dom+Seg / Sáb+Seg (alternados)',
-  '0430':    '📋 Grupos A/B: folga fixa Sáb + rodízio Dom mensal · Grupos C/D: folga fixa Seg + rodízio Dom · Grupo E: folga fixa Dom',
+  espanhola: '📋 Ciclo 4 semanas · Grupos A e B · Sáb / Dom / Dom+Seg / Sáb+Seg alternados',
+  '0430':    '📋 Grupos A/B: folga fixa Sáb + rodízio Dom · Grupos C/D: folga fixa Seg + rodízio Dom · Grupo E: folga fixa Dom',
   '6x1_dom': '📋 6x1 · Folga fixa domingo',
   '5x2_fds': '📋 5x2 · Folga fixa sábado e domingo',
   '5x2_qqi': '📋 5x2 Especial · Folga fixa quarta e quinta + 4º domingo do mês',
-  'consolidacao': '📋 Revezamento 2 semanas · Grupos A/B alternam entre 6x1 (folga Dom) e 5x2 (folga Sáb/Dom)',
+  consolidacao: '📋 Revezamento 2 semanas · Grupos A/B alternam entre 6x1 folga Dom e 5x2 folga Sáb/Dom'
 };
 
 function onEscalaChange() {
   const val = document.getElementById('turno-escala').value;
   const box = document.getElementById('escala-descricao');
+  if (!box) return;
   if (val && ESCALA_DESCRICOES[val]) {
-    box.innerHTML = ESCALA_DESCRICOES[val]; box.style.display = 'block';
+    box.textContent = ESCALA_DESCRICOES[val];
+    box.style.display = 'block';
   } else {
+    box.textContent = '';
     box.style.display = 'none';
   }
 }
@@ -666,34 +768,34 @@ async function salvarTurno() {
   const nome   = document.getElementById('turno-nome').value.trim();
   const inicio = document.getElementById('turno-inicio').value;
   const fim    = document.getElementById('turno-fim').value;
-  const cor    = document.getElementById('turno-cor').value;
+  const cor    = document.getElementById('turno-cor').value || '#3483FA';
   const escala = document.getElementById('turno-escala').value;
 
   if (!nome)   { toast('Informe o nome do turno.', 'error'); return; }
   if (!escala) { toast('Selecione o tipo de escala.', 'error'); return; }
+  if (inicio && fim && inicio === fim) { toast('Horário de início e fim não podem ser iguais.', 'error'); return; }
 
   const btn = document.getElementById('btn-salvar-turno');
-  btn.disabled = true;
+  setButtonLoading(btn, true, editingTurnoId ? 'Atualizando...' : 'Salvando...');
   setCarregando('form-grid-turnos', true);
 
   try {
-    const { error } = await db.from('turnos').insert([{
-      nome,
-      inicio: inicio || null,
-      fim: fim || null,
-      cor,
-      escala
-    }]);
-
+    const dbData = { nome, inicio: inicio || null, fim: fim || null, cor, escala };
+    let error;
+    if (editingTurnoId) {
+      ({ error } = await db.from('turnos').update(dbData).eq('id', editingTurnoId));
+    } else {
+      ({ error } = await db.from('turnos').insert([dbData]));
+    }
     if (error) throw error;
 
-    toast('Turno cadastrado com sucesso!', 'success');
-    limparFormTurno();
+    toast(editingTurnoId ? 'Turno atualizado com sucesso!' : 'Turno cadastrado com sucesso!', 'success');
+    cancelarEdicaoTurno();
     await carregarDadosDoBanco();
   } catch (error) {
-    toast('Erro ao salvar no Supabase: ' + error.message, 'error');
+    toast('Erro ao salvar no Supabase: ' + (error.message || error), 'error');
   } finally {
-    btn.disabled = false;
+    setButtonLoading(btn, false);
     setCarregando('form-grid-turnos', false);
   }
 }
@@ -702,11 +804,37 @@ function limparFormTurno() {
   ['turno-nome','turno-inicio','turno-fim'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('turno-cor').value = '#3483FA';
   document.getElementById('turno-escala').value = '';
-  document.getElementById('escala-descricao').style.display = 'none';
+  const desc = document.getElementById('escala-descricao');
+  desc.style.display = 'none';
+  desc.textContent = '';
+}
+
+function editarTurno(id) {
+  const t = turnos.find(t => t.id === id);
+  if (!t) return;
+  editingTurnoId = id;
+  document.getElementById('turno-nome').value = t.nome || '';
+  document.getElementById('turno-inicio').value = t.inicio ? t.inicio.substring(0,5) : '';
+  document.getElementById('turno-fim').value = t.fim ? t.fim.substring(0,5) : '';
+  document.getElementById('turno-cor').value = t.cor || '#3483FA';
+  document.getElementById('turno-escala').value = t.escala || '';
+  onEscalaChange();
+  document.getElementById('turno-form-label').textContent = 'Editar turno';
+  document.getElementById('btn-salvar-turno').textContent = 'Atualizar Turno';
+  document.getElementById('turno-nome').focus();
+  document.getElementById('page-turnos').scrollIntoView({ behavior:'smooth' });
+}
+
+function cancelarEdicaoTurno() {
+  editingTurnoId = null;
+  document.getElementById('turno-form-label').textContent = 'Cadastrar turno';
+  document.getElementById('btn-salvar-turno').textContent = 'Salvar Turno';
+  limparFormTurno();
 }
 
 function confirmarExcluirTurno(id) {
   const t = turnos.find(t => t.id === id);
+  if (!t) return;
   const uso = heads.filter(h => h.turnoId === id).length;
   if (uso > 0) { toast(`Não é possível excluir: ${uso} colaborador(es) associado(s) a este turno.`, 'error'); return; }
   pendingDelete = { type:'turno', id };
@@ -722,7 +850,7 @@ function folgaResumoTurno(escala) {
     '6x1_dom': 'Domingo fixo',
     '5x2_fds': 'Sáb + Dom fixo',
     '5x2_qqi': 'Qua + Qui + 4º Dom',
-    'consolidacao': 'Mista 6x1 e 5x2 (Grupos A/B)',
+    consolidacao: 'Mista 6x1 e 5x2 (grupos A/B)',
   };
   return map[escala] || '—';
 }
@@ -731,13 +859,13 @@ function escalaBadge(escala) {
   if (!escala) return '<span class="badge badge-gray">—</span>';
   const e = ESCALAS[escala];
   const label = e ? e.label : escala;
-  const cores = { espanhola:'badge-purple', '0430':'badge-orange', '6x1_dom':'badge-blue', '5x2_fds':'badge-green', '5x2_qqi':'badge-blue', 'consolidacao':'badge-purple' };
-  return `<span class="badge ${cores[escala]||'badge-gray'}">${label}</span>`;
+  const cores = { espanhola:'badge-purple', '0430':'badge-orange', '6x1_dom':'badge-blue', '5x2_fds':'badge-green', '5x2_qqi':'badge-blue', consolidacao:'badge-purple' };
+  return `<span class="badge ${cores[escala] || 'badge-gray'}">${escapeHtml(label)}</span>`;
 }
 
 function renderTurnos() {
-  const busca = document.getElementById('busca-turno').value.toLowerCase();
-  const lista = turnos.filter(t => t.nome.toLowerCase().includes(busca));
+  const busca = lower(document.getElementById('busca-turno').value);
+  const lista = turnos.filter(t => lower(t.nome).includes(busca));
   document.getElementById('turno-count').textContent = `${lista.length} turno${lista.length!==1?'s':''}`;
 
   const tbody = document.getElementById('tbody-turnos');
@@ -747,14 +875,18 @@ function renderTurnos() {
   }
   tbody.innerHTML = lista.map(t => {
     const ativ = heads.filter(h => h.turnoId === t.id && h.status === 'ativo').length;
-    const hor  = (t.inicio && t.fim) ? `${t.inicio.substring(0,5)} – ${t.fim.substring(0,5)}` : '<span style="color:var(--text-hint)">—</span>';
+    const hor  = (t.inicio && t.fim) ? `${escapeHtml(t.inicio.substring(0,5))} – ${escapeHtml(t.fim.substring(0,5))}` : '<span style="color:var(--text-hint)">—</span>';
+    const id = safeId(t.id);
     return `<tr>
-      <td><span class="turno-dot" style="background:${t.cor}"></span><strong>${t.nome}</strong></td>
+      <td><span class="turno-dot" style="background:${escapeHtml(t.cor)}"></span><strong>${escapeHtml(t.nome)}</strong></td>
       <td style="font-variant-numeric:tabular-nums">${hor}</td>
       <td>${escalaBadge(t.escala)}</td>
-      <td style="font-size:12px;color:var(--text-muted)">${folgaResumoTurno(t.escala)}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${escapeHtml(folgaResumoTurno(t.escala))}</td>
       <td>${ativ>0?`<span class="badge badge-green">${ativ} ativos</span>`:'<span style="color:var(--text-hint);font-size:12px">—</span>'}</td>
-      <td style="text-align:right"><button class="btn btn-danger btn-sm" onclick="confirmarExcluirTurno('${t.id}')">Excluir</button></td>
+      <td style="text-align:right;white-space:nowrap">
+        <button class="btn btn-secondary btn-sm" onclick="editarTurno('${id}')" style="margin-right:6px">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmarExcluirTurno('${id}')">Excluir</button>
+      </td>
     </tr>`;
   }).join('');
 }
@@ -763,36 +895,26 @@ function renderTurnos() {
 //  LÓGICA DE ANOMALIAS (CIA / COA)
 // ════════════════════════════════════════
 function renderAnomalias() {
-  const filtDataInput = document.getElementById('filtro-data-anomalia').value; // Formato YYYY-MM-DD
+  const filtDataInput = document.getElementById('filtro-data-anomalia').value;
   const filtTipo = document.getElementById('filtro-tipo-anomalia').value;
-  const buscaText = document.getElementById('busca-anomalia').value.toLowerCase();
+  const buscaText = lower(document.getElementById('busca-anomalia').value);
 
-  let lista = anomalias;
+  let listaBase = anomalias.filter(a => dataMarcacaoMatchesFiltro(a.data_marcacao, filtDataInput));
 
-  // Converter data YYYY-MM-DD do input para DD/MM/YYYY que vem do Apps Script
-  if (filtDataInput) {
-    const [ano, mes, dia] = filtDataInput.split('-');
-    const dataBr = `${dia}/${mes}/${ano}`;
-    lista = lista.filter(a => a.data_marcacao === dataBr);
-  }
-
-  // Filtrar Tipo
   if (filtTipo !== 'AMBOS') {
-    lista = lista.filter(a => a.tipo === filtTipo);
+    listaBase = listaBase.filter(a => asText(a.tipo).toUpperCase() === filtTipo);
   }
 
-  // Estatísticas no Topo
-  document.getElementById('stat-anom-total').textContent = lista.length;
-  document.getElementById('stat-cia').textContent = lista.filter(a => a.tipo === 'CIA').length;
-  document.getElementById('stat-coa').textContent = lista.filter(a => a.tipo === 'COA').length;
+  document.getElementById('stat-anom-total').textContent = listaBase.length;
+  document.getElementById('stat-cia').textContent = listaBase.filter(a => asText(a.tipo).toUpperCase() === 'CIA').length;
+  document.getElementById('stat-coa').textContent = listaBase.filter(a => asText(a.tipo).toUpperCase() === 'COA').length;
 
-  // Filtrar pela Busca de Texto
+  let lista = listaBase;
   if (buscaText) {
     lista = lista.filter(a => {
-      // Procura o operador correspondente para permitir buscar pelo nome completo
-      const head = heads.find(h => h.ext && h.ext.toLowerCase() === a.ext.toLowerCase()) || {};
-      const nomeOp = (head.nome || '').toLowerCase();
-      return a.ext.toLowerCase().includes(buscaText) || nomeOp.includes(buscaText);
+      const extAnomalia = normalizeExt(a.ext);
+      const head = heads.find(h => normalizeExt(h.ext) === extAnomalia) || {};
+      return extAnomalia.includes(buscaText) || lower(head.nome).includes(buscaText) || lower(head.gestor).includes(buscaText);
     });
   }
 
@@ -800,34 +922,33 @@ function renderAnomalias() {
 
   const tbody = document.getElementById('tbody-anomalias');
   if (!lista.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">✅</div><p>Nenhuma ofensa de ponto encontrada</p><span>Nenhum registo para os filtros atuais</span></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">✅</div><p>Nenhuma ofensa de ponto encontrada</p><span>Nenhum registro para os filtros atuais</span></div></td></tr>`;
     return;
   }
 
-  // Pinta as linhas cruzando dados da Ofensa (Supabase) com Dados do Colaborador (Local)
   tbody.innerHTML = lista.map(a => {
-    const head = heads.find(h => h.ext && h.ext.toLowerCase() === a.ext.toLowerCase()) || {};
-    
-    // Tratamento visual para o caso de a marcação ser de alguém que não está cadastrado no Headcount
-    const nomeVisual = head.nome ? `<strong>${head.nome}</strong>` : `<span style="color:var(--danger-text)">Colaborador não cadastrado</span>`;
+    const extAnomalia = normalizeExt(a.ext);
+    const head = heads.find(h => normalizeExt(h.ext) === extAnomalia) || {};
+    const nomeVisual = head.nome ? `<strong>${escapeHtml(head.nome)}</strong>` : `<span style="color:var(--danger-text)">Colaborador não cadastrado</span>`;
     const turnoVisual = turnoBadge(head.turnoId);
-    const gestorVisual = head.gestor || '—';
-    const tipoBadge = a.tipo === 'CIA' 
-        ? `<span class="badge badge-orange">CIA</span>` 
-        : `<span class="badge badge-purple">COA</span>`;
+    const gestorVisual = escapeHtml(head.gestor || '—');
+    const tipo = asText(a.tipo).toUpperCase();
+    const tipoBadge = tipo === 'CIA'
+      ? `<span class="badge badge-orange">CIA</span>`
+      : `<span class="badge badge-purple">COA</span>`;
 
     return `<tr>
-      <td style="color:var(--text-muted);font-size:13px">${a.data_marcacao}</td>
+      <td style="color:var(--text-muted);font-size:13px">${escapeHtml(formatarDataMarcacao(a.data_marcacao))}</td>
       <td>
         ${nomeVisual}<br>
-        <span style="font-family:monospace;font-size:11px;color:var(--text-hint)">ext_${a.ext}</span>
+        <span style="font-family:monospace;font-size:11px;color:var(--text-hint)">ext_${escapeHtml(extAnomalia || '—')}</span>
       </td>
       <td>${turnoVisual}</td>
       <td style="color:var(--text-muted);font-size:12px">${gestorVisual}</td>
       <td>${tipoBadge}</td>
-      <td style="font-weight:700">${a.hora}</td>
+      <td style="font-weight:700">${escapeHtml(a.hora || '—')}</td>
       <td>
-        <select style="padding:4px 8px; border:1px solid var(--border); border-radius:4px; font-size:12px; color:var(--text-hint); background:transparent;">
+        <select style="padding:4px 8px; border:1px solid var(--border); border-radius:4px; font-size:12px; color:var(--text-muted); background:transparent;">
           <option value="">Aguardando tratativa...</option>
           <option value="esquecimento">Esquecimento Operacional</option>
           <option value="sistema">Falha no Relógio/Sistema</option>
@@ -842,7 +963,7 @@ function renderAnomalias() {
 //  LÓGICA DE COLABORADORES / HEADCOUNT
 // ════════════════════════════════════════
 function atualizarSelectTurnos() {
-  const opts = turnos.map(t => `<option value="${t.id}">${t.nome}</option>`).join('');
+  const opts = turnos.map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.nome)}</option>`).join('');
   document.getElementById('hc-turno').innerHTML = '<option value="">— Selecionar —</option>' + opts;
   document.getElementById('filtro-turno-hc').innerHTML = '<option value="">Todos os turnos</option>' + opts;
 }
@@ -855,15 +976,19 @@ function onHcTurnoChange() {
   const hint    = document.getElementById('hc-grupo-hint');
 
   if (!turno || !ESCALAS[turno.escala] || !ESCALAS[turno.escala].grupos.length) {
-    wrap.style.display = 'none'; sel.value = ''; return;
+    wrap.style.display = 'none';
+    sel.innerHTML = '<option value="">— Selecionar —</option>';
+    sel.value = '';
+    hint.textContent = '';
+    return;
   }
 
   const grupos = ESCALAS[turno.escala].grupos;
-  sel.innerHTML = '<option value="">— Selecionar —</option>' + grupos.map(g => `<option value="${g}">Grupo ${g}</option>`).join('');
+  sel.innerHTML = '<option value="">— Selecionar —</option>' + grupos.map(g => `<option value="${escapeHtml(g)}">Grupo ${escapeHtml(g)}</option>`).join('');
 
   const hints = {
     espanhola: 'A e B se complementam no ciclo de 4 semanas.',
-    '0430':    'A/B: folga Sáb · C/D: folga Seg · E: folga Dom (sem rodízio)',
+    '0430':    'A/B: folga Sáb · C/D: folga Seg · E: folga Dom sem rodízio',
     consolidacao: 'A e B revezam entre 6x1 e 5x2 a cada semana.'
   };
   hint.textContent = hints[turno.escala] || '';
@@ -873,7 +998,7 @@ function onHcTurnoChange() {
 async function salvarHead() {
   const nome    = document.getElementById('hc-nome').value.trim();
   const groot   = document.getElementById('hc-groot').value.trim();
-  const ext     = document.getElementById('hc-ext').value.trim();
+  const ext     = normalizeExt(document.getElementById('hc-ext').value);
   const tpl     = document.getElementById('hc-3pl').value;
   const gestor  = document.getElementById('hc-gestor').value.trim();
   const turnoId = document.getElementById('hc-turno').value;
@@ -888,11 +1013,18 @@ async function salvarHead() {
     toast('Selecione o grupo para esta escala.', 'error'); return;
   }
 
+  const duplicadoGroot = heads.find(h => asText(h.groot) === groot && h.id !== editingHcId);
+  if (duplicadoGroot) { toast('Já existe colaborador com este Groot ID.', 'error'); return; }
+
+  if (ext) {
+    const duplicadoExt = heads.find(h => normalizeExt(h.ext) === ext && h.id !== editingHcId);
+    if (duplicadoExt) { toast('Já existe colaborador com este EXT.', 'error'); return; }
+  }
+
   const btn = document.getElementById('btn-salvar-hc');
-  btn.disabled = true;
+  setButtonLoading(btn, true, editingHcId ? 'Atualizando...' : 'Salvando...');
   setCarregando('form-grid-hc', true);
 
-  // Mapear dados para as colunas exatas da tabela do banco de dados (snake_case)
   const dbData = {
     nome,
     groot_id: groot,
@@ -906,13 +1038,11 @@ async function salvarHead() {
 
   try {
     if (editingHcId) {
-      // Atualização de registo existente
       const { error } = await db.from('colaboradores').update(dbData).eq('id', editingHcId);
       if (error) throw error;
       toast('Colaborador atualizado com sucesso!', 'success');
       cancelarEdicaoHC();
     } else {
-      // Criação de novo registo
       const { error } = await db.from('colaboradores').insert([dbData]);
       if (error) throw error;
       toast('Colaborador cadastrado com sucesso!', 'success');
@@ -920,9 +1050,9 @@ async function salvarHead() {
     }
     await carregarDadosDoBanco();
   } catch (error) {
-    toast('Erro ao salvar no Supabase: ' + error.message, 'error');
+    toast('Erro ao salvar no Supabase: ' + (error.message || error), 'error');
   } finally {
-    btn.disabled = false;
+    setButtonLoading(btn, false);
     setCarregando('form-grid-hc', false);
   }
 }
@@ -933,20 +1063,22 @@ function limparFormHC() {
   document.getElementById('hc-3pl').value    = 'DHL';
   document.getElementById('hc-status').value = 'ativo';
   document.getElementById('hc-grupo-wrap').style.display = 'none';
+  document.getElementById('hc-grupo').innerHTML = '<option value="">— Selecionar —</option>';
   document.getElementById('hc-grupo').value = '';
+  document.getElementById('hc-grupo-hint').textContent = '';
 }
 
 function editarHead(id) {
   const h = heads.find(h => h.id === id);
   if (!h) return;
   editingHcId = id;
-  document.getElementById('hc-nome').value   = h.nome;
-  document.getElementById('hc-groot').value  = h.groot;
-  document.getElementById('hc-ext').value    = h.ext || '';
+  document.getElementById('hc-nome').value   = h.nome || '';
+  document.getElementById('hc-groot').value  = h.groot || '';
+  document.getElementById('hc-ext').value    = normalizeExt(h.ext);
   document.getElementById('hc-3pl').value    = h.tpl || 'DHL';
   document.getElementById('hc-gestor').value = h.gestor || '';
   document.getElementById('hc-turno').value  = h.turnoId || '';
-  document.getElementById('hc-status').value = h.status;
+  document.getElementById('hc-status').value = h.status || 'ativo';
   onHcTurnoChange();
   document.getElementById('hc-grupo').value  = h.grupo || '';
   document.getElementById('hc-form-label').textContent = 'Editar colaborador';
@@ -964,6 +1096,7 @@ function cancelarEdicaoHC() {
 
 function confirmarExcluirHead(id) {
   const h = heads.find(h => h.id === id);
+  if (!h) return;
   pendingDelete = { type:'head', id };
   document.getElementById('modal-msg').textContent = `Excluir "${h.nome}" do headcount? Esta ação não pode ser desfeita.`;
   document.getElementById('btn-confirmar-excluir').onclick = executarExclusao;
@@ -972,21 +1105,24 @@ function confirmarExcluirHead(id) {
 
 async function executarExclusao() {
   if (!pendingDelete) return;
-  
+  const btn = document.getElementById('btn-confirmar-excluir');
+  setButtonLoading(btn, true, 'Excluindo...');
   try {
     if (pendingDelete.type === 'turno') {
       const { error } = await db.from('turnos').delete().eq('id', pendingDelete.id);
       if (error) throw error;
-      toast('Turno excluído com sucesso.');
+      toast('Turno excluído com sucesso.', 'success');
     } else {
       const { error } = await db.from('colaboradores').delete().eq('id', pendingDelete.id);
       if (error) throw error;
-      toast('Colaborador excluído com sucesso.');
+      toast('Colaborador excluído com sucesso.', 'success');
     }
     fecharModal();
     await carregarDadosDoBanco();
   } catch (error) {
-    toast('Erro ao excluir no Supabase: ' + error.message, 'error');
+    toast('Erro ao excluir no Supabase: ' + (error.message || error), 'error');
+  } finally {
+    setButtonLoading(btn, false);
   }
 }
 
@@ -997,36 +1133,38 @@ function fecharModal() {
 
 function tplBadge(tpl) {
   const map = { DHL:'badge-blue', Mendes:'badge-purple', TSI:'badge-orange', SRM:'badge-green' };
-  return `<span class="badge ${map[tpl]||'badge-gray'}">${tpl||'—'}</span>`;
+  const val = asText(tpl) || '—';
+  return `<span class="badge ${map[val] || 'badge-gray'}">${escapeHtml(val)}</span>`;
 }
 
 function statusBadge(s) {
   const map = { ativo:['badge-green','Ativo'], inativo:['badge-gray','Inativo'], ferias:['badge-blue','Férias'], afastado:['badge-red','Afastado'] };
-  const [cls, label] = map[s] || ['badge-gray', s];
-  return `<span class="badge ${cls}">${label}</span>`;
+  const [cls, label] = map[s] || ['badge-gray', asText(s) || '—'];
+  return `<span class="badge ${cls}">${escapeHtml(label)}</span>`;
 }
 
 function turnoBadge(id) {
   const t = turnos.find(t => t.id === id);
   if (!t) return '<span style="color:var(--text-hint);font-size:12px">—</span>';
-  return `<span class="badge" style="background:${t.cor}22;color:${t.cor};border:1px solid ${t.cor}44"><span class="turno-dot" style="background:${t.cor}"></span>${t.nome}</span>`;
+  const cor = escapeHtml(t.cor || '#3483FA');
+  return `<span class="badge" style="background:${cor}22;color:${cor};border:1px solid ${cor}44"><span class="turno-dot" style="background:${cor}"></span>${escapeHtml(t.nome)}</span>`;
 }
 
 function folgaBadge(head) {
   const turno = turnos.find(t => t.id === head.turnoId);
   const folga = calcFolgaSemana(head, turno);
   if (!folga) return '<span style="color:var(--text-hint);font-size:12px">—</span>';
-  return `<span class="folga-chip">📅 ${folga}</span>`;
+  return `<span class="folga-chip">📅 ${escapeHtml(folga)}</span>`;
 }
 
 function obterListaFiltradaHC() {
-  const busca      = document.getElementById('busca-hc').value.toLowerCase();
+  const busca      = lower(document.getElementById('busca-hc').value);
   const filtTurno  = document.getElementById('filtro-turno-hc').value;
   const filtTpl    = document.getElementById('filtro-3pl-hc').value;
   const filtStatus = document.getElementById('filtro-status-hc').value;
 
   return heads.filter(h => {
-    const mb = !busca  || h.nome.toLowerCase().includes(busca) || h.groot.toLowerCase().includes(busca) || (h.gestor||'').toLowerCase().includes(busca);
+    const mb = !busca || lower(h.nome).includes(busca) || lower(h.groot).includes(busca) || lower(h.gestor).includes(busca) || normalizeExt(h.ext).includes(busca);
     const mt = !filtTurno  || h.turnoId === filtTurno;
     const mp = !filtTpl    || h.tpl     === filtTpl;
     const ms = !filtStatus || h.status  === filtStatus;
@@ -1044,21 +1182,25 @@ function renderHeads() {
     return;
   }
 
-  tbody.innerHTML = lista.map(h => `<tr>
-    <td><strong>${h.nome}</strong></td>
-    <td style="font-family:monospace;font-size:12px">${h.groot}</td>
-    <td style="font-family:monospace;font-size:12px">${h.ext?`<span style="color:var(--text-hint)">ext_</span>${h.ext}`:'<span style="color:var(--text-hint)">—</span>'}</td>
-    <td>${tplBadge(h.tpl)}</td>
-    <td>${turnoBadge(h.turnoId)}</td>
-    <td style="font-size:12px;color:var(--text-muted)">${h.grupo?`Grupo ${h.grupo}`:'—'}</td>
-    <td>${folgaBadge(h)}</td>
-    <td style="color:var(--text-muted);font-size:12px">${h.gestor||'—'}</td>
-    <td>${statusBadge(h.status)}</td>
-    <td style="text-align:right;white-space:nowrap">
-      <button class="btn btn-secondary btn-sm" onclick="editarHead('${h.id}')" style="margin-right:6px">Editar</button>
-      <button class="btn btn-danger btn-sm" onclick="confirmarExcluirHead('${h.id}')">Excluir</button>
-    </td>
-  </tr>`).join('');
+  tbody.innerHTML = lista.map(h => {
+    const id = safeId(h.id);
+    const ext = normalizeExt(h.ext);
+    return `<tr>
+      <td><strong>${escapeHtml(h.nome)}</strong></td>
+      <td style="font-family:monospace;font-size:12px">${escapeHtml(h.groot)}</td>
+      <td style="font-family:monospace;font-size:12px">${ext?`<span style="color:var(--text-hint)">ext_</span>${escapeHtml(ext)}`:'<span style="color:var(--text-hint)">—</span>'}</td>
+      <td>${tplBadge(h.tpl)}</td>
+      <td>${turnoBadge(h.turnoId)}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${h.grupo?`Grupo ${escapeHtml(h.grupo)}`:'—'}</td>
+      <td>${folgaBadge(h)}</td>
+      <td style="color:var(--text-muted);font-size:12px">${escapeHtml(h.gestor || '—')}</td>
+      <td>${statusBadge(h.status)}</td>
+      <td style="text-align:right;white-space:nowrap">
+        <button class="btn btn-secondary btn-sm" onclick="editarHead('${id}')" style="margin-right:6px">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmarExcluirHead('${id}')">Excluir</button>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 function atualizarStats() {
@@ -1080,54 +1222,59 @@ function exportarCSV() {
     return;
   }
 
-  // Cabeçalho estruturado na MESMA linha usando \n para quebra
-  let csvContent = "Nome Completo;Groot ID;Usuário EXT;Parceiro 3PL;Turno Associado;Grupo de Escala;Previsão de Folga;Gestor Direto;Status Atual\n";
+  let csvContent = 'Nome Completo;Groot ID;Usuário EXT;Parceiro 3PL;Turno Associado;Grupo de Escala;Previsão de Folga;Gestor Direto;Status Atual\n';
 
   listaParaExportar.forEach(h => {
     const turno = turnos.find(t => t.id === h.turnoId);
     const nomeTurno = turno ? turno.nome : '—';
     const folga = calcFolgaSemana(h, turno) || '—';
-    
-    // Tratamento de aspas e campos nulos para evitar quebras estruturais no arquivo
+    const ext = normalizeExt(h.ext);
+
     const linha = [
       h.nome,
       h.groot,
-      h.ext ? `ext_${h.ext}` : '—',
+      ext ? `ext_${ext}` : '—',
       h.tpl || '—',
       nomeTurno,
       h.grupo ? `Grupo ${h.grupo}` : '—',
       folga,
       h.gestor || '—',
-      h.status
-    ].map(texto => `"${texto.replace(/"/g, '""')}"`).join(";");
+      h.status || '—'
+    ].map(toCsvCell).join(';');
 
-    // Adiciona a linha e a quebra de linha (\n) na mesma linha do código
-    csvContent += linha + "\n";
+    csvContent += linha + '\n';
   });
 
-  // Geração do arquivo com o Byte Order Mark (BOM) do UTF-8
   const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  
-  const dataFormatada = new Date().toISOString().slice(0, 10);
-  link.setAttribute("href", url);
-  link.setAttribute("download", `headcount_srj2_${dataFormatada}.csv`);
-  
+  const link = document.createElement('a');
+
+  const dataFormatada = hojeIsoLocal();
+  link.setAttribute('href', url);
+  link.setAttribute('download', `headcount_srj2_${dataFormatada}.csv`);
+
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  
+  URL.revokeObjectURL(url);
+
   toast('Base de dados exportada com sucesso!', 'success');
 }
 
-// Event listener para fechar modal clicando fora dele
-document.getElementById('modal-excluir').addEventListener('click', function(e) {
-  if (e.target === this) fecharModal();
+// Event listeners gerais
+const modalExcluir = document.getElementById('modal-excluir');
+if (modalExcluir) {
+  modalExcluir.addEventListener('click', function(e) {
+    if (e.target === this) fecharModal();
+  });
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') fecharModal();
 });
 
-// EVENTO DE INICIALIZAÇÃO DA PÁGINA
 window.addEventListener('DOMContentLoaded', carregarDadosDoBanco);
 </script>
+
 </body>
 </html>
