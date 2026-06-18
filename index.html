@@ -134,6 +134,24 @@
   .field-hint { font-size: 11px; color: var(--text-hint); margin-top: 3px; }
 
 
+  /* Autenticação / login */
+  .auth-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: linear-gradient(135deg, var(--meli-yellow) 0%, #fff5a8 42%, var(--meli-bg) 42%); }
+  .auth-card { width: 100%; max-width: 420px; background: var(--surface); border-radius: 12px; box-shadow: 0 12px 36px rgba(0,0,0,.16); padding: 28px; }
+  .auth-brand { display:flex; align-items:center; gap:10px; margin-bottom: 18px; }
+  .auth-brand .logo-box { display:inline-flex; align-items:center; min-height:26px; }
+  .auth-title { font-size: 20px; font-weight: 700; color: var(--meli-blue); margin-bottom: 4px; }
+  .auth-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; }
+  .auth-actions { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top: 18px; }
+  .auth-error { min-height: 18px; margin-top: 12px; font-size: 12px; color: var(--danger-text); }
+  .auth-hint { margin-top: 16px; padding: 10px 12px; background: #f7f7f7; border-radius: var(--radius); font-size: 11px; color: var(--text-muted); line-height: 1.45; }
+  .app-shell.auth-hidden, .auth-screen.auth-hidden { display: none !important; }
+  .header-user { margin-left: auto; display:flex; align-items:center; gap:8px; color: var(--meli-blue); }
+  .user-pill { display:inline-flex; align-items:center; gap:7px; padding: 4px 9px; border-radius: 999px; background: rgba(45,50,119,.10); color: var(--meli-blue); font-size: 12px; font-weight: 600; max-width: 260px; }
+  .user-pill small { font-weight: 500; opacity: .72; }
+  .btn-logout { padding: 5px 10px; border: 1px solid rgba(45,50,119,.30); background: transparent; color: var(--meli-blue); border-radius: var(--radius); font-size: 12px; font-weight: 700; cursor:pointer; }
+  .btn-logout:hover { background: rgba(45,50,119,.08); }
+  .access-note { margin-bottom: 16px; padding: 10px 12px; background: #f0f5ff; border: 1px solid #c8d9fb; border-radius: var(--radius); font-size: 12px; color: var(--meli-blue); line-height:1.5; }
+
   .btn:disabled { opacity: .55; cursor: not-allowed; }
   .table-wrap td, .table-wrap th { max-width: 260px; }
   .text-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -152,22 +170,60 @@
 </head>
 <body>
 
+<div id="auth-screen" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="logo-box">SVC</div>
+      <div>
+        <div class="auth-title">Acesso Operacional</div>
+        <div style="font-size:12px;color:var(--text-muted);font-weight:600">CD SRJ2 — DHL / Meli</div>
+      </div>
+    </div>
+    <p class="auth-subtitle">Entre com seu usuário e senha para acessar as áreas liberadas para o seu perfil.</p>
+
+    <form onsubmit="entrarSistema(event)">
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Usuário</label>
+        <input type="text" id="auth-usuario" placeholder="Ex: Admin.srj2" autocomplete="username" required>
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="auth-senha" placeholder="Digite sua senha" autocomplete="current-password" required>
+      </div>
+      <div class="auth-actions">
+        <button class="btn btn-primary" id="btn-login" type="submit">Entrar</button>
+      </div>
+      <div class="auth-error" id="auth-msg"></div>
+    </form>
+
+    <div class="auth-hint">
+      Perfil inicial: <strong>Admin.srj2</strong>. No Supabase Auth, cadastre este usuário como <strong>admin.srj2@svc.local</strong> e vincule o perfil <strong>admin</strong>.
+    </div>
+  </div>
+</div>
+
+<div id="app-shell" class="app-shell auth-hidden">
+
 <header class="header">
   <div class="logo-box">SVC</div>
   <h1>Gestão Operacional</h1>
   <div class="header-divider"></div>
   <span class="header-sub">CD SRJ2 — DHL / Meli</span>
+  <div class="header-user">
+    <span class="user-pill" title="Usuário logado"><span id="user-display">—</span> <small id="user-profile">—</small></span>
+    <button class="btn-logout" onclick="sairSistema()">Sair</button>
+  </div>
 </header>
 
 <nav class="nav-tabs">
-  <button class="tab-btn active" onclick="switchTab('turnos',this)">Turnos</button>
-  <button class="tab-btn" onclick="switchTab('headcount',this)">Headcount</button>
-  <button class="tab-btn" onclick="switchTab('anomalias',this)">Anomalias (CIA/COA)</button>
+  <button class="tab-btn active" id="tab-turnos" data-tab="turnos" onclick="switchTab('turnos',this)">Turnos</button>
+  <button class="tab-btn" id="tab-headcount" data-tab="headcount" onclick="switchTab('headcount',this)">Headcount</button>
+  <button class="tab-btn" id="tab-anomalias" data-tab="anomalias" onclick="switchTab('anomalias',this)">Anomalias (CIA/COA)</button>
 </nav>
 
 <div id="page-turnos" class="page active">
 
-  <div class="form-card card" style="margin-bottom:24px">
+  <div class="form-card card" id="card-form-turnos" style="margin-bottom:24px">
     <p class="section-label" id="turno-form-label">Cadastrar turno</p>
     <div class="form-grid" id="form-grid-turnos">
 
@@ -236,6 +292,8 @@
 
 <div id="page-headcount" class="page">
 
+  <div class="access-note" id="hc-readonly-note" style="display:none">Seu perfil permite consultar o headcount, mas não cadastrar, editar ou excluir colaboradores.</div>
+
   <div class="stats-row">
     <div class="stat-card"><div class="stat-label">Total Ativo</div><div class="stat-value" id="stat-total">0</div><div class="stat-sub">colaboradores</div></div>
     <div class="stat-card"><div class="stat-label">Turnos</div><div class="stat-value" id="stat-turnos">0</div><div class="stat-sub">configurados</div></div>
@@ -243,7 +301,7 @@
     <div class="stat-card"><div class="stat-label">3PL Parceiros</div><div class="stat-value" id="stat-3pl">0</div><div class="stat-sub">Mendes / TSI / SRM</div></div>
   </div>
 
-  <div class="form-card card" style="margin-bottom:24px">
+  <div class="form-card card" id="card-form-hc" style="margin-bottom:24px">
     <p class="section-label" id="hc-form-label">Cadastrar colaborador</p>
     <div class="form-grid" id="form-grid-hc">
 
@@ -340,7 +398,7 @@
         <option value="afastado">Afastado</option>
       </select>
       
-      <button class="btn btn-secondary btn-sm" onclick="exportarCSV()" style="height:34px; display:inline-flex; align-items:center; gap:6px;">
+      <button class="btn btn-secondary btn-sm" id="btn-exportar-hc" onclick="exportarCSV()" style="height:34px; display:inline-flex; align-items:center; gap:6px;">
         <span>📥 Exportar CSV</span>
       </button>
 
@@ -437,6 +495,8 @@
   </div>
 </div>
 
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -448,7 +508,13 @@ const { createClient } = supabase;
 // Observação: a chave anon pode ficar no front-end somente se o Supabase estiver com RLS/policies configuradas.
 const supabaseUrl = 'https://xzdpdmvjpokseaiwcnxu.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh6ZHBkbXZqcG9rc2VhaXdjbnh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNzM5NTAsImV4cCI6MjA5Njg0OTk1MH0.3lXv4HLEEtkRNB6z8hWtXkzC-aZqKZIT3uWgiOd4N_w';
-const db = createClient(supabaseUrl, supabaseKey);
+const db = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  }
+});
 
 // Opcional: cole aqui a URL do Web App do Google Apps Script, caso a aba Anomalias deva ler direto do Sheets.
 // Se ficar vazio, o sistema usa a tabela Supabase `marcacoes_auto`, que pode ser abastecida pelo Apps Script.
@@ -546,6 +612,243 @@ function setButtonLoading(btn, loading, textoLoading = 'Salvando...') {
   } else {
     btn.textContent = btn.dataset.originalText || btn.textContent;
     btn.disabled = false;
+  }
+}
+
+
+// ════════════════════════════════════════
+//  AUTENTICAÇÃO E CONTROLE DE ACESSO
+// ════════════════════════════════════════
+const AUTH_EMAIL_DOMAIN = 'svc.local';
+const EXIGIR_CADASTRO_PERFIL = false; // Troque para true quando a tabela svc_usuarios estiver configurada.
+
+const PERFIS_ACESSO = {
+  admin: {
+    label: 'Administrador',
+    tabs: ['turnos', 'headcount', 'anomalias'],
+    criar_turnos: true, editar_turnos: true, excluir_turnos: true,
+    criar_hc: true, editar_hc: true, excluir_hc: true, exportar_hc: true,
+    ver_anomalias: true, atualizar_anomalias: true, tratar_anomalias: true
+  },
+  supervisor: {
+    label: 'Supervisor',
+    tabs: ['headcount', 'anomalias'],
+    criar_turnos: false, editar_turnos: false, excluir_turnos: false,
+    criar_hc: true, editar_hc: true, excluir_hc: false, exportar_hc: true,
+    ver_anomalias: true, atualizar_anomalias: true, tratar_anomalias: true
+  },
+  consulta: {
+    label: 'Consulta',
+    tabs: ['headcount', 'anomalias'],
+    criar_turnos: false, editar_turnos: false, excluir_turnos: false,
+    criar_hc: false, editar_hc: false, excluir_hc: false, exportar_hc: false,
+    ver_anomalias: true, atualizar_anomalias: true, tratar_anomalias: false
+  }
+};
+
+let usuarioAtual = null;
+let appInicializado = false;
+
+function normalizarUsuarioLogin(usuario) {
+  return asText(usuario)
+    .trim()
+    .replace(/\s+/g, '')
+    .toLowerCase();
+}
+
+function usuarioParaEmailAuth(usuario) {
+  const limpo = normalizarUsuarioLogin(usuario);
+  if (!limpo) return '';
+  if (limpo.includes('@')) return limpo;
+  return `${limpo}@${AUTH_EMAIL_DOMAIN}`;
+}
+
+function obterPerfilAtual() {
+  const perfil = usuarioAtual?.perfil || 'consulta';
+  return PERFIS_ACESSO[perfil] || PERFIS_ACESSO.consulta;
+}
+
+function pode(permissao) {
+  return !!obterPerfilAtual()[permissao];
+}
+
+function podeAcessarTab(tab) {
+  return obterPerfilAtual().tabs.includes(tab);
+}
+
+function primeiraAbaPermitida() {
+  return obterPerfilAtual().tabs[0] || 'anomalias';
+}
+
+function setVisibleById(id, visivel, display = '') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = visivel ? display : 'none';
+}
+
+function atualizarIdentidadeHeader() {
+  const display = document.getElementById('user-display');
+  const profile = document.getElementById('user-profile');
+  if (display) display.textContent = usuarioAtual?.nome || usuarioAtual?.usuario || 'Usuário';
+  if (profile) profile.textContent = obterPerfilAtual().label || usuarioAtual?.perfil || 'Perfil';
+}
+
+function mostrarLogin(mensagem = '') {
+  document.getElementById('auth-screen')?.classList.remove('auth-hidden');
+  document.getElementById('app-shell')?.classList.add('auth-hidden');
+  const msg = document.getElementById('auth-msg');
+  if (msg) msg.textContent = mensagem;
+}
+
+function mostrarApp() {
+  document.getElementById('auth-screen')?.classList.add('auth-hidden');
+  document.getElementById('app-shell')?.classList.remove('auth-hidden');
+}
+
+async function entrarSistema(event) {
+  if (event) event.preventDefault();
+
+  const usuario = document.getElementById('auth-usuario').value;
+  const senha = document.getElementById('auth-senha').value;
+  const email = usuarioParaEmailAuth(usuario);
+  const btn = document.getElementById('btn-login');
+  const msg = document.getElementById('auth-msg');
+
+  if (msg) msg.textContent = '';
+  if (!email || !senha) {
+    if (msg) msg.textContent = 'Informe usuário e senha.';
+    return;
+  }
+
+  setButtonLoading(btn, true, 'Entrando...');
+
+  try {
+    const { data, error } = await db.auth.signInWithPassword({ email, password: senha });
+    if (error) throw error;
+    await aplicarSessao(data.session);
+  } catch (error) {
+    console.error(error);
+    if (msg) msg.textContent = 'Usuário ou senha inválidos, ou usuário não cadastrado no Supabase Auth.';
+  } finally {
+    setButtonLoading(btn, false);
+  }
+}
+
+async function sairSistema() {
+  try {
+    await db.auth.signOut();
+  } finally {
+    limparSessaoLocal();
+    mostrarLogin();
+  }
+}
+
+function limparSessaoLocal() {
+  usuarioAtual = null;
+  appInicializado = false;
+  turnos = [];
+  heads = [];
+  anomalias = [];
+  if (anomaliasAutoRefreshTimer) clearInterval(anomaliasAutoRefreshTimer);
+  anomaliasAutoRefreshTimer = null;
+  if (anomaliasRealtimeChannel && db.removeChannel) db.removeChannel(anomaliasRealtimeChannel);
+  anomaliasRealtimeChannel = null;
+}
+
+async function carregarPerfilUsuario(session) {
+  const user = session?.user;
+  if (!user) throw new Error('Sessão inválida.');
+
+  const email = lower(user.email);
+  const usuarioBase = email.endsWith(`@${AUTH_EMAIL_DOMAIN}`) ? email.split('@')[0] : email;
+  const fallbackAdmin = usuarioBase === 'admin.srj2';
+  let perfil = fallbackAdmin ? 'admin' : 'consulta';
+  let usuario = fallbackAdmin ? 'Admin.srj2' : usuarioBase;
+  let nome = fallbackAdmin ? 'Admin SRJ2' : usuarioBase;
+
+  try {
+    const filtro = `auth_uid.eq.${user.id},email.eq.${email},usuario.eq.${usuarioBase}`;
+    const { data, error } = await db
+      .from('svc_usuarios')
+      .select('auth_uid,email,usuario,nome,perfil,ativo')
+      .or(filtro)
+      .limit(1)
+      .maybeSingle();
+
+    if (error && error.code !== 'PGRST116') throw error;
+
+    if (data) {
+      if (data.ativo === false) throw new Error('Usuário inativo.');
+      perfil = data.perfil || perfil;
+      usuario = data.usuario || usuario;
+      nome = data.nome || usuario;
+    } else if (EXIGIR_CADASTRO_PERFIL) {
+      throw new Error('Usuário sem perfil cadastrado em svc_usuarios.');
+    }
+  } catch (error) {
+    if (EXIGIR_CADASTRO_PERFIL) throw error;
+    console.warn('Perfil não encontrado em svc_usuarios; usando perfil padrão/fallback:', error);
+  }
+
+  if (!PERFIS_ACESSO[perfil]) perfil = 'consulta';
+  return { id: user.id, email, usuario, nome, perfil };
+}
+
+async function aplicarSessao(session) {
+  try {
+    usuarioAtual = await carregarPerfilUsuario(session);
+    mostrarApp();
+    atualizarIdentidadeHeader();
+    aplicarControleAcesso();
+
+    if (!appInicializado) {
+      await carregarDadosDoBanco();
+      iniciarAutoRefreshAnomalias();
+      assinarRealtimeAnomalias();
+      appInicializado = true;
+    } else {
+      await carregarDadosDoBanco();
+    }
+
+    const aba = primeiraAbaPermitida();
+    const btn = document.querySelector(`.tab-btn[data-tab="${aba}"]`);
+    switchTab(aba, btn);
+  } catch (error) {
+    console.error(error);
+    await db.auth.signOut();
+    limparSessaoLocal();
+    mostrarLogin(error.message || 'Não foi possível validar seu perfil de acesso.');
+  }
+}
+
+function aplicarControleAcesso() {
+  if (!usuarioAtual) return;
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    const tab = btn.dataset.tab;
+    btn.style.display = podeAcessarTab(tab) ? '' : 'none';
+  });
+
+  setVisibleById('card-form-turnos', pode('criar_turnos') || pode('editar_turnos'));
+  setVisibleById('card-form-hc', pode('criar_hc') || pode('editar_hc'));
+  setVisibleById('hc-readonly-note', podeAcessarTab('headcount') && !pode('criar_hc') && !pode('editar_hc'), 'block');
+  setVisibleById('btn-exportar-hc', pode('exportar_hc'), 'inline-flex');
+  setVisibleById('btn-atualizar-anomalias', pode('atualizar_anomalias'), 'inline-flex');
+
+  if (!podeAcessarTab('turnos')) cancelarEdicaoTurno();
+  if (!pode('editar_hc') && !pode('criar_hc')) cancelarEdicaoHC();
+
+  renderTurnos();
+  renderHeads();
+  renderAnomalias();
+}
+
+async function inicializarAuth() {
+  const { data } = await db.auth.getSession();
+  if (data?.session) {
+    await aplicarSessao(data.session);
+  } else {
+    mostrarLogin();
   }
 }
 
@@ -762,6 +1065,7 @@ async function carregarDadosDoBanco() {
     renderHeads();
     atualizarStats();
     await carregarAnomalias({ silencioso: true, renderizar: true });
+    aplicarControleAcesso();
   } catch (error) {
     console.error(error);
     toast('Erro ao buscar informações do Supabase: ' + (error.message || error), 'error');
@@ -772,6 +1076,12 @@ async function carregarDadosDoBanco() {
 //  NAVEGAÇÃO / ABAS
 // ════════════════════════════════════════
 function switchTab(tab, btn) {
+  if (usuarioAtual && !podeAcessarTab(tab)) {
+    toast('Seu perfil não tem acesso a esta aba.', 'error');
+    tab = primeiraAbaPermitida();
+    btn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
+  }
+
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   if (btn) btn.classList.add('active');
@@ -809,6 +1119,7 @@ function onEscalaChange() {
 }
 
 async function salvarTurno() {
+  if (!pode('criar_turnos') && !pode('editar_turnos')) { toast('Seu perfil não permite salvar turnos.', 'error'); return; }
   const nome   = document.getElementById('turno-nome').value.trim();
   const inicio = document.getElementById('turno-inicio').value;
   const fim    = document.getElementById('turno-fim').value;
@@ -854,6 +1165,7 @@ function limparFormTurno() {
 }
 
 function editarTurno(id) {
+  if (!pode('editar_turnos')) { toast('Seu perfil não permite editar turnos.', 'error'); return; }
   const t = turnos.find(t => t.id === id);
   if (!t) return;
   editingTurnoId = id;
@@ -877,6 +1189,7 @@ function cancelarEdicaoTurno() {
 }
 
 function confirmarExcluirTurno(id) {
+  if (!pode('excluir_turnos')) { toast('Seu perfil não permite excluir turnos.', 'error'); return; }
   const t = turnos.find(t => t.id === id);
   if (!t) return;
   const uso = heads.filter(h => h.turnoId === id).length;
@@ -928,8 +1241,9 @@ function renderTurnos() {
       <td style="font-size:12px;color:var(--text-muted)">${escapeHtml(folgaResumoTurno(t.escala))}</td>
       <td>${ativ>0?`<span class="badge badge-green">${ativ} ativos</span>`:'<span style="color:var(--text-hint);font-size:12px">—</span>'}</td>
       <td style="text-align:right;white-space:nowrap">
-        <button class="btn btn-secondary btn-sm" onclick="editarTurno('${id}')" style="margin-right:6px">Editar</button>
-        <button class="btn btn-danger btn-sm" onclick="confirmarExcluirTurno('${id}')">Excluir</button>
+        ${pode('editar_turnos') ? `<button class="btn btn-secondary btn-sm" onclick="editarTurno('${id}')" style="margin-right:6px">Editar</button>` : ''}
+        ${pode('excluir_turnos') ? `<button class="btn btn-danger btn-sm" onclick="confirmarExcluirTurno('${id}')">Excluir</button>` : ''}
+        ${(!pode('editar_turnos') && !pode('excluir_turnos')) ? '<span style="color:var(--text-hint);font-size:12px">—</span>' : ''}
       </td>
     </tr>`;
   }).join('');
@@ -1201,12 +1515,13 @@ function renderAnomalias() {
       <td>${tipoBadge}</td>
       <td style="font-weight:700">${escapeHtml(a.hora || '—')}</td>
       <td>
+        ${pode('tratar_anomalias') ? `
         <select style="padding:4px 8px; border:1px solid var(--border); border-radius:4px; font-size:12px; color:var(--text-muted); background:transparent;">
           <option value="">Aguardando tratativa...</option>
           <option value="esquecimento">Esquecimento Operacional</option>
           <option value="sistema">Falha no Relógio/Sistema</option>
           <option value="dispensa">Dispensa Antecipada</option>
-        </select>
+        </select>` : '<span style="color:var(--text-hint);font-size:12px">Somente leitura</span>'}
       </td>
     </tr>`;
   }).join('');
@@ -1249,6 +1564,7 @@ function onHcTurnoChange() {
 }
 
 async function salvarHead() {
+  if (!pode('criar_hc') && !pode('editar_hc')) { toast('Seu perfil não permite salvar colaboradores.', 'error'); return; }
   const nome    = document.getElementById('hc-nome').value.trim();
   const groot   = document.getElementById('hc-groot').value.trim();
   const ext     = normalizeExt(document.getElementById('hc-ext').value);
@@ -1322,6 +1638,7 @@ function limparFormHC() {
 }
 
 function editarHead(id) {
+  if (!pode('editar_hc')) { toast('Seu perfil não permite editar colaboradores.', 'error'); return; }
   const h = heads.find(h => h.id === id);
   if (!h) return;
   editingHcId = id;
@@ -1348,6 +1665,7 @@ function cancelarEdicaoHC() {
 }
 
 function confirmarExcluirHead(id) {
+  if (!pode('excluir_hc')) { toast('Seu perfil não permite excluir colaboradores.', 'error'); return; }
   const h = heads.find(h => h.id === id);
   if (!h) return;
   pendingDelete = { type:'head', id };
@@ -1358,6 +1676,8 @@ function confirmarExcluirHead(id) {
 
 async function executarExclusao() {
   if (!pendingDelete) return;
+  if (pendingDelete.type === 'turno' && !pode('excluir_turnos')) { toast('Seu perfil não permite excluir turnos.', 'error'); fecharModal(); return; }
+  if (pendingDelete.type === 'head' && !pode('excluir_hc')) { toast('Seu perfil não permite excluir colaboradores.', 'error'); fecharModal(); return; }
   const btn = document.getElementById('btn-confirmar-excluir');
   setButtonLoading(btn, true, 'Excluindo...');
   try {
@@ -1449,8 +1769,9 @@ function renderHeads() {
       <td style="color:var(--text-muted);font-size:12px">${escapeHtml(h.gestor || '—')}</td>
       <td>${statusBadge(h.status)}</td>
       <td style="text-align:right;white-space:nowrap">
-        <button class="btn btn-secondary btn-sm" onclick="editarHead('${id}')" style="margin-right:6px">Editar</button>
-        <button class="btn btn-danger btn-sm" onclick="confirmarExcluirHead('${id}')">Excluir</button>
+        ${pode('editar_hc') ? `<button class="btn btn-secondary btn-sm" onclick="editarHead('${id}')" style="margin-right:6px">Editar</button>` : ''}
+        ${pode('excluir_hc') ? `<button class="btn btn-danger btn-sm" onclick="confirmarExcluirHead('${id}')">Excluir</button>` : ''}
+        ${(!pode('editar_hc') && !pode('excluir_hc')) ? '<span style="color:var(--text-hint);font-size:12px">—</span>' : ''}
       </td>
     </tr>`;
   }).join('');
@@ -1468,6 +1789,7 @@ function atualizarStats() {
 //  COMANDO: EXPORTAR PARA CSV
 // ════════════════════════════════════════
 function exportarCSV() {
+  if (!pode('exportar_hc')) { toast('Seu perfil não permite exportar CSV.', 'error'); return; }
   const listaParaExportar = obterListaFiltradaHC();
 
   if (!listaParaExportar.length) {
@@ -1527,9 +1849,7 @@ document.addEventListener('keydown', function(e) {
 });
 
 window.addEventListener('DOMContentLoaded', async function() {
-  await carregarDadosDoBanco();
-  iniciarAutoRefreshAnomalias();
-  assinarRealtimeAnomalias();
+  await inicializarAuth();
 });
 </script>
 
