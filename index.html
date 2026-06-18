@@ -74,6 +74,12 @@
   .sync-status.ok { color: var(--success-text); }
   .sync-status.error { color: var(--danger-text); }
   .quick-date-actions { display: inline-flex; gap: 6px; }
+  .sync-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; padding: 12px 20px; border-bottom: 1px solid var(--border); background: #fafafa; }
+  .sync-panel-item { border: 1px solid #eee; border-radius: var(--radius); background: var(--surface); padding: 9px 12px; min-height: 54px; }
+  .sync-panel-label { display: block; font-size: 10px; font-weight: 700; color: var(--text-hint); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
+  .sync-panel-value { display: block; font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.3; }
+  .sync-panel-value.ok { color: var(--success-text); }
+  .sync-panel-value.error { color: var(--danger-text); }
 
   .table-wrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; }
@@ -384,6 +390,28 @@
       </button>
       <span class="sync-status" id="anomalia-sync-status">Última atualização: —</span>
       <span class="count-badge" id="anomalia-count">0 registros</span>
+    </div>
+    <div class="sync-panel" id="anomalia-sync-panel">
+      <div class="sync-panel-item">
+        <span class="sync-panel-label">Última atualização</span>
+        <span class="sync-panel-value" id="anomalia-info-ultima">—</span>
+      </div>
+      <div class="sync-panel-item">
+        <span class="sync-panel-label">Fonte</span>
+        <span class="sync-panel-value" id="anomalia-info-fonte">—</span>
+      </div>
+      <div class="sync-panel-item">
+        <span class="sync-panel-label">Registros carregados</span>
+        <span class="sync-panel-value" id="anomalia-info-total">0</span>
+      </div>
+      <div class="sync-panel-item">
+        <span class="sync-panel-label">Período na base</span>
+        <span class="sync-panel-value" id="anomalia-info-periodo">—</span>
+      </div>
+      <div class="sync-panel-item">
+        <span class="sync-panel-label">Filtro atual</span>
+        <span class="sync-panel-value" id="anomalia-info-filtro">0 exibidas</span>
+      </div>
     </div>
     <div class="table-wrap">
       <table>
@@ -913,12 +941,53 @@ function renderTurnos() {
 let anomaliasAutoRefreshTimer = null;
 let anomaliasRealtimeChannel = null;
 let carregandoAnomalias = false;
+let anomaliasSyncInfo = {
+  ultimaAtualizacao: null,
+  fonte: '—',
+  totalCarregado: 0,
+  status: 'idle'
+};
 
 function setAnomaliasSyncStatus(texto, tipo = '') {
   const el = document.getElementById('anomalia-sync-status');
   if (!el) return;
   el.textContent = texto;
   el.className = `sync-status ${tipo}`.trim();
+}
+
+function setText(id, texto, classeExtra = '') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = texto;
+  el.className = classeExtra ? `sync-panel-value ${classeExtra}` : 'sync-panel-value';
+}
+
+function formatarDataHoraSync(date) {
+  if (!date) return '—';
+  return date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'medium' });
+}
+
+function obterPeriodoAnomalias(lista) {
+  if (!lista.length) return 'Sem registros';
+
+  const ordenadas = ordenarAnomalias(lista);
+  const maisNova = formatarDataMarcacao(ordenadas[0].data_marcacao);
+  const maisAntiga = formatarDataMarcacao(ordenadas[ordenadas.length - 1].data_marcacao);
+
+  return maisAntiga === maisNova ? maisNova : `${maisAntiga} até ${maisNova}`;
+}
+
+function atualizarPainelSyncAnomalias(qtdFiltrada = null) {
+  const statusClasse = anomaliasSyncInfo.status === 'error' ? 'error' : anomaliasSyncInfo.status === 'ok' ? 'ok' : '';
+  const filtroTexto = qtdFiltrada === null
+    ? '—'
+    : `${qtdFiltrada} ofensa${qtdFiltrada !== 1 ? 's' : ''} exibida${qtdFiltrada !== 1 ? 's' : ''}`;
+
+  setText('anomalia-info-ultima', formatarDataHoraSync(anomaliasSyncInfo.ultimaAtualizacao), statusClasse);
+  setText('anomalia-info-fonte', anomaliasSyncInfo.fonte || '—', statusClasse);
+  setText('anomalia-info-total', String(anomaliasSyncInfo.totalCarregado || 0), statusClasse);
+  setText('anomalia-info-periodo', obterPeriodoAnomalias(anomalias));
+  setText('anomalia-info-filtro', filtroTexto);
 }
 
 function definirDataAnomalia(tipo) {
@@ -1020,20 +1089,32 @@ async function carregarAnomalias(opcoes = {}) {
   carregandoAnomalias = true;
   if (btn && manual) setButtonLoading(btn, true, 'Atualizando...');
   if (!silencioso || manual) setAnomaliasSyncStatus('Atualizando dados...', '');
+  anomaliasSyncInfo.status = 'loading';
+  atualizarPainelSyncAnomalias();
 
   try {
     const origemSheets = !!asText(GOOGLE_SHEETS_API_URL).trim();
     const lista = origemSheets ? await buscarAnomaliasDoSheets() : await buscarAnomaliasDoSupabase();
     anomalias = ordenarAnomalias(lista || []);
 
-    if (renderizar) renderAnomalias();
+    anomaliasSyncInfo = {
+      ultimaAtualizacao: new Date(),
+      fonte: origemSheets ? 'Google Sheets API' : 'Supabase · marcacoes_auto',
+      totalCarregado: anomalias.length,
+      status: 'ok'
+    };
 
-    const agora = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-    setAnomaliasSyncStatus(`Última atualização: ${agora} · ${origemSheets ? 'Google Sheets API' : 'Supabase'}`, 'ok');
+    if (renderizar) renderAnomalias();
+    else atualizarPainelSyncAnomalias();
+
+    const agora = anomaliasSyncInfo.ultimaAtualizacao.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+    setAnomaliasSyncStatus(`Última atualização: ${agora} · ${anomaliasSyncInfo.fonte}`, 'ok');
     if (manual) toast('Anomalias atualizadas com sucesso!', 'success');
   } catch (error) {
     console.error(error);
+    anomaliasSyncInfo.status = 'error';
     setAnomaliasSyncStatus('Falha ao atualizar anomalias', 'error');
+    atualizarPainelSyncAnomalias();
     if (!silencioso || manual) toast('Erro ao atualizar anomalias: ' + (error.message || error), 'error');
   } finally {
     if (btn && manual) setButtonLoading(btn, false);
@@ -1090,6 +1171,7 @@ function renderAnomalias() {
   }
 
   document.getElementById('anomalia-count').textContent = `${lista.length} ofensa${lista.length !== 1 ? 's' : ''}`;
+  atualizarPainelSyncAnomalias(lista.length);
 
   const tbody = document.getElementById('tbody-anomalias');
   if (!lista.length) {
