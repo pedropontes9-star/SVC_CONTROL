@@ -6,6 +6,7 @@
 <title>SVC — Headcount</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root {
     --meli-yellow: #FFE600;
@@ -155,6 +156,28 @@
   .btn:disabled { opacity: .55; cursor: not-allowed; }
   .table-wrap td, .table-wrap th { max-width: 260px; }
   .text-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Crachás LMS */
+  .cracha-intro { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom: 18px; flex-wrap: wrap; }
+  .cracha-intro h2 { font-size: 18px; color: var(--meli-blue); margin-bottom: 4px; }
+  .cracha-intro p { font-size: 13px; color: var(--text-muted); line-height: 1.45; max-width: 720px; }
+  .cracha-textarea { min-height: 110px; resize: vertical; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; font-family: inherit; color: var(--text); background: var(--surface); transition: border-color .15s; outline: none; }
+  .cracha-textarea:focus { border-color: var(--meli-action); box-shadow: 0 0 0 3px rgba(52,131,250,.1); }
+  .cracha-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .cracha-hint { font-size: 12px; color: var(--text-muted); margin-top: 10px; line-height: 1.45; }
+  .cracha-preview-card { padding: 20px; }
+  .cracha-badge-container { display:grid; grid-template-columns: repeat(auto-fill, 200px); gap: 20px; justify-content:center; align-items:start; min-height: 220px; }
+  .cracha-badge-empty { grid-column: 1 / -1; padding: 48px 24px; text-align:center; color: var(--text-muted); }
+  .cracha-badge { width:200px; height:350px; background:#f3f4f6; border:1px solid #c7c7c7; border-radius: 8px; display:flex; flex-direction:column; position:relative; overflow:hidden; box-shadow: 0 4px 10px rgba(0,0,0,.12); }
+  .cracha-badge-header { padding: 12px 10px 8px; text-align:center; background: linear-gradient(180deg, #ffffff 0%, #f8f8f8 100%); border-bottom:1px solid #e1e1e1; }
+  .cracha-brand-mark { display:inline-flex; align-items:center; justify-content:center; min-width: 58px; height: 24px; margin: 0 auto 7px; padding: 0 10px; border-radius: 4px; background: var(--meli-yellow); color: var(--meli-blue); border: 1px solid rgba(45,50,119,.18); font-size: 12px; font-weight: 800; letter-spacing: .04em; }
+  .cracha-badge-header h1 { margin:0; font-size: 24px; color: var(--meli-blue); font-weight: 800; line-height:1; }
+  .cracha-badge-header p { margin: 3px 0 0; font-size: 9px; color: var(--meli-blue); font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
+  .cracha-qrcode-wrapper { flex:1; display:flex; align-items:center; justify-content:center; padding: 12px; }
+  .cracha-qrcode-container { background:#fff; padding: 6px; border: 1px solid #d4d4d4; border-radius: 4px; }
+  .cracha-badge-footer { min-height: 52px; background: var(--meli-yellow); display:flex; align-items:center; justify-content:center; padding: 6px 8px; text-align:center; border-top:1px solid #c9b900; }
+  .cracha-badge-footer span { font-size: 14px; font-weight: 800; color:#222; line-height:1.15; overflow-wrap:anywhere; }
+
   @media (max-width: 760px) {
     .header { padding: 0 14px; }
     .header-sub { display: none; }
@@ -164,6 +187,21 @@
     .form-card { padding: 16px; }
     .search-bar { padding: 12px; }
     .count-badge { margin-left: 0; }
+  }
+
+
+  @media print {
+    #auth-screen, .header, .nav-tabs, .toast, .modal-overlay,
+    .page:not(#page-crachas), #page-crachas .form-card,
+    #page-crachas .access-note, #page-crachas > .section-label,
+    #page-crachas .cracha-intro { display: none !important; }
+    body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+    #app-shell, #page-crachas { display:block !important; padding:0 !important; margin:0 !important; max-width:none !important; }
+    #page-crachas .card { box-shadow:none !important; border-radius:0 !important; }
+    .cracha-preview-card { padding:0 !important; }
+    .cracha-badge-container { display:block !important; min-height:0 !important; }
+    .cracha-badge-empty { display:none !important; }
+    .cracha-badge { float:left; margin:5mm; box-shadow:none !important; page-break-inside: avoid; break-inside: avoid; border-radius:0; }
   }
 
 </style>
@@ -219,6 +257,7 @@
   <button class="tab-btn active" id="tab-turnos" data-tab="turnos" onclick="switchTab('turnos',this)">Turnos</button>
   <button class="tab-btn" id="tab-headcount" data-tab="headcount" onclick="switchTab('headcount',this)">Headcount</button>
   <button class="tab-btn" id="tab-anomalias" data-tab="anomalias" onclick="switchTab('anomalias',this)">Anomalias (CIA/COA)</button>
+  <button class="tab-btn" id="tab-crachas" data-tab="crachas" onclick="switchTab('crachas',this)">Crachás LMS</button>
 </nav>
 
 <div id="page-turnos" class="page active">
@@ -484,6 +523,56 @@
   </div>
 </div>  
 
+
+
+<div id="page-crachas" class="page">
+  <div class="cracha-intro">
+    <div>
+      <p class="section-label" style="margin-bottom:6px">Gerador manual</p>
+      <h2>Crachás LMS</h2>
+      <p>Gere crachás com QR Code a partir de um colaborador individual ou de uma lista em lote. Nesta fase, a entrada permanece manual, mantendo a funcionalidade original do gerador.</p>
+    </div>
+  </div>
+
+  <div class="access-note" id="cracha-access-note">Disponível para perfis com permissão operacional. Os dados digitados aqui não são salvos no Supabase.</div>
+
+  <div class="form-card card" id="card-form-crachas" style="margin-bottom:24px">
+    <p class="section-label">Dados do crachá</p>
+    <div class="form-grid">
+      <div class="form-group" style="grid-column:span 2">
+        <label>Nome do funcionário</label>
+        <input type="text" id="cracha-nome" placeholder="Ex: Willian Souza Tenorio" maxlength="100">
+      </div>
+      <div class="form-group">
+        <label>Groot ID / Código QR</label>
+        <input type="text" id="cracha-groot" placeholder="Ex: ABC123456" maxlength="60">
+      </div>
+      <div class="form-group" style="grid-column:1 / -1">
+        <label>Lista em lote</label>
+        <textarea id="cracha-lista" class="cracha-textarea" placeholder="Willian Souza Tenorio;ABC123456&#10;Luiz Felipe P. de Sousa;DEF789012"></textarea>
+        <span class="field-hint">Use uma linha por pessoa no formato <strong>Nome;ID</strong>. O colaborador individual, se preenchido, será adicionado primeiro.</span>
+      </div>
+    </div>
+    <div class="cracha-actions">
+      <button class="btn btn-primary" id="btn-gerar-crachas" onclick="gerarCrachasLms()">Gerar Crachás</button>
+      <button class="btn btn-secondary" onclick="imprimirCrachasLms()">Imprimir / Salvar PDF</button>
+      <button class="btn btn-danger" onclick="limparCrachasLms()">Limpar</button>
+    </div>
+    <p class="cracha-hint">Dica: para impressão, gere os crachás e use o botão <strong>Imprimir / Salvar PDF</strong>. O sistema imprimirá apenas os crachás gerados.</p>
+  </div>
+
+  <p class="section-label">Pré-visualização</p>
+  <div class="card cracha-preview-card">
+    <div id="cracha-badge-container" class="cracha-badge-container">
+      <div class="cracha-badge-empty" id="cracha-empty-state">
+        <div class="empty-icon">🪪</div>
+        <p>Nenhum crachá gerado</p>
+        <span>Preencha os dados acima para visualizar os crachás</span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-excluir">
   <div class="modal">
     <h3>Confirmar exclusão</h3>
@@ -620,19 +709,21 @@ function setButtonLoading(btn, loading, textoLoading = 'Salvando...') {
 //  AUTENTICAÇÃO E CONTROLE DE ACESSO
 // ════════════════════════════════════════
 const AUTH_EMAIL_DOMAIN = 'svc.local';
-const EXIGIR_CADASTRO_PERFIL = false; // Troque para true quando a tabela svc_usuarios estiver configurada.
+const EXIGIR_CADASTRO_PERFIL = true; // Com a tabela svc_usuarios configurada, todo acesso precisa ter perfil cadastrado.
 
 const PERFIS_ACESSO = {
   admin: {
     label: 'Administrador',
-    tabs: ['turnos', 'headcount', 'anomalias'],
+    tabs: ['turnos', 'headcount', 'anomalias', 'crachas'],
+    gerar_crachas: true,
     criar_turnos: true, editar_turnos: true, excluir_turnos: true,
     criar_hc: true, editar_hc: true, excluir_hc: true, exportar_hc: true,
     ver_anomalias: true, atualizar_anomalias: true, tratar_anomalias: true
   },
   supervisor: {
     label: 'Supervisor',
-    tabs: ['headcount', 'anomalias'],
+    tabs: ['turnos', 'headcount', 'anomalias', 'crachas'],
+    gerar_crachas: true,
     criar_turnos: false, editar_turnos: false, excluir_turnos: false,
     criar_hc: true, editar_hc: true, excluir_hc: false, exportar_hc: true,
     ver_anomalias: true, atualizar_anomalias: true, tratar_anomalias: true
@@ -640,6 +731,7 @@ const PERFIS_ACESSO = {
   consulta: {
     label: 'Consulta',
     tabs: ['headcount', 'anomalias'],
+    gerar_crachas: false,
     criar_turnos: false, editar_turnos: false, excluir_turnos: false,
     criar_hc: false, editar_hc: false, excluir_hc: false, exportar_hc: false,
     ver_anomalias: true, atualizar_anomalias: true, tratar_anomalias: false
@@ -767,10 +859,10 @@ async function carregarPerfilUsuario(session) {
   let nome = fallbackAdmin ? 'Admin SRJ2' : usuarioBase;
 
   try {
-    const filtro = `auth_uid.eq.${user.id},email.eq.${email},usuario.eq.${usuarioBase}`;
+    const filtro = `auth_uid.eq.${user.id},email.eq.${email},login.eq.${usuarioBase}`;
     const { data, error } = await db
       .from('svc_usuarios')
-      .select('auth_uid,email,usuario,nome,perfil,ativo')
+      .select('auth_uid,email,login,nome,perfil,ativo')
       .or(filtro)
       .limit(1)
       .maybeSingle();
@@ -780,7 +872,7 @@ async function carregarPerfilUsuario(session) {
     if (data) {
       if (data.ativo === false) throw new Error('Usuário inativo.');
       perfil = data.perfil || perfil;
-      usuario = data.usuario || usuario;
+      usuario = data.login || usuario;
       nome = data.nome || usuario;
     } else if (EXIGIR_CADASTRO_PERFIL) {
       throw new Error('Usuário sem perfil cadastrado em svc_usuarios.');
@@ -834,6 +926,7 @@ function aplicarControleAcesso() {
   setVisibleById('hc-readonly-note', podeAcessarTab('headcount') && !pode('criar_hc') && !pode('editar_hc'), 'block');
   setVisibleById('btn-exportar-hc', pode('exportar_hc'), 'inline-flex');
   setVisibleById('btn-atualizar-anomalias', pode('atualizar_anomalias'), 'inline-flex');
+  setVisibleById('card-form-crachas', pode('gerar_crachas'));
 
   if (!podeAcessarTab('turnos')) cancelarEdicaoTurno();
   if (!pode('editar_hc') && !pode('criar_hc')) cancelarEdicaoHC();
@@ -1847,6 +1940,127 @@ if (modalExcluir) {
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') fecharModal();
 });
+
+
+// ════════════════════════════════════════
+//  GERADOR DE CRACHÁS LMS
+// ════════════════════════════════════════
+function obterDadosCrachasLms() {
+  const individualName = asText(document.getElementById('cracha-nome')?.value).trim();
+  const individualId = asText(document.getElementById('cracha-groot')?.value).trim();
+  const batchText = asText(document.getElementById('cracha-lista')?.value).trim();
+  const badgeData = [];
+
+  if ((individualName && !individualId) || (!individualName && individualId)) {
+    throw new Error('Para o crachá individual, preencha nome e Groot ID.');
+  }
+
+  if (individualName && individualId) {
+    badgeData.push({ name: individualName, id: individualId });
+  }
+
+  if (batchText) {
+    batchText.split(/\r?\n/).forEach((line, idx) => {
+      const limpa = line.trim();
+      if (!limpa) return;
+      const parts = limpa.split(';');
+      if (parts.length < 2) {
+        console.warn(`Linha ${idx + 1} ignorada no lote de crachás: formato inválido.`);
+        return;
+      }
+      const name = asText(parts[0]).trim();
+      const id = asText(parts.slice(1).join(';')).trim();
+      if (name && id) badgeData.push({ name, id });
+    });
+  }
+
+  return badgeData;
+}
+
+function gerarCrachasLms() {
+  if (!pode('gerar_crachas')) { toast('Seu perfil não permite gerar crachás.', 'error'); return; }
+  if (typeof QRCode === 'undefined') { toast('Biblioteca de QR Code não carregada. Verifique a conexão.', 'error'); return; }
+
+  try {
+    const badgeData = obterDadosCrachasLms();
+    if (!badgeData.length) { toast('Preencha o formulário ou cole uma lista no formato Nome;ID.', 'error'); return; }
+
+    badgeData.forEach(data => criarCrachaLms(data.name, data.id));
+
+    document.getElementById('cracha-nome').value = '';
+    document.getElementById('cracha-groot').value = '';
+    document.getElementById('cracha-lista').value = '';
+    toast(`${badgeData.length} crachá${badgeData.length !== 1 ? 's' : ''} gerado${badgeData.length !== 1 ? 's' : ''}.`, 'success');
+  } catch (error) {
+    toast(error.message || 'Erro ao gerar crachás.', 'error');
+  }
+}
+
+function criarCrachaLms(name, id) {
+  const container = document.getElementById('cracha-badge-container');
+  const empty = document.getElementById('cracha-empty-state');
+  if (empty) empty.remove();
+
+  const badge = document.createElement('div');
+  badge.className = 'cracha-badge';
+
+  const header = document.createElement('div');
+  header.className = 'cracha-badge-header';
+
+  const brand = document.createElement('div');
+  brand.className = 'cracha-brand-mark';
+  brand.textContent = 'SVC';
+
+  const title = document.createElement('h1');
+  title.textContent = 'LMS';
+
+  const subtitle = document.createElement('p');
+  subtitle.textContent = 'Labor Management System';
+
+  header.appendChild(brand);
+  header.appendChild(title);
+  header.appendChild(subtitle);
+
+  const qrWrapper = document.createElement('div');
+  qrWrapper.className = 'cracha-qrcode-wrapper';
+
+  const qrContainer = document.createElement('div');
+  qrContainer.className = 'cracha-qrcode-container';
+  qrWrapper.appendChild(qrContainer);
+
+  const footer = document.createElement('div');
+  footer.className = 'cracha-badge-footer';
+
+  const nameSpan = document.createElement('span');
+  nameSpan.textContent = name;
+  footer.appendChild(nameSpan);
+
+  badge.appendChild(header);
+  badge.appendChild(qrWrapper);
+  badge.appendChild(footer);
+  container.appendChild(badge);
+
+  new QRCode(qrContainer, {
+    text: id,
+    width: 140,
+    height: 140,
+    colorDark: '#000000',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H
+  });
+}
+
+function limparCrachasLms() {
+  const container = document.getElementById('cracha-badge-container');
+  if (!container) return;
+  container.innerHTML = `<div class="cracha-badge-empty" id="cracha-empty-state"><div class="empty-icon">🪪</div><p>Nenhum crachá gerado</p><span>Preencha os dados acima para visualizar os crachás</span></div>`;
+}
+
+function imprimirCrachasLms() {
+  const qtd = document.querySelectorAll('#cracha-badge-container .cracha-badge').length;
+  if (!qtd) { toast('Gere pelo menos um crachá antes de imprimir.', 'error'); return; }
+  window.print();
+}
 
 window.addEventListener('DOMContentLoaded', async function() {
   await inicializarAuth();
