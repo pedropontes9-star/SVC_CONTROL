@@ -214,7 +214,7 @@
       <div class="logo-box">SVC</div>
       <div>
         <div class="auth-title">Acesso Operacional</div>
-        <div style="font-size:12px;color:var(--text-muted);font-weight:600">CD SRJ2 — DHL / Meli</div>
+        <div style="font-size:12px;color:var(--text-muted);font-weight:600">CD SRJ2 — 3PL / Meli</div>
       </div>
     </div>
     <p class="auth-subtitle">Entre com seu usuário e senha para acessar as áreas liberadas para o seu perfil.</p>
@@ -246,7 +246,7 @@
   <div class="logo-box">SVC</div>
   <h1>Gestão Operacional</h1>
   <div class="header-divider"></div>
-  <span class="header-sub">CD SRJ2 — DHL / Meli</span>
+  <span class="header-sub">CD SRJ2 — 3PL / Meli</span>
   <div class="header-user">
     <span class="user-pill" title="Usuário logado"><span id="user-display">—</span> <small id="user-profile">—</small></span>
     <button class="btn-logout" onclick="sairSistema()">Sair</button>
@@ -336,7 +336,7 @@
   <div class="stats-row">
     <div class="stat-card"><div class="stat-label">Total Ativo</div><div class="stat-value" id="stat-total">0</div><div class="stat-sub">colaboradores</div></div>
     <div class="stat-card"><div class="stat-label">Turnos</div><div class="stat-value" id="stat-turnos">0</div><div class="stat-sub">configurados</div></div>
-    <div class="stat-card"><div class="stat-label">DHL</div><div class="stat-value" id="stat-dhl">0</div><div class="stat-sub">colaboradores</div></div>
+    <div class="stat-card"><div class="stat-label">3PL</div><div class="stat-value" id="stat-3PL">0</div><div class="stat-sub">colaboradores</div></div>
     <div class="stat-card"><div class="stat-label">3PL Parceiros</div><div class="stat-value" id="stat-3pl">0</div><div class="stat-sub">Mendes / TSI / SRM</div></div>
   </div>
 
@@ -368,7 +368,7 @@
       <div class="form-group">
         <label>3PL</label>
         <select id="hc-3pl">
-          <option value="DHL">DHL</option>
+          <option value="3PL">3PL</option>
           <option value="Mendes">Mendes</option>
           <option value="TSI">TSI</option>
           <option value="SRM">SRM</option>
@@ -424,7 +424,7 @@
       </select>
       <select id="filtro-3pl-hc" onchange="renderHeads()">
         <option value="">Todos os 3PL</option>
-        <option value="DHL">DHL</option>
+        <option value="3PL">3PL</option>
         <option value="Mendes">Mendes</option>
         <option value="TSI">TSI</option>
         <option value="SRM">SRM</option>
@@ -1722,7 +1722,7 @@ async function salvarHead() {
 function limparFormHC() {
   ['hc-nome','hc-groot','hc-ext','hc-gestor'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('hc-turno').value  = '';
-  document.getElementById('hc-3pl').value    = 'DHL';
+  document.getElementById('hc-3pl').value    = '3PL';
   document.getElementById('hc-status').value = 'ativo';
   document.getElementById('hc-grupo-wrap').style.display = 'none';
   document.getElementById('hc-grupo').innerHTML = '<option value="">— Selecionar —</option>';
@@ -1738,7 +1738,7 @@ function editarHead(id) {
   document.getElementById('hc-nome').value   = h.nome || '';
   document.getElementById('hc-groot').value  = h.groot || '';
   document.getElementById('hc-ext').value    = normalizeExt(h.ext);
-  document.getElementById('hc-3pl').value    = h.tpl || 'DHL';
+  document.getElementById('hc-3pl').value    = h.tpl || '3PL';
   document.getElementById('hc-gestor').value = h.gestor || '';
   document.getElementById('hc-turno').value  = h.turnoId || '';
   document.getElementById('hc-status').value = h.status || 'ativo';
@@ -1798,7 +1798,7 @@ function fecharModal() {
 }
 
 function tplBadge(tpl) {
-  const map = { DHL:'badge-blue', Mendes:'badge-purple', TSI:'badge-orange', SRM:'badge-green' };
+  const map = { 3PL:'badge-blue', Mendes:'badge-purple', TSI:'badge-orange', SRM:'badge-green' };
   const val = asText(tpl) || '—';
   return `<span class="badge ${map[val] || 'badge-gray'}">${escapeHtml(val)}</span>`;
 }
@@ -1874,8 +1874,8 @@ function atualizarStats() {
   const ativos = heads.filter(h => h.status === 'ativo');
   document.getElementById('stat-total').textContent  = ativos.length;
   document.getElementById('stat-turnos').textContent = turnos.length;
-  document.getElementById('stat-dhl').textContent    = ativos.filter(h => h.tpl === 'DHL').length;
-  document.getElementById('stat-3pl').textContent    = ativos.filter(h => h.tpl !== 'DHL').length;
+  document.getElementById('stat-3PL').textContent    = ativos.filter(h => h.tpl === '3PL').length;
+  document.getElementById('stat-3pl').textContent    = ativos.filter(h => h.tpl !== '3PL').length;
 }
 
 // ════════════════════════════════════════
