@@ -70,6 +70,10 @@
   .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-hint); pointer-events: none; }
   .search-bar select { padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; font-family: inherit; color: var(--text); background: var(--surface); outline: none; }
   .count-badge { font-size: 12px; color: var(--text-muted); margin-left: auto; white-space: nowrap; }
+  .sync-status { font-size: 11px; color: var(--text-hint); white-space: nowrap; }
+  .sync-status.ok { color: var(--success-text); }
+  .sync-status.error { color: var(--danger-text); }
+  .quick-date-actions { display: inline-flex; gap: 6px; }
 
   .table-wrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; }
@@ -360,6 +364,10 @@
   <div class="card">
     <div class="search-bar">
       <input type="date" id="filtro-data-anomalia" onchange="renderAnomalias()" style="padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-family: inherit;">
+      <span class="quick-date-actions">
+        <button class="btn btn-secondary btn-sm" onclick="definirDataAnomalia('hoje')">Hoje</button>
+        <button class="btn btn-secondary btn-sm" onclick="definirDataAnomalia('ontem')">Ontem</button>
+      </span>
       
       <select id="filtro-tipo-anomalia" onchange="renderAnomalias()">
         <option value="AMBOS">Todos os Tipos (CIA/COA)</option>
@@ -371,6 +379,10 @@
         <span class="search-icon">🔍</span>
         <input type="text" placeholder="Buscar por colaborador ou EXT..." id="busca-anomalia" oninput="renderAnomalias()">
       </div>
+      <button class="btn btn-secondary btn-sm" id="btn-atualizar-anomalias" onclick="carregarAnomalias({ manual: true })" style="height:34px; display:inline-flex; align-items:center; gap:6px;">
+        <span>🔄 Atualizar</span>
+      </button>
+      <span class="sync-status" id="anomalia-sync-status">Última atualização: —</span>
       <span class="count-badge" id="anomalia-count">0 registros</span>
     </div>
     <div class="table-wrap">
@@ -410,6 +422,11 @@ const supabaseUrl = 'https://xzdpdmvjpokseaiwcnxu.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh6ZHBkbXZqcG9rc2VhaXdjbnh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNzM5NTAsImV4cCI6MjA5Njg0OTk1MH0.3lXv4HLEEtkRNB6z8hWtXkzC-aZqKZIT3uWgiOd4N_w';
 const db = createClient(supabaseUrl, supabaseKey);
 
+// Opcional: cole aqui a URL do Web App do Google Apps Script, caso a aba Anomalias deva ler direto do Sheets.
+// Se ficar vazio, o sistema usa a tabela Supabase `marcacoes_auto`, que pode ser abastecida pelo Apps Script.
+const GOOGLE_SHEETS_API_URL = '';
+const ANOMALIAS_AUTO_REFRESH_MS = 60000;
+
 // ════════════════════════════════════════
 //  HELPERS GERAIS — segurança, normalização e datas
 // ════════════════════════════════════════
@@ -437,7 +454,6 @@ function normalizeExt(value) {
 function safeId(value) {
   return asText(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
-
 function toCsvCell(value) {
   const texto = asText(value) || '—';
   return `"${texto.replace(/"/g, '""')}"`;
@@ -710,18 +726,14 @@ async function carregarDadosDoBanco() {
       status: h.status || 'ativo'
     }));
 
-    const { data: dataAnomalias, error: errAnomalias } = await db.from('marcacoes_auto').select('*').order('data_marcacao', { ascending: false });
-    if (errAnomalias) throw errAnomalias;
-    anomalias = dataAnomalias || [];
-
     const filtroData = document.getElementById('filtro-data-anomalia');
-    if (filtroData && !filtroData.value) filtroData.value = ontemIsoLocal();
+    if (filtroData && !filtroData.value) filtroData.value = hojeIsoLocal();
 
     atualizarSelectTurnos();
     renderTurnos();
     renderHeads();
     atualizarStats();
-    renderAnomalias();
+    await carregarAnomalias({ silencioso: true, renderizar: true });
   } catch (error) {
     console.error(error);
     toast('Erro ao buscar informações do Supabase: ' + (error.message || error), 'error');
@@ -737,6 +749,10 @@ function switchTab(tab, btn) {
   if (btn) btn.classList.add('active');
   const page = document.getElementById('page-' + tab);
   if (page) page.classList.add('active');
+
+  if (tab === 'anomalias') {
+    carregarAnomalias({ silencioso: true, renderizar: true });
+  }
 }
 
 // ════════════════════════════════════════
@@ -894,6 +910,161 @@ function renderTurnos() {
 // ════════════════════════════════════════
 //  LÓGICA DE ANOMALIAS (CIA / COA)
 // ════════════════════════════════════════
+let anomaliasAutoRefreshTimer = null;
+let anomaliasRealtimeChannel = null;
+let carregandoAnomalias = false;
+
+function setAnomaliasSyncStatus(texto, tipo = '') {
+  const el = document.getElementById('anomalia-sync-status');
+  if (!el) return;
+  el.textContent = texto;
+  el.className = `sync-status ${tipo}`.trim();
+}
+
+function definirDataAnomalia(tipo) {
+  const input = document.getElementById('filtro-data-anomalia');
+  if (!input) return;
+  input.value = tipo === 'ontem' ? ontemIsoLocal() : hojeIsoLocal();
+  renderAnomalias();
+}
+
+function getPayloadListaAnomalias(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== 'object') return [];
+  return payload.data || payload.anomalias || payload.rows || payload.values || payload.result || [];
+}
+
+function normalizarLinhaArrayAnomalia(row, headers = []) {
+  const objeto = {};
+  if (headers.length) {
+    headers.forEach((header, idx) => {
+      objeto[asText(header).trim()] = row[idx];
+    });
+    return objeto;
+  }
+  return {
+    data_marcacao: row[0],
+    ext: row[1],
+    tipo: row[2],
+    hora: row[3],
+    causa_raiz: row[4]
+  };
+}
+
+function normalizarPayloadAnomalias(payload) {
+  let lista = getPayloadListaAnomalias(payload);
+  if (!Array.isArray(lista)) lista = [];
+
+  if (lista.length && Array.isArray(lista[0])) {
+    const primeiraLinha = lista[0].map(asText);
+    const temCabecalho = primeiraLinha.some(c => /data|ext|tipo|hora|cia|coa/i.test(c));
+    const headers = temCabecalho ? primeiraLinha : [];
+    const linhas = temCabecalho ? lista.slice(1) : lista;
+    lista = linhas.map(row => normalizarLinhaArrayAnomalia(row, headers));
+  }
+
+  return lista.map(a => ({
+    id: a.id || a.ID || a.Id || crypto.randomUUID?.() || `${asText(a.ext)}-${asText(a.data_marcacao)}-${asText(a.hora)}`,
+    data_marcacao: a.data_marcacao || a.data || a.Data || a.DATA || a['Data'] || a['Data Marcação'] || a['Data Marcacao'] || a['data marcação'] || a['data marcacao'],
+    ext: normalizeExt(a.ext || a.EXT || a.usuario || a.Usuario || a.USUARIO || a.operador || a.Operador || a['Usuário'] || a['Usuario'] || a['EXT']),
+    tipo: asText(a.tipo || a.Tipo || a.TIPO || a['Tipo'] || a['CIA/COA']).toUpperCase(),
+    hora: a.hora || a.Hora || a.HORA || a.hora_ofensa || a['Hora da Ofensa'] || a['Hora Ofensa'] || a['hora marcação'] || a['Hora Marcação'],
+    causa_raiz: a.causa_raiz || a.causa || a.Causa || a['Causa Raiz'] || a['Causa Raiz (Análise)'] || ''
+  })).filter(a => a.data_marcacao || a.ext || a.tipo || a.hora);
+}
+
+function parseDataMarcacaoParaOrdenacao(dataMarcacao, hora = '') {
+  const raw = asText(dataMarcacao).trim();
+  const horaTxt = asText(hora).trim();
+  let iso = '';
+
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) iso = brToIso(raw);
+  else if (/^\d{4}-\d{2}-\d{2}/.test(raw)) iso = raw.slice(0, 10);
+
+  if (iso) {
+    const h = /^\d{1,2}:\d{2}/.test(horaTxt) ? horaTxt.padStart(5, '0') : '00:00';
+    return new Date(`${iso}T${h}:00`).getTime();
+  }
+
+  const parsed = new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+}
+
+function ordenarAnomalias(lista) {
+  return [...lista].sort((a, b) => parseDataMarcacaoParaOrdenacao(b.data_marcacao, b.hora) - parseDataMarcacaoParaOrdenacao(a.data_marcacao, a.hora));
+}
+
+async function buscarAnomaliasDoSheets() {
+  const urlBase = asText(GOOGLE_SHEETS_API_URL).trim();
+  if (!urlBase) return null;
+
+  const separador = urlBase.includes('?') ? '&' : '?';
+  const url = `${urlBase}${separador}_=${Date.now()}`;
+  const resposta = await fetch(url, { method: 'GET', cache: 'no-store' });
+  if (!resposta.ok) throw new Error(`Google Sheets API retornou HTTP ${resposta.status}`);
+  const payload = await resposta.json();
+  return normalizarPayloadAnomalias(payload);
+}
+
+async function buscarAnomaliasDoSupabase() {
+  const { data, error } = await db.from('marcacoes_auto').select('*');
+  if (error) throw error;
+  return normalizarPayloadAnomalias(data || []);
+}
+
+async function carregarAnomalias(opcoes = {}) {
+  if (carregandoAnomalias) return;
+  const { manual = false, silencioso = false, renderizar = true } = opcoes;
+  const btn = document.getElementById('btn-atualizar-anomalias');
+
+  carregandoAnomalias = true;
+  if (btn && manual) setButtonLoading(btn, true, 'Atualizando...');
+  if (!silencioso || manual) setAnomaliasSyncStatus('Atualizando dados...', '');
+
+  try {
+    const origemSheets = !!asText(GOOGLE_SHEETS_API_URL).trim();
+    const lista = origemSheets ? await buscarAnomaliasDoSheets() : await buscarAnomaliasDoSupabase();
+    anomalias = ordenarAnomalias(lista || []);
+
+    if (renderizar) renderAnomalias();
+
+    const agora = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+    setAnomaliasSyncStatus(`Última atualização: ${agora} · ${origemSheets ? 'Google Sheets API' : 'Supabase'}`, 'ok');
+    if (manual) toast('Anomalias atualizadas com sucesso!', 'success');
+  } catch (error) {
+    console.error(error);
+    setAnomaliasSyncStatus('Falha ao atualizar anomalias', 'error');
+    if (!silencioso || manual) toast('Erro ao atualizar anomalias: ' + (error.message || error), 'error');
+  } finally {
+    if (btn && manual) setButtonLoading(btn, false);
+    carregandoAnomalias = false;
+  }
+}
+
+function iniciarAutoRefreshAnomalias() {
+  if (anomaliasAutoRefreshTimer) clearInterval(anomaliasAutoRefreshTimer);
+  anomaliasAutoRefreshTimer = setInterval(() => {
+    const paginaAtiva = document.getElementById('page-anomalias')?.classList.contains('active');
+    if (paginaAtiva) carregarAnomalias({ silencioso: true, renderizar: true });
+  }, ANOMALIAS_AUTO_REFRESH_MS);
+}
+
+function assinarRealtimeAnomalias() {
+  if (asText(GOOGLE_SHEETS_API_URL).trim()) return;
+  if (!db.channel || anomaliasRealtimeChannel) return;
+
+  try {
+    anomaliasRealtimeChannel = db
+      .channel('svc_marcacoes_auto_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'marcacoes_auto' }, () => {
+        carregarAnomalias({ silencioso: true, renderizar: true });
+      })
+      .subscribe();
+  } catch (error) {
+    console.warn('Realtime de anomalias não foi ativado:', error);
+  }
+}
+
 function renderAnomalias() {
   const filtDataInput = document.getElementById('filtro-data-anomalia').value;
   const filtTipo = document.getElementById('filtro-tipo-anomalia').value;
@@ -1273,7 +1444,11 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') fecharModal();
 });
 
-window.addEventListener('DOMContentLoaded', carregarDadosDoBanco);
+window.addEventListener('DOMContentLoaded', async function() {
+  await carregarDadosDoBanco();
+  iniciarAutoRefreshAnomalias();
+  assinarRealtimeAnomalias();
+});
 </script>
 
 </body>
