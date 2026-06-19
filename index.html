@@ -144,6 +144,30 @@
   .modal h3 { font-size: 16px; font-weight: 600; color: var(--meli-blue); margin-bottom: 16px; }
   .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 
+  /* Importação massiva Headcount */
+  .modal-lg { max-width: 980px; max-height: 90vh; overflow-y: auto; }
+  .bulk-import-layout { display: grid; grid-template-columns: minmax(260px, 1fr); gap: 14px; }
+  .bulk-import-textarea { width: 100%; min-height: 170px; resize: vertical; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 12px; font-family: 'Inter', monospace; color: var(--text); background: var(--surface); outline: none; line-height: 1.45; }
+  .bulk-import-textarea:focus { border-color: var(--meli-action); box-shadow: 0 0 0 3px rgba(52,131,250,.1); }
+  .bulk-import-help { background: #f7f7f7; border: 1px solid #eee; border-radius: var(--radius); padding: 10px 12px; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+  .bulk-import-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-top: 14px; }
+  .bulk-summary-card { border: 1px solid #eee; border-radius: var(--radius); padding: 10px 12px; background: #fafafa; }
+  .bulk-summary-card span { display:block; font-size: 10px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; color: var(--text-hint); margin-bottom: 4px; }
+  .bulk-summary-card strong { font-size: 19px; color: var(--text); }
+  .bulk-summary-card.ok strong { color: var(--success-text); }
+  .bulk-summary-card.warn strong { color: var(--warn-text); }
+  .bulk-summary-card.error strong { color: var(--danger-text); }
+  .bulk-preview-wrap { margin-top: 14px; border: 1px solid #eee; border-radius: var(--radius); overflow: auto; max-height: 330px; }
+  .bulk-preview-wrap table { min-width: 920px; }
+  .bulk-row-error td { background: #fff8f8; }
+  .bulk-row-warn td { background: #fffdf4; }
+  .bulk-result { display:inline-flex; align-items:center; gap:5px; padding:2px 7px; border-radius:999px; font-size:11px; font-weight:700; white-space:nowrap; }
+  .bulk-result.ok { background: var(--success-fill); color: var(--success-text); }
+  .bulk-result.warn { background: var(--warn-fill); color: var(--warn-text); }
+  .bulk-result.error { background: var(--danger-fill); color: var(--danger-text); }
+  .bulk-error-list { margin-top: 8px; font-size: 11px; color: var(--danger-text); line-height: 1.4; }
+
+
   .turno-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; flex-shrink: 0; }
 
   .stats-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px; }
@@ -514,6 +538,10 @@
         <option value="afastado">Afastado</option>
       </select>
       
+      <button class="btn btn-secondary btn-sm" id="btn-importar-hc" onclick="abrirImportacaoHC()" style="height:34px; display:inline-flex; align-items:center; gap:6px;">
+        <span>📤 Importar em massa</span>
+      </button>
+
       <button class="btn btn-secondary btn-sm" id="btn-exportar-hc" onclick="exportarCSV()" style="height:34px; display:inline-flex; align-items:center; gap:6px;">
         <span>📥 Exportar CSV</span>
       </button>
@@ -646,6 +674,70 @@
         <p>Nenhum crachá gerado</p>
         <span>Preencha os dados acima para visualizar os crachás</span>
       </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-overlay" id="modal-importar-hc">
+  <div class="modal modal-lg" onclick="event.stopPropagation()">
+    <h3>Importar Headcount em massa</h3>
+    <p style="font-size:13px;color:var(--text-muted);line-height:1.5;margin-bottom:14px">
+      Cole uma base copiada do Excel/Google Sheets ou um CSV separado por ponto e vírgula. O sistema fará uma pré-validação antes de gravar no Supabase.
+    </p>
+
+    <div class="bulk-import-help">
+      <strong>Modelo obrigatório:</strong><br>
+      Nome;Groot ID;EXT;3PL;Turno;Grupo;Gestor;Status<br>
+      <span>Turno e Grupo são obrigatórios. O turno precisa existir em <strong>HCM → Turnos</strong>. Se o status vier vazio, será considerado <strong>ativo</strong>.</span>
+    </div>
+
+    <div class="form-grid" style="margin-top:14px;margin-bottom:12px">
+      <div class="form-group" style="grid-column:span 2">
+        <label>Modo de importação</label>
+        <select id="hc-import-modo" onchange="preValidarImportacaoHC(false)">
+          <option value="novos">Inserir somente novos</option>
+          <option value="upsert">Inserir novos e atualizar existentes pelo Groot ID</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="bulk-import-layout">
+      <div class="form-group">
+        <label>Dados para importação</label>
+        <textarea id="hc-import-textarea" class="bulk-import-textarea" placeholder="Nome;Groot ID;EXT;3PL;Turno;Grupo;Gestor;Status&#10;João Silva;123456;ext_joao.silva;DHL;T2 14:00;A;Carlos Souza;ativo&#10;Maria Santos;789012;maria.santos;Mendes;T1 06:00;B;Ana Lima;ativo"></textarea>
+        <span class="field-hint">Também aceita colagem direta do Sheets/Excel com colunas separadas por tabulação.</span>
+      </div>
+    </div>
+
+    <div class="form-actions" style="margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-primary" id="btn-validar-import-hc" onclick="preValidarImportacaoHC(true)">Pré-validar</button>
+      <button class="btn btn-secondary" onclick="baixarModeloImportacaoHC()">Baixar modelo CSV</button>
+      <button class="btn btn-secondary" onclick="limparImportacaoHC()">Limpar</button>
+    </div>
+
+    <div class="bulk-import-summary" id="hc-import-summary" style="display:none">
+      <div class="bulk-summary-card"><span>Linhas lidas</span><strong id="hc-import-total">0</strong></div>
+      <div class="bulk-summary-card ok"><span>Novos</span><strong id="hc-import-novos">0</strong></div>
+      <div class="bulk-summary-card warn"><span>Atualizar</span><strong id="hc-import-atualizar">0</strong></div>
+      <div class="bulk-summary-card warn"><span>Ignorados</span><strong id="hc-import-ignorados">0</strong></div>
+      <div class="bulk-summary-card error"><span>Erros</span><strong id="hc-import-erros">0</strong></div>
+    </div>
+
+    <div class="bulk-preview-wrap" id="hc-import-preview-wrap" style="display:none">
+      <table>
+        <thead>
+          <tr>
+            <th>Linha</th><th>Nome</th><th>Groot ID</th><th>EXT</th><th>3PL</th><th>Turno</th><th>Grupo</th><th>Status</th><th>Resultado</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-hc-import-preview"></tbody>
+      </table>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="fecharImportacaoHC()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" id="btn-confirmar-import-hc" onclick="confirmarImportacaoHC()" disabled>Confirmar importação</button>
     </div>
   </div>
 </div>
@@ -1025,6 +1117,7 @@ function aplicarControleAcesso() {
   setVisibleById('card-form-hc', pode('criar_hc') || pode('editar_hc'));
   setVisibleById('hc-readonly-note', podeAcessarTab('headcount') && !pode('criar_hc') && !pode('editar_hc'), 'block');
   setVisibleById('btn-exportar-hc', pode('exportar_hc'), 'inline-flex');
+  setVisibleById('btn-importar-hc', pode('criar_hc'), 'inline-flex');
   setVisibleById('btn-atualizar-anomalias', pode('atualizar_anomalias'), 'inline-flex');
   setVisibleById('card-form-crachas', pode('gerar_crachas'));
 
@@ -2018,6 +2111,373 @@ function atualizarStats() {
   document.getElementById('stat-3pl').textContent    = ativos.filter(h => h.tpl !== 'DHL').length;
 }
 
+
+// ════════════════════════════════════════
+//  COMANDO: IMPORTAR HEADCOUNT EM MASSA
+// ════════════════════════════════════════
+let hcImportPreview = [];
+
+function abrirImportacaoHC() {
+  if (!pode('criar_hc')) { toast('Seu perfil não permite importar colaboradores.', 'error'); return; }
+  const modal = document.getElementById('modal-importar-hc');
+  if (!modal) return;
+  modal.classList.add('open');
+  setTimeout(() => document.getElementById('hc-import-textarea')?.focus(), 60);
+}
+
+function fecharImportacaoHC() {
+  document.getElementById('modal-importar-hc')?.classList.remove('open');
+}
+
+function limparImportacaoHC() {
+  const textarea = document.getElementById('hc-import-textarea');
+  if (textarea) textarea.value = '';
+  hcImportPreview = [];
+  renderPreviewImportacaoHC();
+}
+
+function baixarModeloImportacaoHC() {
+  const csv = 'Nome;Groot ID;EXT;3PL;Turno;Grupo;Gestor;Status\nJoão Silva;123456;ext_joao.silva;DHL;NOME DO TURNO;A;Carlos Souza;ativo\nMaria Santos;789012;maria.santos;Mendes;NOME DO TURNO;B;Ana Lima;ativo\n';
+  const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'modelo_importacao_headcount_srj2.csv';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function detectarSeparadorImportacao(linha) {
+  return linha.includes('\t') ? '\t' : ';';
+}
+
+function parseLinhaDelimitada(linha, separador) {
+  const out = [];
+  let atual = '';
+  let entreAspas = false;
+
+  for (let i = 0; i < linha.length; i++) {
+    const ch = linha[i];
+    const prox = linha[i + 1];
+
+    if (ch === '"') {
+      if (entreAspas && prox === '"') {
+        atual += '"';
+        i++;
+      } else {
+        entreAspas = !entreAspas;
+      }
+      continue;
+    }
+
+    if (ch === separador && !entreAspas) {
+      out.push(atual.trim());
+      atual = '';
+      continue;
+    }
+    atual += ch;
+  }
+  out.push(atual.trim());
+  return out;
+}
+
+function normalizarChaveImportacao(value) {
+  return asText(value)
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+}
+
+function normalizar3PL(value) {
+  const chave = normalizarChaveImportacao(value);
+  const map = { dhl: 'DHL', mendes: 'Mendes', tsi: 'TSI', srm: 'SRM' };
+  return map[chave] || '';
+}
+
+function normalizarStatusHC(value) {
+  const chave = normalizarChaveImportacao(value || 'ativo');
+  const map = {
+    ativo: 'ativo',
+    ativa: 'ativo',
+    inativo: 'inativo',
+    inativa: 'inativo',
+    ferias: 'ferias',
+    ferias_: 'ferias',
+    afastado: 'afastado',
+    afastada: 'afastado'
+  };
+  return map[chave] || '';
+}
+
+function montarMapaCabecalhoImportacao(headers) {
+  const aliases = {
+    nome: ['nome', 'nome completo', 'colaborador', 'funcionario', 'funcionário'],
+    groot: ['groot id', 'groot_id', 'groot', 'id', 'codigo', 'código'],
+    ext: ['ext', 'usuario ext', 'usuário ext', 'rep_nickname', 'nickname', 'login'],
+    tpl: ['3pl', 'tpl', 'parceiro 3pl', 'parceiro', 'empresa'],
+    turno: ['turno', 'turno associado', 'nome do turno'],
+    grupo: ['grupo', 'grupo de escala', 'grupo escala'],
+    gestor: ['gestor', 'gestor direto', 'supervisor', 'coordenador'],
+    status: ['status', 'status atual', 'situacao', 'situação']
+  };
+
+  const normalizados = headers.map(normalizarChaveImportacao);
+  const mapa = {};
+  Object.entries(aliases).forEach(([campo, nomes]) => {
+    const idx = normalizados.findIndex(h => nomes.includes(h));
+    if (idx >= 0) mapa[campo] = idx;
+  });
+  return mapa;
+}
+
+function linhaPareceCabecalhoImportacao(cols) {
+  const mapa = montarMapaCabecalhoImportacao(cols);
+  return mapa.nome !== undefined && mapa.groot !== undefined && mapa.turno !== undefined && mapa.grupo !== undefined;
+}
+
+function obterValorImportado(cols, mapa, campo, fallbackIdx) {
+  const idx = mapa[campo] !== undefined ? mapa[campo] : fallbackIdx;
+  return asText(cols[idx]).trim();
+}
+
+function encontrarTurnoPorNomeImportacao(nomeTurno) {
+  const chave = normalizarChaveImportacao(nomeTurno);
+  if (!chave) return null;
+  return turnos.find(t => normalizarChaveImportacao(t.nome) === chave) || null;
+}
+
+function statusImportacaoLabel(item) {
+  if (item.erros.length) return '<span class="bulk-result error">Erro</span>';
+  if (item.acao === 'novo') return '<span class="bulk-result ok">Novo</span>';
+  if (item.acao === 'atualizar') return '<span class="bulk-result warn">Atualizar</span>';
+  if (item.acao === 'ignorar') return '<span class="bulk-result warn">Já cadastrado</span>';
+  return '<span class="bulk-result warn">Revisar</span>';
+}
+
+function preValidarImportacaoHC(mostrarToast = true) {
+  if (!pode('criar_hc')) { toast('Seu perfil não permite importar colaboradores.', 'error'); return; }
+
+  const texto = asText(document.getElementById('hc-import-textarea')?.value).trim();
+  const modo = document.getElementById('hc-import-modo')?.value || 'novos';
+
+  if (!texto) {
+    hcImportPreview = [];
+    renderPreviewImportacaoHC();
+    if (mostrarToast) toast('Cole os dados para importar.', 'error');
+    return;
+  }
+
+  const linhas = texto.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (!linhas.length) {
+    hcImportPreview = [];
+    renderPreviewImportacaoHC();
+    return;
+  }
+
+  const separador = detectarSeparadorImportacao(linhas[0]);
+  let startIdx = 0;
+  let mapa = { nome: 0, groot: 1, ext: 2, tpl: 3, turno: 4, grupo: 5, gestor: 6, status: 7 };
+  const primeiraCols = parseLinhaDelimitada(linhas[0], separador);
+
+  if (linhaPareceCabecalhoImportacao(primeiraCols)) {
+    mapa = montarMapaCabecalhoImportacao(primeiraCols);
+    startIdx = 1;
+  }
+
+  const contagemGroot = new Map();
+  const contagemExt = new Map();
+  const linhasParseadas = [];
+
+  for (let i = startIdx; i < linhas.length; i++) {
+    const cols = parseLinhaDelimitada(linhas[i], separador);
+    const item = {
+      linha: i + 1,
+      nome: obterValorImportado(cols, mapa, 'nome', 0),
+      groot: obterValorImportado(cols, mapa, 'groot', 1),
+      ext: normalizeExt(obterValorImportado(cols, mapa, 'ext', 2)),
+      tplRaw: obterValorImportado(cols, mapa, 'tpl', 3),
+      turnoRaw: obterValorImportado(cols, mapa, 'turno', 4),
+      grupo: obterValorImportado(cols, mapa, 'grupo', 5).toUpperCase(),
+      gestor: obterValorImportado(cols, mapa, 'gestor', 6),
+      statusRaw: obterValorImportado(cols, mapa, 'status', 7),
+      turno: null,
+      tpl: '',
+      status: '',
+      existente: null,
+      acao: '',
+      erros: []
+    };
+
+    item.tpl = normalizar3PL(item.tplRaw);
+    item.status = normalizarStatusHC(item.statusRaw || 'ativo');
+    item.turno = encontrarTurnoPorNomeImportacao(item.turnoRaw);
+
+    if (item.groot) contagemGroot.set(item.groot, (contagemGroot.get(item.groot) || 0) + 1);
+    if (item.ext) contagemExt.set(item.ext, (contagemExt.get(item.ext) || 0) + 1);
+    linhasParseadas.push(item);
+  }
+
+  hcImportPreview = linhasParseadas.map(item => validarLinhaImportacaoHC(item, modo, contagemGroot, contagemExt));
+  renderPreviewImportacaoHC();
+
+  const qtdErro = hcImportPreview.filter(i => i.erros.length).length;
+  const qtdProcessar = hcImportPreview.filter(i => !i.erros.length && ['novo', 'atualizar'].includes(i.acao)).length;
+
+  if (mostrarToast) {
+    if (qtdErro) toast(`Pré-validação concluída com ${qtdErro} erro(s).`, 'error');
+    else toast(`Pré-validação OK: ${qtdProcessar} registro(s) pronto(s).`, 'success');
+  }
+}
+
+function validarLinhaImportacaoHC(item, modo, contagemGroot, contagemExt) {
+  if (!item.nome) item.erros.push('Nome obrigatório');
+  if (!item.groot) item.erros.push('Groot ID obrigatório');
+  if (!item.tpl) item.erros.push('3PL inválido');
+  if (!item.turnoRaw) item.erros.push('Turno obrigatório');
+  if (item.turnoRaw && !item.turno) item.erros.push(`Turno não encontrado: ${item.turnoRaw}`);
+  if (!item.grupo) item.erros.push('Grupo obrigatório');
+  if (!item.status) item.erros.push('Status inválido');
+  if (item.groot && contagemGroot.get(item.groot) > 1) item.erros.push('Groot ID duplicado na lista');
+  if (item.ext && contagemExt.get(item.ext) > 1) item.erros.push('EXT duplicado na lista');
+
+  if (item.turno && item.grupo) {
+    const escala = ESCALAS[item.turno.escala];
+    if (escala?.grupos?.length && !escala.grupos.includes(item.grupo)) {
+      item.erros.push(`Grupo ${item.grupo} inválido para o turno ${item.turno.nome}`);
+    }
+  }
+
+  const existenteGroot = item.groot ? heads.find(h => asText(h.groot) === item.groot) : null;
+  const existenteExt = item.ext ? heads.find(h => normalizeExt(h.ext) === item.ext) : null;
+  item.existente = existenteGroot || existenteExt || null;
+
+  if (existenteExt && existenteGroot && existenteExt.id !== existenteGroot.id) {
+    item.erros.push('Groot ID e EXT pertencem a colaboradores diferentes');
+  } else if (existenteExt && !existenteGroot) {
+    item.erros.push(`EXT já cadastrado para outro Groot ID (${existenteExt.groot || 'sem Groot'})`);
+  }
+
+  if (!item.erros.length) {
+    if (existenteGroot) item.acao = modo === 'upsert' ? 'atualizar' : 'ignorar';
+    else item.acao = 'novo';
+  }
+
+  return item;
+}
+
+function renderPreviewImportacaoHC() {
+  const summary = document.getElementById('hc-import-summary');
+  const wrap = document.getElementById('hc-import-preview-wrap');
+  const tbody = document.getElementById('tbody-hc-import-preview');
+  const btnConfirmar = document.getElementById('btn-confirmar-import-hc');
+
+  const total = hcImportPreview.length;
+  const novos = hcImportPreview.filter(i => i.acao === 'novo' && !i.erros.length).length;
+  const atualizar = hcImportPreview.filter(i => i.acao === 'atualizar' && !i.erros.length).length;
+  const ignorados = hcImportPreview.filter(i => i.acao === 'ignorar' && !i.erros.length).length;
+  const erros = hcImportPreview.filter(i => i.erros.length).length;
+  const processar = novos + atualizar;
+
+  setTextSimple('hc-import-total', total);
+  setTextSimple('hc-import-novos', novos);
+  setTextSimple('hc-import-atualizar', atualizar);
+  setTextSimple('hc-import-ignorados', ignorados);
+  setTextSimple('hc-import-erros', erros);
+
+  if (summary) summary.style.display = total ? 'grid' : 'none';
+  if (wrap) wrap.style.display = total ? 'block' : 'none';
+  if (btnConfirmar) btnConfirmar.disabled = !processar || !!erros;
+
+  if (!tbody) return;
+  if (!total) {
+    tbody.innerHTML = '';
+    return;
+  }
+
+  tbody.innerHTML = hcImportPreview.map(item => {
+    const cls = item.erros.length ? 'bulk-row-error' : item.acao === 'ignorar' ? 'bulk-row-warn' : '';
+    const detalhes = item.erros.length ? `<div class="bulk-error-list">${item.erros.map(escapeHtml).join('<br>')}</div>` : '';
+    return `<tr class="${cls}">
+      <td>${item.linha}</td>
+      <td><strong>${escapeHtml(item.nome || '—')}</strong></td>
+      <td style="font-family:monospace;font-size:12px">${escapeHtml(item.groot || '—')}</td>
+      <td style="font-family:monospace;font-size:12px">${item.ext ? '<span style="color:var(--text-hint)">ext_</span>' + escapeHtml(item.ext) : '—'}</td>
+      <td>${item.tpl ? tplBadge(item.tpl) : '<span class="badge badge-red">Inválido</span>'}</td>
+      <td>${item.turno ? turnoBadge(item.turno.id) : escapeHtml(item.turnoRaw || '—')}</td>
+      <td>${escapeHtml(item.grupo || '—')}</td>
+      <td>${item.status ? statusBadge(item.status) : '<span class="badge badge-red">Inválido</span>'}</td>
+      <td>${statusImportacaoLabel(item)}${detalhes}</td>
+    </tr>`;
+  }).join('');
+}
+
+function setTextSimple(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = String(value);
+}
+
+function dbDataImportacaoHC(item) {
+  return {
+    nome: item.nome,
+    groot_id: item.groot,
+    ext: item.ext || null,
+    tpl: item.tpl,
+    gestor: item.gestor || null,
+    turno_id: item.turno.id,
+    grupo: item.grupo,
+    status: item.status || 'ativo'
+  };
+}
+
+async function confirmarImportacaoHC() {
+  if (!pode('criar_hc')) { toast('Seu perfil não permite importar colaboradores.', 'error'); return; }
+  if (!hcImportPreview.length) { toast('Faça a pré-validação antes de importar.', 'error'); return; }
+
+  const erros = hcImportPreview.filter(i => i.erros.length);
+  if (erros.length) { toast('Corrija os erros antes de confirmar a importação.', 'error'); return; }
+
+  const novos = hcImportPreview.filter(i => i.acao === 'novo');
+  const atualizacoes = hcImportPreview.filter(i => i.acao === 'atualizar');
+  const ignorados = hcImportPreview.filter(i => i.acao === 'ignorar');
+
+  if (!novos.length && !atualizacoes.length) {
+    toast('Nenhum registro novo ou atualização para importar.', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btn-confirmar-import-hc');
+  setButtonLoading(btn, true, 'Importando...');
+
+  try {
+    if (novos.length) {
+      const payloadNovos = novos.map(dbDataImportacaoHC);
+      for (let i = 0; i < payloadNovos.length; i += 500) {
+        const lote = payloadNovos.slice(i, i + 500);
+        const { error } = await db.from('colaboradores').insert(lote);
+        if (error) throw error;
+      }
+    }
+
+    for (const item of atualizacoes) {
+      const { error } = await db.from('colaboradores').update(dbDataImportacaoHC(item)).eq('id', item.existente.id);
+      if (error) throw error;
+    }
+
+    toast(`Importação concluída: ${novos.length} novo(s), ${atualizacoes.length} atualizado(s), ${ignorados.length} ignorado(s).`, 'success');
+    await carregarDadosDoBanco();
+    fecharImportacaoHC();
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao importar Headcount: ' + (error.message || error), 'error');
+  } finally {
+    setButtonLoading(btn, false);
+  }
+}
+
 // ════════════════════════════════════════
 //  COMANDO: EXPORTAR PARA CSV
 // ════════════════════════════════════════
@@ -2074,6 +2534,13 @@ const modalExcluir = document.getElementById('modal-excluir');
 if (modalExcluir) {
   modalExcluir.addEventListener('click', function(e) {
     if (e.target === this) fecharModal();
+  });
+}
+
+const modalImportarHc = document.getElementById('modal-importar-hc');
+if (modalImportarHc) {
+  modalImportarHc.addEventListener('click', function(e) {
+    if (e.target === this) fecharImportacaoHC();
   });
 }
 
