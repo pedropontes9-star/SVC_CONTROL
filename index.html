@@ -144,12 +144,17 @@
   .modal h3 { font-size: 16px; font-weight: 600; color: var(--meli-blue); margin-bottom: 16px; }
   .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 
+
+
   /* Importação massiva Headcount */
   .modal-lg { max-width: 980px; max-height: 90vh; overflow-y: auto; }
   .bulk-import-layout { display: grid; grid-template-columns: minmax(260px, 1fr); gap: 14px; }
   .bulk-import-textarea { width: 100%; min-height: 170px; resize: vertical; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 12px; font-family: 'Inter', monospace; color: var(--text); background: var(--surface); outline: none; line-height: 1.45; }
   .bulk-import-textarea:focus { border-color: var(--meli-action); box-shadow: 0 0 0 3px rgba(52,131,250,.1); }
   .bulk-import-help { background: #f7f7f7; border: 1px solid #eee; border-radius: var(--radius); padding: 10px 12px; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+  .bulk-import-file { border: 1px dashed #c8d9fb; background: #f8fbff; border-radius: var(--radius); padding: 12px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .bulk-import-file input[type="file"] { max-width: 320px; font-size: 12px; color: var(--text-muted); }
+  .bulk-import-file-info { font-size: 12px; color: var(--text-muted); line-height: 1.45; }
   .bulk-import-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-top: 14px; }
   .bulk-summary-card { border: 1px solid #eee; border-radius: var(--radius); padding: 10px 12px; background: #fafafa; }
   .bulk-summary-card span { display:block; font-size: 10px; text-transform: uppercase; letter-spacing: .04em; font-weight: 700; color: var(--text-hint); margin-bottom: 4px; }
@@ -679,17 +684,17 @@
 </div>
 
 
-<div class="modal-overlay" id="modal-importar-hc">
+<div class="modal-overlay" id="modal-importar-hc" onclick="fecharImportacaoHC()">
   <div class="modal modal-lg" onclick="event.stopPropagation()">
     <h3>Importar Headcount em massa</h3>
     <p style="font-size:13px;color:var(--text-muted);line-height:1.5;margin-bottom:14px">
-      Cole uma base copiada do Excel/Google Sheets ou um CSV separado por ponto e vírgula. O sistema fará uma pré-validação antes de gravar no Supabase.
+      Cole uma base copiada do Excel/Google Sheets ou anexe um arquivo <strong>.csv</strong> ou <strong>.tsv</strong>. O sistema fará uma pré-validação antes de gravar no Supabase.
     </p>
 
     <div class="bulk-import-help">
-      <strong>Modelo obrigatório:</strong><br>
+      <strong>Modelo esperado:</strong><br>
       Nome;Groot ID;EXT;3PL;Turno;Grupo;Gestor;Status<br>
-      <span>Turno e Grupo são obrigatórios. O turno precisa existir em <strong>HCM → Turnos</strong>. Se o status vier vazio, será considerado <strong>ativo</strong>.</span>
+      <span>Turno é obrigatório e precisa existir em <strong>HCM → Turnos</strong>. Grupo só é obrigatório quando o turno possuir grupos de escala; para turnos sem grupo, será salvo em branco e exibido como <strong>Não se aplica</strong>. Status vazio vira <strong>ativo</strong>.</span>
     </div>
 
     <div class="form-grid" style="margin-top:14px;margin-bottom:12px">
@@ -703,16 +708,25 @@
     </div>
 
     <div class="bulk-import-layout">
+      <div class="bulk-import-file">
+        <div class="bulk-import-file-info">
+          <strong>Anexar arquivo CSV ou TSV</strong><br>
+          O conteúdo do arquivo será carregado no campo abaixo para revisão antes da pré-validação.
+        </div>
+        <input type="file" id="hc-import-arquivo" accept=".csv,.tsv,text/csv,text/tab-separated-values,text/plain" onchange="lerArquivoImportacaoHC(event)">
+      </div>
+
       <div class="form-group">
         <label>Dados para importação</label>
         <textarea id="hc-import-textarea" class="bulk-import-textarea" placeholder="Nome;Groot ID;EXT;3PL;Turno;Grupo;Gestor;Status&#10;João Silva;123456;ext_joao.silva;DHL;T2 14:00;A;Carlos Souza;ativo&#10;Maria Santos;789012;maria.santos;Mendes;T1 06:00;B;Ana Lima;ativo"></textarea>
-        <span class="field-hint">Também aceita colagem direta do Sheets/Excel com colunas separadas por tabulação.</span>
+        <span class="field-hint">Aceita ponto e vírgula, vírgula ou tabulação. Você pode colar do Excel/Sheets ou carregar um arquivo .csv/.tsv.</span>
       </div>
     </div>
 
     <div class="form-actions" style="margin-top:12px;flex-wrap:wrap">
       <button class="btn btn-primary" id="btn-validar-import-hc" onclick="preValidarImportacaoHC(true)">Pré-validar</button>
-      <button class="btn btn-secondary" onclick="baixarModeloImportacaoHC()">Baixar modelo CSV</button>
+      <button class="btn btn-secondary" onclick="baixarModeloImportacaoHC('csv')">Baixar modelo CSV</button>
+      <button class="btn btn-secondary" onclick="baixarModeloImportacaoHC('tsv')">Baixar modelo TSV</button>
       <button class="btn btn-secondary" onclick="limparImportacaoHC()">Limpar</button>
     </div>
 
@@ -1116,8 +1130,8 @@ function aplicarControleAcesso() {
   setVisibleById('card-form-turnos', pode('criar_turnos') || pode('editar_turnos'));
   setVisibleById('card-form-hc', pode('criar_hc') || pode('editar_hc'));
   setVisibleById('hc-readonly-note', podeAcessarTab('headcount') && !pode('criar_hc') && !pode('editar_hc'), 'block');
-  setVisibleById('btn-exportar-hc', pode('exportar_hc'), 'inline-flex');
   setVisibleById('btn-importar-hc', pode('criar_hc'), 'inline-flex');
+  setVisibleById('btn-exportar-hc', pode('exportar_hc'), 'inline-flex');
   setVisibleById('btn-atualizar-anomalias', pode('atualizar_anomalias'), 'inline-flex');
   setVisibleById('card-form-crachas', pode('gerar_crachas'));
 
@@ -2071,6 +2085,15 @@ function obterListaFiltradaHC() {
   });
 }
 
+
+function grupoHeadDisplay(head) {
+  const turno = turnos.find(t => t.id === head.turnoId);
+  const escala = turno ? ESCALAS[turno.escala] : null;
+  if (head.grupo) return `Grupo ${escapeHtml(head.grupo)}`;
+  if (turno && (!escala || !escala.grupos || !escala.grupos.length)) return '<span style="color:var(--text-hint);font-size:12px">Não se aplica</span>';
+  return '—';
+}
+
 function renderHeads() {
   const lista = obterListaFiltradaHC();
   document.getElementById('hc-count').textContent = `${lista.length} colaborador${lista.length!==1?'es':''}`;
@@ -2090,7 +2113,7 @@ function renderHeads() {
       <td style="font-family:monospace;font-size:12px">${ext?`<span style="color:var(--text-hint)">ext_</span>${escapeHtml(ext)}`:'<span style="color:var(--text-hint)">—</span>'}</td>
       <td>${tplBadge(h.tpl)}</td>
       <td>${turnoBadge(h.turnoId)}</td>
-      <td style="font-size:12px;color:var(--text-muted)">${h.grupo?`Grupo ${escapeHtml(h.grupo)}`:'—'}</td>
+      <td style="font-size:12px;color:var(--text-muted)">${grupoHeadDisplay(h)}</td>
       <td>${folgaBadge(h)}</td>
       <td style="color:var(--text-muted);font-size:12px">${escapeHtml(h.gestor || '—')}</td>
       <td>${statusBadge(h.status)}</td>
@@ -2131,26 +2154,86 @@ function fecharImportacaoHC() {
 
 function limparImportacaoHC() {
   const textarea = document.getElementById('hc-import-textarea');
+  const file = document.getElementById('hc-import-arquivo');
   if (textarea) textarea.value = '';
+  if (file) file.value = '';
   hcImportPreview = [];
   renderPreviewImportacaoHC();
 }
 
-function baixarModeloImportacaoHC() {
-  const csv = 'Nome;Groot ID;EXT;3PL;Turno;Grupo;Gestor;Status\nJoão Silva;123456;ext_joao.silva;DHL;NOME DO TURNO;A;Carlos Souza;ativo\nMaria Santos;789012;maria.santos;Mendes;NOME DO TURNO;B;Ana Lima;ativo\n';
-  const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
+function baixarModeloImportacaoHC(tipo = 'csv') {
+  const separador = tipo === 'tsv' ? '\t' : ';';
+  const linhas = [
+    ['Nome', 'Groot ID', 'EXT', '3PL', 'Turno', 'Grupo', 'Gestor', 'Status'],
+    ['João Silva', '123456', 'ext_joao.silva', 'DHL', 'NOME DO TURNO', 'A', 'Carlos Souza', 'ativo'],
+    ['Maria Santos', '789012', 'maria.santos', 'Mendes', 'NOME DO TURNO', 'B', 'Ana Lima', 'ativo']
+  ];
+  const conteudo = linhas.map(cols => cols.map(v => {
+    const txt = asText(v);
+    return tipo === 'csv' && /[;,"\n\r]/.test(txt) ? `"${txt.replace(/"/g, '""')}"` : txt;
+  }).join(separador)).join('\n') + '\n';
+  const mime = tipo === 'tsv' ? 'text/tab-separated-values;charset=utf-8;' : 'text/csv;charset=utf-8;';
+  const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), conteudo], { type: mime });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = 'modelo_importacao_headcount_srj2.csv';
+  link.download = `modelo_importacao_headcount_srj2.${tipo === 'tsv' ? 'tsv' : 'csv'}`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
 
+function lerArquivoImportacaoHC(event) {
+  const arquivo = event?.target?.files?.[0];
+  if (!arquivo) return;
+
+  const nome = lower(arquivo.name);
+  const tipoValido = nome.endsWith('.csv') || nome.endsWith('.tsv') || nome.endsWith('.txt') || /csv|tab-separated|plain/.test(lower(arquivo.type));
+  if (!tipoValido) {
+    toast('Anexe um arquivo .csv ou .tsv.', 'error');
+    event.target.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const texto = asText(reader.result).replace(/^\uFEFF/, '');
+    const textarea = document.getElementById('hc-import-textarea');
+    if (textarea) textarea.value = texto;
+    hcImportPreview = [];
+    renderPreviewImportacaoHC();
+    toast(`Arquivo carregado: ${arquivo.name}. Revise e pré-valide antes de importar.`, 'success');
+  };
+  reader.onerror = () => toast('Não foi possível ler o arquivo anexado.', 'error');
+  reader.readAsText(arquivo, 'UTF-8');
+}
+
+function contarSeparadorForaAspas(linha, separador) {
+  let count = 0;
+  let entreAspas = false;
+  for (let i = 0; i < linha.length; i++) {
+    const ch = linha[i];
+    const prox = linha[i + 1];
+    if (ch === '"') {
+      if (entreAspas && prox === '"') i++;
+      else entreAspas = !entreAspas;
+      continue;
+    }
+    if (ch === separador && !entreAspas) count++;
+  }
+  return count;
+}
+
 function detectarSeparadorImportacao(linha) {
-  return linha.includes('\t') ? '\t' : ';';
+  const candidatos = ['\t', ';', ','];
+  let melhor = ';';
+  let maior = -1;
+  candidatos.forEach(sep => {
+    const qtd = contarSeparadorForaAspas(linha, sep);
+    if (qtd > maior) { maior = qtd; melhor = sep; }
+  });
+  return melhor;
 }
 
 function parseLinhaDelimitada(linha, separador) {
@@ -2206,7 +2289,6 @@ function normalizarStatusHC(value) {
     inativo: 'inativo',
     inativa: 'inativo',
     ferias: 'ferias',
-    ferias_: 'ferias',
     afastado: 'afastado',
     afastada: 'afastado'
   };
@@ -2236,7 +2318,7 @@ function montarMapaCabecalhoImportacao(headers) {
 
 function linhaPareceCabecalhoImportacao(cols) {
   const mapa = montarMapaCabecalhoImportacao(cols);
-  return mapa.nome !== undefined && mapa.groot !== undefined && mapa.turno !== undefined && mapa.grupo !== undefined;
+  return mapa.nome !== undefined && mapa.groot !== undefined && mapa.turno !== undefined;
 }
 
 function obterValorImportado(cols, mapa, campo, fallbackIdx) {
@@ -2250,6 +2332,16 @@ function encontrarTurnoPorNomeImportacao(nomeTurno) {
   return turnos.find(t => normalizarChaveImportacao(t.nome) === chave) || null;
 }
 
+function turnoPossuiGrupos(turno) {
+  const escala = turno ? ESCALAS[turno.escala] : null;
+  return !!(escala && Array.isArray(escala.grupos) && escala.grupos.length);
+}
+
+function grupoPreviewImportacao(item) {
+  if (item.turno && !turnoPossuiGrupos(item.turno)) return '<span style="color:var(--text-hint);font-size:12px">Não se aplica</span>';
+  return escapeHtml(item.grupo || '—');
+}
+
 function statusImportacaoLabel(item) {
   if (item.erros.length) return '<span class="bulk-result error">Erro</span>';
   if (item.acao === 'novo') return '<span class="bulk-result ok">Novo</span>';
@@ -2261,13 +2353,13 @@ function statusImportacaoLabel(item) {
 function preValidarImportacaoHC(mostrarToast = true) {
   if (!pode('criar_hc')) { toast('Seu perfil não permite importar colaboradores.', 'error'); return; }
 
-  const texto = asText(document.getElementById('hc-import-textarea')?.value).trim();
+  const texto = asText(document.getElementById('hc-import-textarea')?.value).replace(/^\uFEFF/, '').trim();
   const modo = document.getElementById('hc-import-modo')?.value || 'novos';
 
   if (!texto) {
     hcImportPreview = [];
     renderPreviewImportacaoHC();
-    if (mostrarToast) toast('Cole os dados para importar.', 'error');
+    if (mostrarToast) toast('Cole os dados ou anexe um arquivo para importar.', 'error');
     return;
   }
 
@@ -2315,6 +2407,7 @@ function preValidarImportacaoHC(mostrarToast = true) {
     item.tpl = normalizar3PL(item.tplRaw);
     item.status = normalizarStatusHC(item.statusRaw || 'ativo');
     item.turno = encontrarTurnoPorNomeImportacao(item.turnoRaw);
+    if (item.turno && !turnoPossuiGrupos(item.turno)) item.grupo = '';
 
     if (item.groot) contagemGroot.set(item.groot, (contagemGroot.get(item.groot) || 0) + 1);
     if (item.ext) contagemExt.set(item.ext, (contagemExt.get(item.ext) || 0) + 1);
@@ -2339,15 +2432,15 @@ function validarLinhaImportacaoHC(item, modo, contagemGroot, contagemExt) {
   if (!item.tpl) item.erros.push('3PL inválido');
   if (!item.turnoRaw) item.erros.push('Turno obrigatório');
   if (item.turnoRaw && !item.turno) item.erros.push(`Turno não encontrado: ${item.turnoRaw}`);
-  if (!item.grupo) item.erros.push('Grupo obrigatório');
   if (!item.status) item.erros.push('Status inválido');
   if (item.groot && contagemGroot.get(item.groot) > 1) item.erros.push('Groot ID duplicado na lista');
   if (item.ext && contagemExt.get(item.ext) > 1) item.erros.push('EXT duplicado na lista');
 
-  if (item.turno && item.grupo) {
+  if (item.turno) {
     const escala = ESCALAS[item.turno.escala];
-    if (escala?.grupos?.length && !escala.grupos.includes(item.grupo)) {
-      item.erros.push(`Grupo ${item.grupo} inválido para o turno ${item.turno.nome}`);
+    if (turnoPossuiGrupos(item.turno)) {
+      if (!item.grupo) item.erros.push('Grupo obrigatório para este turno');
+      else if (!escala.grupos.includes(item.grupo)) item.erros.push(`Grupo ${item.grupo} inválido para o turno ${item.turno.nome}`);
     }
   }
 
@@ -2408,7 +2501,7 @@ function renderPreviewImportacaoHC() {
       <td style="font-family:monospace;font-size:12px">${item.ext ? '<span style="color:var(--text-hint)">ext_</span>' + escapeHtml(item.ext) : '—'}</td>
       <td>${item.tpl ? tplBadge(item.tpl) : '<span class="badge badge-red">Inválido</span>'}</td>
       <td>${item.turno ? turnoBadge(item.turno.id) : escapeHtml(item.turnoRaw || '—')}</td>
-      <td>${escapeHtml(item.grupo || '—')}</td>
+      <td>${grupoPreviewImportacao(item)}</td>
       <td>${item.status ? statusBadge(item.status) : '<span class="badge badge-red">Inválido</span>'}</td>
       <td>${statusImportacaoLabel(item)}${detalhes}</td>
     </tr>`;
@@ -2428,7 +2521,7 @@ function dbDataImportacaoHC(item) {
     tpl: item.tpl,
     gestor: item.gestor || null,
     turno_id: item.turno.id,
-    grupo: item.grupo,
+    grupo: item.grupo || null,
     status: item.status || 'ativo'
   };
 }
@@ -2504,7 +2597,7 @@ function exportarCSV() {
       ext ? `ext_${ext}` : '—',
       h.tpl || '—',
       nomeTurno,
-      h.grupo ? `Grupo ${h.grupo}` : '—',
+      h.grupo ? `Grupo ${h.grupo}` : 'Não se aplica',
       folga,
       h.gestor || '—',
       h.status || '—'
@@ -2537,15 +2630,8 @@ if (modalExcluir) {
   });
 }
 
-const modalImportarHc = document.getElementById('modal-importar-hc');
-if (modalImportarHc) {
-  modalImportarHc.addEventListener('click', function(e) {
-    if (e.target === this) fecharImportacaoHC();
-  });
-}
-
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') fecharModal();
+  if (e.key === 'Escape') { fecharModal(); fecharImportacaoHC(); }
 });
 
 
