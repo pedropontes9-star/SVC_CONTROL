@@ -498,7 +498,7 @@
           <option value="0430">04:30 — Folga fixa + rodízio domingo (grupos A/B/C/D/E)</option>
           <option value="6x1_dom">6x1 — Folga fixa domingo</option>
           <option value="5x2_fds">5x2 — Folga sábado e domingo</option>
-          <option value="5x2_qqi">5x2 especial — Folga qua/qui + 4º domingo</option>
+          <option value="5x2_qqi">5x2 especial — Qua/Qui + Domingo rotativo por grupo</option>
           <option value="consolidacao">Consolidação (Mista - Grupos A/B)</option>
         </select>
         <div id="escala-descricao" class="escala-info" style="display:none"></div>
@@ -935,7 +935,7 @@
     <div class="bulk-import-help">
       <strong>Modelo esperado:</strong><br>
       Nome;Groot ID;EXT;3PL;Turno;Grupo;Gestor;Status<br>
-      <span>Turno é obrigatório e precisa existir em <strong>HCM → Turnos</strong>. Grupo só é obrigatório quando o turno possuir grupos de escala; para turnos sem grupo, será salvo em branco e exibido como <strong>Não se aplica</strong>. Status vazio vira <strong>ativo</strong>.</span>
+      <span>Turno é obrigatório e precisa existir em <strong>HCM → Turnos</strong>. Grupo só é obrigatório quando o turno possuir grupos de escala; você pode informar <strong>A</strong> ou <strong>Grupo A</strong>. Para turnos sem grupo, será salvo em branco e exibido como <strong>Não se aplica</strong>. Status vazio vira <strong>ativo</strong>.</span>
     </div>
 
     <div class="form-grid" style="margin-top:14px;margin-bottom:12px">
@@ -959,7 +959,7 @@
 
       <div class="form-group">
         <label>Dados para importação</label>
-        <textarea id="hc-import-textarea" class="bulk-import-textarea" placeholder="Nome;Groot ID;EXT;3PL;Turno;Grupo;Gestor;Status&#10;João Silva;123456;ext_joao.silva;DHL;T2 14:00;A;Carlos Souza;ativo&#10;Maria Santos;789012;maria.santos;Mendes;T1 06:00;B;Ana Lima;ativo"></textarea>
+        <textarea id="hc-import-textarea" class="bulk-import-textarea" placeholder="Nome;Groot ID;EXT;3PL;Turno;Grupo;Gestor;Status&#10;João Silva;123456;ext_joao.silva;DHL;T2 14:00;A;Carlos Souza;ativo&#10;Maria Santos;789012;maria.santos;Mendes;T1 06:00;Grupo B;Ana Lima;ativo"></textarea>
         <span class="field-hint">Aceita ponto e vírgula, vírgula ou tabulação. Você pode colar do Excel/Sheets ou carregar um arquivo .csv/.tsv.</span>
       </div>
     </div>
@@ -1400,148 +1400,195 @@ const ESCALAS = {
   espanhola: {
     label: 'Espanhola',
     grupos: ['A','B'],
-    descricao: 'Ciclo de 4 semanas rotativas. Grupos A e B se complementam — todo sábado, domingo e segunda sempre tem alguém folgando.',
-    refDate: new Date(2025, 5, 14), // sábado 14/jun/2025
+    descricao: 'Ciclo de 4 semanas. Grupo A e B alternam folgas entre sábado, domingo e segunda.',
+    refDate: new Date(2025, 5, 14), // sábado 14/jun/2025 — início do ciclo
     ciclo: {
-      A: [
-        ['sab'],
-        ['dom'],
-        ['dom','seg'],
-        ['sab','seg'],
-      ],
-      B: [
-        ['dom','seg'],
-        ['sab','seg'],
-        ['sab'],
-        ['dom'],
-      ]
+      A: [ ['sab'], ['dom'], ['dom','seg'], ['sab','seg'] ],
+      B: [ ['dom','seg'], ['sab','seg'], ['sab'], ['dom'] ]
     }
   },
   '0430': {
     label: '04:30',
     grupos: ['A','B','C','D','E'],
-    descricao: 'Grupos A/B: folga fixa sábado + rodízio de domingo. Grupos C/D: folga fixa segunda + mesmo rodízio. Grupo E: folga fixa domingo.',
-    refDate: new Date(2025, 5, 14),
+    descricao: 'A/B: folga fixa sábado + rodízio de domingo. C/D: folga fixa segunda + rodízio de domingo. E: domingo fixo.',
+    refDate: new Date(2025, 5, 14), // referência: domingo seguinte abre o rodízio no grupo A
     ciclo: null
   },
   '6x1_dom': {
     label: '6x1',
     grupos: [],
-    descricao: '6 dias trabalhados, 1 de folga. Folga fixa no domingo.',
+    descricao: '6 dias trabalhados e domingo fixo de folga.',
     ciclo: null
   },
   '5x2_fds': {
     label: '5x2',
     grupos: [],
-    descricao: '5 dias trabalhados, folga fixa sábado e domingo.',
+    descricao: 'Folga fixa sábado e domingo.',
     ciclo: null
   },
   '5x2_qqi': {
-    label: '5x2 Esp.',
-    grupos: [],
-    descricao: '5 dias trabalhados, folga fixa quarta e quinta + 4º domingo do mês.',
+    label: '5x2 Qua/Qui',
+    grupos: ['A','B','C','D'],
+    descricao: 'Ciclo semanal A > B > C > D. Todos folgam quarta; o grupo da semana 4 troca quinta por domingo. Referência: semana 22/06/2026 a 28/06/2026 com grupo C na semana 4.',
+    refDate: new Date(2026, 5, 22), // segunda 22/jun/2026 — grupo C está na semana 4
+    refGrupoSemana4: 'C',
+    ordem: ['A','B','C','D'],
     ciclo: null
   },
   consolidacao: {
     label: 'Consolid.',
     grupos: ['A','B'],
-    descricao: 'Revezamento de 2 semanas. Grupo A e B alternam entre 6x1 com folga domingo e 5x2 com folga sábado/domingo.',
-    refDate: new Date(2025, 5, 15), // domingo 15/jun/2025
+    descricao: 'Revezamento de 2 semanas. A e B alternam entre domingo fixo e sábado + domingo.',
+    refDate: new Date(2025, 5, 15), // domingo 15/jun/2025 — início do ciclo
     ciclo: null
   }
 };
 
-const DIAS_LABEL = { sab:'Sábado', dom:'Domingo', seg:'Segunda', qua:'Quarta', qui:'Quinta' };
+const DIAS_LABEL = {
+  dom: 'Domingo', seg: 'Segunda', ter: 'Terça', qua: 'Quarta',
+  qui: 'Quinta', sex: 'Sexta', sab: 'Sábado'
+};
 
+function diasToLabel(dias) {
+  return (dias || []).map(d => DIAS_LABEL[d] || d).join(' + ');
+}
+
+function dataSemHora(date) {
+  const d = new Date(date || new Date());
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function normalizarGrupoFolga(value) {
+  return asText(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toUpperCase()
+    .replace(/^GRUPO\s+/, '')
+    .trim();
+}
+
+function diffSemanas(ref, alvo) {
+  return Math.round((dataSemHora(alvo) - dataSemHora(ref)) / (7 * 86400000));
+}
+
+// Semana espanhola começa no sábado.
 function inicioSemanaEspanhola(date) {
-  const d = new Date(date);
+  const d = dataSemHora(date);
   const dow = d.getDay();
   const diff = (dow === 6) ? 0 : -(dow + 1);
   d.setDate(d.getDate() + diff);
-  d.setHours(0,0,0,0);
   return d;
 }
 
 function semanaEspanhola(date) {
   const ref = inicioSemanaEspanhola(ESCALAS.espanhola.refDate);
   const alvo = inicioSemanaEspanhola(date);
-  const diff = Math.round((alvo - ref) / (7 * 86400000));
+  const diff = diffSemanas(ref, alvo);
   return ((diff % 4) + 4) % 4;
+}
+
+// Para o rodízio 04:30, a semana operacional olha para o domingo daquela semana.
+function domingoOperacionalDaSemana(date) {
+  const d = dataSemHora(date);
+  const dow = d.getDay();
+  d.setDate(d.getDate() + ((7 - dow) % 7));
+  return d;
+}
+
+function inicioSemanaDomingo(date) {
+  const d = dataSemHora(date);
+  d.setDate(d.getDate() - d.getDay());
+  return d;
+}
+
+function inicioSemanaSegunda(date) {
+  const d = dataSemHora(date);
+  const dow = d.getDay();
+  d.setDate(d.getDate() + (dow === 0 ? -6 : 1 - dow));
+  return d;
+}
+
+function grupoSemanaQuatro5x2QQI(date) {
+  const cfg = ESCALAS['5x2_qqi'];
+  const ordem = cfg.ordem || cfg.grupos || [];
+  if (!ordem.length || !cfg.refDate || !cfg.refGrupoSemana4) return null;
+
+  const refSemana = inicioSemanaSegunda(cfg.refDate);
+  const alvoSemana = inicioSemanaSegunda(date);
+  const semanas = diffSemanas(refSemana, alvoSemana);
+  const idxRef = ordem.indexOf(cfg.refGrupoSemana4);
+  if (idxRef < 0) return null;
+
+  const idx = ((idxRef + semanas) % ordem.length + ordem.length) % ordem.length;
+  return ordem[idx];
+}
+
+function semanaContemData(dataRef, dataAlvo) {
+  const ini = inicioSemanaDomingo(dataRef);
+  const fim = new Date(ini);
+  fim.setDate(ini.getDate() + 6);
+  fim.setHours(23,59,59,999);
+  const alvo = dataSemHora(dataAlvo);
+  return alvo >= ini && alvo <= fim;
+}
+
+function quartoDomingoDoMes(date) {
+  const base = dataSemHora(date);
+  const ano = base.getFullYear();
+  const mes = base.getMonth();
+  const domingos = [];
+  for (let dia = 1; dia <= 31; dia++) {
+    const d = new Date(ano, mes, dia);
+    if (d.getMonth() !== mes) break;
+    if (d.getDay() === 0) domingos.push(d);
+  }
+  return domingos[3] || null;
 }
 
 function calcFolgaSemana(head, turno, dataRef) {
   const data = dataRef || new Date();
-  if (!turno) return null;
+  if (!turno || !turno.escala || !ESCALAS[turno.escala]) return null;
 
   const escala = turno.escala;
+  const grupo = normalizarGrupoFolga(head && head.grupo);
 
   if (escala === 'espanhola') {
-    const sem = semanaEspanhola(data);
-    const grupo = head.grupo;
     if (!grupo || !ESCALAS.espanhola.ciclo[grupo]) return null;
-    const dias = ESCALAS.espanhola.ciclo[grupo][sem] || [];
-    return dias.map(d => DIAS_LABEL[d] || d).join(' + ');
+    const sem = semanaEspanhola(data);
+    return diasToLabel(ESCALAS.espanhola.ciclo[grupo][sem]);
   }
 
   if (escala === '0430') {
-    const grupo = head.grupo;
-    if (!grupo) return null;
+    if (!grupo || !ESCALAS['0430'].grupos.includes(grupo)) return null;
     if (grupo === 'E') return 'Domingo';
 
-    const fixo = (grupo === 'A' || grupo === 'B') ? 'Sábado' : 'Segunda';
-    const ref = ESCALAS['0430'].refDate;
-    const hoje = new Date(data); hoje.setHours(0,0,0,0);
-    const dow = hoje.getDay();
-    const domSemana = new Date(hoje);
-    domSemana.setDate(hoje.getDate() + (7 - dow) % 7);
-    const diffSem = Math.round((domSemana - ref) / (7 * 86400000));
+    const folgaFixa = (grupo === 'A' || grupo === 'B') ? 'Sábado' : 'Segunda';
+    const refRodizio = domingoOperacionalDaSemana(ESCALAS['0430'].refDate);
+    const domSemana = domingoOperacionalDaSemana(data);
+    const semNorm = ((diffSemanas(refRodizio, domSemana) % 4) + 4) % 4;
     const ordemGrupos = ['A','B','C','D'];
-    const idxGrupo = ordemGrupos.indexOf(grupo);
-    const semNorm = ((diffSem % 4) + 4) % 4;
-    const folgaDom = semNorm === idxGrupo;
+    const folgaDomingo = semNorm === ordemGrupos.indexOf(grupo);
 
-    return folgaDom ? `${fixo} + Domingo` : fixo;
+    return folgaDomingo ? `${folgaFixa} + Domingo` : folgaFixa;
   }
 
   if (escala === '6x1_dom') return 'Domingo';
   if (escala === '5x2_fds') return 'Sábado + Domingo';
+
   if (escala === '5x2_qqi') {
-    const d = new Date(data);
-    const domingos = [];
-    const mes = d.getMonth();
-    const ano = d.getFullYear();
-    for (let dia = 1; dia <= 31; dia++) {
-      const t = new Date(ano, mes, dia);
-      if (t.getMonth() !== mes) break;
-      if (t.getDay() === 0) domingos.push(t);
-    }
-    const quartoDom = domingos[3];
-    if (quartoDom) {
-      const inicioSem = new Date(d);
-      inicioSem.setDate(d.getDate() - d.getDay());
-      inicioSem.setHours(0,0,0,0);
-      const fimSem = new Date(inicioSem);
-      fimSem.setDate(inicioSem.getDate() + 6);
-      fimSem.setHours(23,59,59,999);
-      if (quartoDom >= inicioSem && quartoDom <= fimSem) return 'Quarta + Quinta + Domingo';
-    }
-    return 'Quarta + Quinta';
+    if (!grupo || !ESCALAS['5x2_qqi'].grupos.includes(grupo)) return null;
+    const grupoSemana4 = grupoSemanaQuatro5x2QQI(data);
+    return grupo === grupoSemana4 ? 'Quarta + Domingo' : 'Quarta + Quinta';
   }
 
   if (escala === 'consolidacao') {
-    const grupo = head.grupo;
-    if (!grupo) return null;
+    if (!grupo || !ESCALAS.consolidacao.grupos.includes(grupo)) return null;
+    const semNorm = ((diffSemanas(ESCALAS.consolidacao.refDate, inicioSemanaDomingo(data)) % 2) + 2) % 2;
 
-    const ref = ESCALAS.consolidacao.refDate;
-    const hoje = new Date(data); hoje.setHours(0,0,0,0);
-    const dow = hoje.getDay();
-    const domSemana = new Date(hoje);
-    domSemana.setDate(hoje.getDate() - dow);
-    const diffSem = Math.round((domSemana - ref) / (7 * 86400000));
-    const semNormalizada = ((diffSem % 2) + 2) % 2;
-
-    if (grupo === 'A') return semNormalizada === 0 ? 'Domingo' : 'Sábado + Domingo';
-    if (grupo === 'B') return semNormalizada === 0 ? 'Sábado + Domingo' : 'Domingo';
+    if (grupo === 'A') return semNorm === 0 ? 'Domingo' : 'Sábado + Domingo';
+    if (grupo === 'B') return semNorm === 0 ? 'Sábado + Domingo' : 'Domingo';
   }
 
   return null;
@@ -1593,7 +1640,7 @@ async function carregarDadosDoBanco() {
       ext: h.ext,
       tpl: h.tpl,
       turnoId: h.turno_id,
-      grupo: h.grupo,
+      grupo: normalizarGrupoFolga(h.grupo),
       gestor: h.gestor,
       status: h.status || 'ativo'
     }));
@@ -1682,12 +1729,12 @@ function switchTab(tab, btn) {
 //  LÓGICA DE TURNOS (Supabase)
 // ════════════════════════════════════════
 const ESCALA_DESCRICOES = {
-  espanhola: '📋 Ciclo 4 semanas · Grupos A e B · Sáb / Dom / Dom+Seg / Sáb+Seg alternados',
-  '0430':    '📋 Grupos A/B: folga fixa Sáb + rodízio Dom · Grupos C/D: folga fixa Seg + rodízio Dom · Grupo E: folga fixa Dom',
-  '6x1_dom': '📋 6x1 · Folga fixa domingo',
-  '5x2_fds': '📋 5x2 · Folga fixa sábado e domingo',
-  '5x2_qqi': '📋 5x2 Especial · Folga fixa quarta e quinta + 4º domingo do mês',
-  consolidacao: '📋 Revezamento 2 semanas · Grupos A/B alternam entre 6x1 folga Dom e 5x2 folga Sáb/Dom'
+  espanhola: '📋 Grupos A/B · ciclo de 4 semanas · folgas alternadas entre Sábado, Domingo e Segunda',
+  '0430':    '📋 Grupos A/B: Sábado fixo + rodízio de Domingo · C/D: Segunda fixa + rodízio de Domingo · E: Domingo fixo',
+  '6x1_dom': '📋 Sem grupo · folga fixa Domingo',
+  '5x2_fds': '📋 Sem grupo · folga fixa Sábado e Domingo',
+  '5x2_qqi': '📋 Grupos A/B/C/D · todos folgam Quarta · grupo da semana 4 folga Domingo no lugar da Quinta',
+  consolidacao: '📋 Grupos A/B · revezamento semanal entre Domingo e Sábado + Domingo'
 };
 
 function onEscalaChange() {
@@ -1785,16 +1832,17 @@ function confirmarExcluirTurno(id) {
   document.getElementById('modal-excluir').classList.add('open');
 }
 
-function folgaResumoTurno(escala) {
-  const map = {
-    espanhola: 'Rotativa 4 sem. (grupos A/B)',
-    '0430':    'Fixa + rodízio Dom (grupos A–E)',
-    '6x1_dom': 'Domingo fixo',
-    '5x2_fds': 'Sáb + Dom fixo',
-    '5x2_qqi': 'Qua + Qui + 4º Dom',
-    consolidacao: 'Mista 6x1 e 5x2 (grupos A/B)',
-  };
-  return map[escala] || '—';
+function folgaResumoTurno(escala, dataRef = new Date()) {
+  const cfg = ESCALAS[escala];
+  if (!cfg) return '—';
+
+  if (cfg.grupos && cfg.grupos.length) {
+    return cfg.grupos
+      .map(grupo => `${grupo}: ${calcFolgaSemana({ grupo }, { escala }, dataRef) || '—'}`)
+      .join(' · ');
+  }
+
+  return calcFolgaSemana({}, { escala }, dataRef) || '—';
 }
 
 function escalaBadge(escala) {
@@ -2142,6 +2190,7 @@ function onHcTurnoChange() {
   const hints = {
     espanhola: 'A e B se complementam no ciclo de 4 semanas.',
     '0430':    'A/B: folga Sáb · C/D: folga Seg · E: folga Dom sem rodízio',
+    '5x2_qqi': 'A/B/C/D em ciclo semanal. Na semana de 22/06/2026 a 28/06/2026, o Grupo C folga Quarta e Domingo.',
     consolidacao: 'A e B revezam entre 6x1 e 5x2 a cada semana.'
   };
   hint.textContent = hints[turno.escala] || '';
@@ -2161,9 +2210,13 @@ async function salvarHead() {
 
   if (!nome)  { toast('Informe o nome do colaborador.', 'error'); return; }
   if (!groot) { toast('Informe o Groot ID.', 'error'); return; }
+  if (!turnoId) { toast('Selecione o turno do colaborador.', 'error'); return; }
 
   const turno = turnos.find(t => t.id === turnoId);
-  if (turno && ESCALAS[turno.escala] && ESCALAS[turno.escala].grupos.length && !grupo) {
+  if (!turno) { toast('Turno selecionado não foi encontrado. Atualize a página e tente novamente.', 'error'); return; }
+
+  const grupoNormalizado = normalizarGrupoFolga(grupo);
+  if (turnoPossuiGrupos(turno) && !grupoNormalizado) {
     toast('Selecione o grupo para esta escala.', 'error'); return;
   }
 
@@ -2185,8 +2238,8 @@ async function salvarHead() {
     ext: ext || null,
     tpl,
     gestor: gestor || null,
-    turno_id: turnoId || null,
-    grupo: grupo || null,
+    turno_id: turnoId,
+    grupo: turnoPossuiGrupos(turno) ? grupoNormalizado : null,
     status
   };
 
@@ -2310,6 +2363,10 @@ function turnoBadge(id) {
 
 function folgaBadge(head) {
   const turno = turnos.find(t => t.id === head.turnoId);
+  if (!turno) return '<span style="color:var(--text-hint);font-size:12px">—</span>';
+  if (turnoPossuiGrupos(turno) && !normalizarGrupoFolga(head.grupo)) {
+    return '<span class="bulk-result error">Grupo pendente</span>';
+  }
   const folga = calcFolgaSemana(head, turno);
   if (!folga) return '<span style="color:var(--text-hint);font-size:12px">—</span>';
   return `<span class="folga-chip">📅 ${escapeHtml(folga)}</span>`;
@@ -2540,6 +2597,10 @@ function normalizarStatusHC(value) {
   return map[chave] || '';
 }
 
+function normalizarGrupoEscala(value) {
+  return normalizarGrupoFolga(value);
+}
+
 function montarMapaCabecalhoImportacao(headers) {
   const aliases = {
     nome: ['nome', 'nome completo', 'colaborador', 'funcionario', 'funcionário'],
@@ -2638,7 +2699,7 @@ function preValidarImportacaoHC(mostrarToast = true) {
       ext: normalizeExt(obterValorImportado(cols, mapa, 'ext', 2)),
       tplRaw: obterValorImportado(cols, mapa, 'tpl', 3),
       turnoRaw: obterValorImportado(cols, mapa, 'turno', 4),
-      grupo: obterValorImportado(cols, mapa, 'grupo', 5).toUpperCase(),
+      grupo: normalizarGrupoEscala(obterValorImportado(cols, mapa, 'grupo', 5)),
       gestor: obterValorImportado(cols, mapa, 'gestor', 6),
       statusRaw: obterValorImportado(cols, mapa, 'status', 7),
       turno: null,
