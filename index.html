@@ -198,21 +198,14 @@
   /* Hint text */
   .field-hint { font-size: 11px; color: var(--text-hint); margin-top: 3px; }
 
-
-  /* Scheduling / Anomalias avançado */
-  .subtle-note { font-size: 12px; color: var(--text-muted); line-height: 1.45; }
-  .data-range-wrap { display: inline-flex; align-items: center; gap: 7px; flex-wrap: wrap; }
-  .data-range-wrap label { font-size: 10px; font-weight: 700; color: var(--text-hint); text-transform: uppercase; letter-spacing: .04em; }
-  .data-range-wrap input[type="date"] { padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-family: inherit; font-size: 13px; }
-  .sortable-th { cursor: pointer; user-select: none; position: relative; }
-  .sortable-th:hover { background: #edf3ff; color: var(--meli-blue); }
-  .sort-mark { margin-left: 5px; color: var(--text-hint); font-size: 10px; }
-  .cause-chip { display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:999px; background:#f0f5ff; color:var(--meli-blue); font-size:11px; font-weight:700; line-height:1.3; }
-  .cause-chip.warn { background: var(--warn-fill); color: var(--warn-text); }
-  .cause-chip.error { background: var(--danger-fill); color: var(--danger-text); }
+  /* Scheduling */
   .scheduling-status { margin-left: auto; font-size: 11px; color: var(--text-hint); }
   .scheduling-status.ok { color: var(--success-text); }
   .scheduling-status.warn { color: var(--warn-text); }
+  .scheduling-groups { display:flex; flex-wrap:wrap; gap:8px; padding: 8px 0 2px; }
+  .scheduling-group-option { display:inline-flex; align-items:center; gap:6px; padding:6px 9px; border:1px solid var(--border); border-radius:999px; background:#fafafa; color:var(--text-muted); font-size:12px; font-weight:700; cursor:pointer; user-select:none; }
+  .scheduling-group-option input { accent-color: var(--meli-action); }
+  .scheduling-group-option:has(input:checked) { background:#e8f0fe; border-color:#c8d9fb; color:var(--meli-blue); }
 
 
   /* Autenticação / login */
@@ -550,6 +543,7 @@
   </div>
 </div>
 
+
 <div id="page-scheduling" class="page">
 
   <div class="access-note" id="scheduling-local-note" style="display:none">Tabela <strong>scheduling</strong> não localizada no Supabase. Os registros desta tela serão salvos localmente neste navegador até a tabela ser criada.</div>
@@ -573,6 +567,12 @@
       <div class="form-group">
         <label>Escala</label>
         <input type="text" id="sc-escala-label" placeholder="Automático pelo turno" disabled>
+      </div>
+
+      <div class="form-group" id="sc-grupos-wrap" style="display:none;grid-column:span 2">
+        <label>Grupo(s)</label>
+        <div class="scheduling-groups" id="sc-grupos-options"></div>
+        <span class="field-hint" id="sc-grupos-hint">Selecione quais grupos fazem parte deste scheduling.</span>
       </div>
 
       <div class="form-group">
@@ -603,17 +603,17 @@
     <div class="search-bar">
       <div class="search-input-wrap">
         <span class="search-icon">🔍</span>
-        <input type="text" placeholder="Buscar por nº scheduling ou turno..." id="busca-scheduling" oninput="renderSchedulings()">
+        <input type="text" placeholder="Buscar por nº scheduling, turno ou grupo..." id="busca-scheduling" oninput="renderSchedulings()">
       </div>
       <span class="count-badge" id="scheduling-count">0 schedulings</span>
     </div>
     <div class="table-wrap">
       <table>
         <thead><tr>
-          <th>Nº Scheduling</th><th>Turno</th><th>Escala</th><th>Heads</th><th>Período de referência</th><th style="text-align:right">Ações</th>
+          <th>Nº Scheduling</th><th>Turno</th><th>Escala</th><th>Grupo(s)</th><th>Heads</th><th>Período de referência</th><th style="text-align:right">Ações</th>
         </tr></thead>
         <tbody id="tbody-scheduling">
-          <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📅</div><p>Nenhum scheduling cadastrado</p><span>Cadastre a programação para calcular % CIA/COA por período</span></div></td></tr>
+          <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📅</div><p>Nenhum scheduling cadastrado</p><span>Cadastre a programação para calcular % CIA/COA por período</span></div></td></tr>
         </tbody>
       </table>
     </div>
@@ -756,30 +756,15 @@
     <div class="stat-card"><div class="stat-label">Total de Ofensas</div><div class="stat-value" id="stat-anom-total">0</div><div class="stat-sub">no período filtrado</div></div>
     <div class="stat-card"><div class="stat-label">CIA (Entrada)</div><div class="stat-value" style="color: var(--warn-text)" id="stat-cia">0</div><div class="stat-sub">Autogerados</div></div>
     <div class="stat-card"><div class="stat-label">COA (Saída)</div><div class="stat-value" style="color: #7B2FBE" id="stat-coa">0</div><div class="stat-sub">Autogerados</div></div>
-    <div class="stat-card"><div class="stat-label">% CIA</div><div class="stat-value" style="color: var(--warn-text)" id="stat-pct-cia">—</div><div class="stat-sub" id="stat-pct-cia-sub">base scheduling</div></div>
-    <div class="stat-card"><div class="stat-label">% COA</div><div class="stat-value" style="color: #7B2FBE" id="stat-pct-coa">—</div><div class="stat-sub" id="stat-pct-coa-sub">base scheduling</div></div>
-    <div class="stat-card"><div class="stat-label">Heads Programados</div><div class="stat-value" id="stat-heads-programados">0</div><div class="stat-sub">no período</div></div>
-  </div>
-
-  <div class="stats-row" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
-    <div class="stat-card"><div class="stat-label">Turno mais ofensor CIA</div><div class="stat-value" style="font-size:16px" id="stat-turno-cia">—</div><div class="stat-sub" id="stat-turno-cia-sub">0 ofensas</div></div>
-    <div class="stat-card"><div class="stat-label">Turno mais ofensor COA</div><div class="stat-value" style="font-size:16px" id="stat-turno-coa">—</div><div class="stat-sub" id="stat-turno-coa-sub">0 ofensas</div></div>
-    <div class="stat-card"><div class="stat-label">Causa raiz mais frequente</div><div class="stat-value" style="font-size:16px" id="stat-causa-top">—</div><div class="stat-sub" id="stat-causa-top-sub">0 ocorrências</div></div>
   </div>
 
   <p class="section-label">Monitoramento de Ponto Autogerado</p>
   <div class="card">
     <div class="search-bar">
-      <div class="data-range-wrap">
-        <label>Início</label>
-        <input type="date" id="filtro-data-inicio-anomalia" onchange="renderAnomalias()">
-        <label>Fim</label>
-        <input type="date" id="filtro-data-fim-anomalia" onchange="renderAnomalias()">
-      </div>
+      <input type="date" id="filtro-data-anomalia" onchange="renderAnomalias()" style="padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-family: inherit;">
       <span class="quick-date-actions">
-        <button class="btn btn-secondary btn-sm" onclick="definirPeriodoAnomalia('hoje')">Hoje</button>
-        <button class="btn btn-secondary btn-sm" onclick="definirPeriodoAnomalia('ontem')">Ontem</button>
-        <button class="btn btn-secondary btn-sm" onclick="definirPeriodoAnomalia('7dias')">7 dias</button>
+        <button class="btn btn-secondary btn-sm" onclick="definirDataAnomalia('hoje')">Hoje</button>
+        <button class="btn btn-secondary btn-sm" onclick="definirDataAnomalia('ontem')">Ontem</button>
       </span>
       
       <select id="filtro-tipo-anomalia" onchange="renderAnomalias()">
@@ -790,7 +775,7 @@
 
       <div class="search-input-wrap">
         <span class="search-icon">🔍</span>
-        <input type="text" placeholder="Buscar por colaborador, EXT, gestor ou turno..." id="busca-anomalia" oninput="renderAnomalias()">
+        <input type="text" placeholder="Buscar por colaborador ou EXT..." id="busca-anomalia" oninput="renderAnomalias()">
       </div>
       <button class="btn btn-secondary btn-sm" id="btn-atualizar-anomalias" onclick="carregarAnomalias({ manual: true })" style="height:34px; display:inline-flex; align-items:center; gap:6px;">
         <span>🔄 Atualizar</span>
@@ -823,13 +808,7 @@
     <div class="table-wrap">
       <table>
         <thead><tr>
-          <th class="sortable-th" onclick="ordenarTabelaAnomalias('data')">Data <span class="sort-mark" id="sort-anom-data">↕</span></th>
-          <th class="sortable-th" onclick="ordenarTabelaAnomalias('colaborador')">Colaborador <span class="sort-mark" id="sort-anom-colaborador">↕</span></th>
-          <th class="sortable-th" onclick="ordenarTabelaAnomalias('turno')">Turno <span class="sort-mark" id="sort-anom-turno">↕</span></th>
-          <th class="sortable-th" onclick="ordenarTabelaAnomalias('gestor')">Gestor <span class="sort-mark" id="sort-anom-gestor">↕</span></th>
-          <th class="sortable-th" onclick="ordenarTabelaAnomalias('tipo')">Tipo <span class="sort-mark" id="sort-anom-tipo">↕</span></th>
-          <th class="sortable-th" onclick="ordenarTabelaAnomalias('hora')">Hora da Ofensa <span class="sort-mark" id="sort-anom-hora">↕</span></th>
-          <th class="sortable-th" onclick="ordenarTabelaAnomalias('causa')">Causa Raiz Automática <span class="sort-mark" id="sort-anom-causa">↕</span></th>
+          <th>Data</th><th>Colaborador</th><th>Turno</th><th>Gestor</th><th>Tipo</th><th>Hora da Ofensa</th><th>Causa Raiz (Análise)</th>
         </tr></thead>
         <tbody id="tbody-anomalias">
           <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">⏳</div><p>Carregando dados de ponto...</p></div></td></tr>
@@ -1237,48 +1216,6 @@ function formatarDataMarcacao(dataMarcacao) {
   return raw;
 }
 
-function dataMarcacaoToIso(dataMarcacao) {
-  const raw = asText(dataMarcacao).trim();
-  if (!raw) return '';
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) return brToIso(raw);
-  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10);
-  const parsed = new Date(raw);
-  if (Number.isNaN(parsed.getTime())) return '';
-  const offset = parsed.getTimezoneOffset();
-  const local = new Date(parsed.getTime() - offset * 60000);
-  return local.toISOString().slice(0, 10);
-}
-
-function dataMarcacaoDentroPeriodo(dataMarcacao, inicioIso, fimIso) {
-  const iso = dataMarcacaoToIso(dataMarcacao);
-  if (!iso) return false;
-  if (inicioIso && iso < inicioIso) return false;
-  if (fimIso && iso > fimIso) return false;
-  return true;
-}
-
-function criarDataLocalIso(iso) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(asText(iso))) return null;
-  const [ano, mes, dia] = iso.split('-').map(Number);
-  return new Date(ano, mes - 1, dia);
-}
-
-function somarDiasIso(iso, dias) {
-  const d = criarDataLocalIso(iso);
-  if (!d) return '';
-  d.setDate(d.getDate() + dias);
-  const offset = d.getTimezoneOffset();
-  const local = new Date(d.getTime() - offset * 60000);
-  return local.toISOString().slice(0, 10);
-}
-
-function formatarDataIsoBr(iso) {
-  if (!iso) return '—';
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(asText(iso))) return asText(iso);
-  const [ano, mes, dia] = iso.split('-');
-  return `${dia}/${mes}/${ano}`;
-}
-
 function setButtonLoading(btn, loading, textoLoading = 'Salvando...') {
   if (!btn) return;
   if (loading) {
@@ -1319,7 +1256,7 @@ const PERFIS_ACESSO = {
   },
   consulta: {
     label: 'Consulta',
-    tabs: ['headcount', 'anomalias', 'monitor'],
+    tabs: ['headcount', 'scheduling', 'anomalias', 'monitor'],
     gerar_crachas: false,
     criar_turnos: false, editar_turnos: false, excluir_turnos: false,
     criar_hc: false, editar_hc: false, excluir_hc: false, exportar_hc: false,
@@ -1807,14 +1744,11 @@ async function carregarDadosDoBanco() {
       status: h.status || 'ativo'
     }));
 
-    await carregarSchedulings();
-
-    const filtroInicio = document.getElementById('filtro-data-inicio-anomalia');
-    const filtroFim = document.getElementById('filtro-data-fim-anomalia');
-    if (filtroInicio && !filtroInicio.value) filtroInicio.value = hojeIsoLocal();
-    if (filtroFim && !filtroFim.value) filtroFim.value = hojeIsoLocal();
+    const filtroData = document.getElementById('filtro-data-anomalia');
+    if (filtroData && !filtroData.value) filtroData.value = hojeIsoLocal();
 
     atualizarSelectTurnos();
+    await carregarSchedulings();
     renderTurnos();
     renderHeads();
     renderSchedulings();
@@ -2053,254 +1987,6 @@ function renderTurnos() {
   }).join('');
 }
 
-
-// ════════════════════════════════════════
-//  LÓGICA DE SCHEDULING
-// ════════════════════════════════════════
-const SCHEDULING_LOCAL_KEY = 'svc_scheduling_local_v1';
-
-function normalizarScheduling(row) {
-  const turnoId = row.turno_id || row.turnoId || row.turno || '';
-  const turno = turnos.find(t => t.id === turnoId);
-  return {
-    id: row.id || crypto.randomUUID?.() || `${asText(row.numero)}-${Date.now()}`,
-    numero: asText(row.numero || row.n_scheduling || row.scheduling || row['Nº Scheduling'] || row['N Scheduling']).trim(),
-    turnoId,
-    escala: row.escala || turno?.escala || '',
-    heads: Number(row.heads || row.n_heads || row.numero_heads || row['Nº de Heads'] || 0) || 0,
-    dataInicio: row.data_inicio || row.dataInicio || row.inicio || '',
-    dataFim: row.data_fim || row.dataFim || row.fim || ''
-  };
-}
-
-function carregarSchedulingsLocal() {
-  try {
-    const raw = localStorage.getItem(SCHEDULING_LOCAL_KEY);
-    schedulings = raw ? JSON.parse(raw).map(normalizarScheduling) : [];
-  } catch (_) {
-    schedulings = [];
-  }
-}
-
-function salvarSchedulingsLocal() {
-  localStorage.setItem(SCHEDULING_LOCAL_KEY, JSON.stringify(schedulings));
-}
-
-function setSchedulingStatus(texto, tipo = '') {
-  const el = document.getElementById('scheduling-sync-status');
-  if (!el) return;
-  el.textContent = texto;
-  el.className = `scheduling-status ${tipo}`.trim();
-}
-
-async function carregarSchedulings() {
-  try {
-    const { data, error } = await db.from('scheduling').select('*').order('data_inicio');
-    if (error) throw error;
-    schedulingLocalMode = false;
-    schedulings = (data || []).map(normalizarScheduling);
-    setSchedulingStatus('Base: Supabase · scheduling', 'ok');
-  } catch (error) {
-    console.warn('Tabela scheduling indisponível; usando localStorage:', error);
-    schedulingLocalMode = true;
-    carregarSchedulingsLocal();
-    setSchedulingStatus('Base: local deste navegador', 'warn');
-  }
-  setVisibleById('scheduling-local-note', schedulingLocalMode, 'block');
-}
-
-function onSchedulingTurnoChange() {
-  const turnoId = document.getElementById('sc-turno')?.value;
-  const turno = turnos.find(t => t.id === turnoId);
-  const input = document.getElementById('sc-escala-label');
-  if (!input) return;
-  input.value = turno?.escala && ESCALAS[turno.escala] ? ESCALAS[turno.escala].label : '';
-}
-
-function limparFormScheduling() {
-  ['sc-numero','sc-heads','sc-data-inicio','sc-data-fim'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  const turno = document.getElementById('sc-turno');
-  if (turno) turno.value = '';
-  onSchedulingTurnoChange();
-}
-
-function cancelarEdicaoScheduling() {
-  editingSchedulingId = null;
-  const label = document.getElementById('scheduling-form-label');
-  const btn = document.getElementById('btn-salvar-scheduling');
-  if (label) label.textContent = 'Cadastrar scheduling';
-  if (btn) btn.textContent = 'Salvar Scheduling';
-  limparFormScheduling();
-}
-
-async function salvarScheduling() {
-  if (!pode('criar_scheduling') && !pode('editar_scheduling')) { toast('Seu perfil não permite salvar scheduling.', 'error'); return; }
-
-  const numero = document.getElementById('sc-numero').value.trim();
-  const turnoId = document.getElementById('sc-turno').value;
-  const headsQtd = Number(document.getElementById('sc-heads').value || 0);
-  const dataInicio = document.getElementById('sc-data-inicio').value;
-  const dataFim = document.getElementById('sc-data-fim').value;
-  const turno = turnos.find(t => t.id === turnoId);
-
-  if (!numero) { toast('Informe o Nº Scheduling.', 'error'); return; }
-  if (!turno) { toast('Selecione o turno do scheduling.', 'error'); return; }
-  if (!Number.isFinite(headsQtd) || headsQtd <= 0) { toast('Informe um Nº de Heads maior que zero.', 'error'); return; }
-  if (!dataInicio || !dataFim) { toast('Informe data início e data fim.', 'error'); return; }
-  if (dataFim < dataInicio) { toast('Data fim não pode ser anterior à data início.', 'error'); return; }
-
-  const duplicado = schedulings.find(sc => asText(sc.numero) === numero && sc.id !== editingSchedulingId);
-  if (duplicado) { toast('Já existe scheduling com este número.', 'error'); return; }
-
-  const btn = document.getElementById('btn-salvar-scheduling');
-  setButtonLoading(btn, true, editingSchedulingId ? 'Atualizando...' : 'Salvando...');
-  setCarregando('form-grid-scheduling', true);
-
-  try {
-    const localData = {
-      id: editingSchedulingId || crypto.randomUUID?.() || `${numero}-${Date.now()}`,
-      numero,
-      turnoId,
-      escala: turno.escala,
-      heads: Math.round(headsQtd),
-      dataInicio,
-      dataFim
-    };
-
-    if (schedulingLocalMode) {
-      if (editingSchedulingId) {
-        schedulings = schedulings.map(sc => sc.id === editingSchedulingId ? localData : sc);
-      } else {
-        schedulings.push(localData);
-      }
-      salvarSchedulingsLocal();
-    } else {
-      const dbData = {
-        numero,
-        turno_id: turnoId,
-        escala: turno.escala,
-        heads: Math.round(headsQtd),
-        data_inicio: dataInicio,
-        data_fim: dataFim
-      };
-      let error;
-      if (editingSchedulingId) {
-        ({ error } = await db.from('scheduling').update(dbData).eq('id', editingSchedulingId));
-      } else {
-        ({ error } = await db.from('scheduling').insert([dbData]));
-      }
-      if (error) throw error;
-      await carregarSchedulings();
-    }
-
-    toast(editingSchedulingId ? 'Scheduling atualizado com sucesso!' : 'Scheduling cadastrado com sucesso!', 'success');
-    cancelarEdicaoScheduling();
-    renderSchedulings();
-    renderAnomalias();
-  } catch (error) {
-    toast('Erro ao salvar scheduling: ' + (error.message || error), 'error');
-  } finally {
-    setButtonLoading(btn, false);
-    setCarregando('form-grid-scheduling', false);
-  }
-}
-
-function editarScheduling(id) {
-  if (!pode('editar_scheduling')) { toast('Seu perfil não permite editar scheduling.', 'error'); return; }
-  const sc = schedulings.find(x => x.id === id);
-  if (!sc) return;
-  editingSchedulingId = id;
-  document.getElementById('sc-numero').value = sc.numero || '';
-  document.getElementById('sc-turno').value = sc.turnoId || '';
-  document.getElementById('sc-heads').value = sc.heads || '';
-  document.getElementById('sc-data-inicio').value = sc.dataInicio || '';
-  document.getElementById('sc-data-fim').value = sc.dataFim || '';
-  onSchedulingTurnoChange();
-  document.getElementById('scheduling-form-label').textContent = 'Editar scheduling';
-  document.getElementById('btn-salvar-scheduling').textContent = 'Atualizar Scheduling';
-  document.getElementById('sc-numero').focus();
-  document.getElementById('page-scheduling')?.scrollIntoView({ behavior:'smooth' });
-}
-
-function confirmarExcluirScheduling(id) {
-  if (!pode('excluir_scheduling')) { toast('Seu perfil não permite excluir scheduling.', 'error'); return; }
-  const sc = schedulings.find(x => x.id === id);
-  if (!sc) return;
-  pendingDelete = { type:'scheduling', id };
-  document.getElementById('modal-msg').textContent = `Excluir o scheduling "${sc.numero}"? Esta ação não pode ser desfeita.`;
-  document.getElementById('btn-confirmar-excluir').onclick = executarExclusao;
-  document.getElementById('modal-excluir').classList.add('open');
-}
-
-function renderSchedulings() {
-  const count = document.getElementById('scheduling-count');
-  const tbody = document.getElementById('tbody-scheduling');
-  if (!tbody) return;
-
-  const busca = lower(document.getElementById('busca-scheduling')?.value || '');
-  const lista = schedulings.filter(sc => {
-    const turno = turnos.find(t => t.id === sc.turnoId) || {};
-    return !busca || lower(sc.numero).includes(busca) || lower(turno.nome).includes(busca) || lower(ESCALAS[sc.escala]?.label).includes(busca);
-  }).sort((a,b) => asText(a.dataInicio).localeCompare(asText(b.dataInicio)) || asText(a.numero).localeCompare(asText(b.numero)));
-
-  if (count) count.textContent = `${lista.length} scheduling${lista.length !== 1 ? 's' : ''}`;
-  setVisibleById('scheduling-local-note', schedulingLocalMode, 'block');
-  setSchedulingStatus(schedulingLocalMode ? 'Base: local deste navegador' : 'Base: Supabase · scheduling', schedulingLocalMode ? 'warn' : 'ok');
-
-  if (!lista.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📅</div><p>${schedulings.length ? 'Nenhum scheduling encontrado' : 'Nenhum scheduling cadastrado'}</p><span>${schedulings.length ? 'Tente outros termos' : 'Cadastre a programação para calcular % CIA/COA por período'}</span></div></td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = lista.map(sc => {
-    const id = safeId(sc.id);
-    const turno = turnos.find(t => t.id === sc.turnoId) || {};
-    const escala = sc.escala && ESCALAS[sc.escala] ? ESCALAS[sc.escala].label : (turno.escala && ESCALAS[turno.escala]?.label) || '—';
-    return `<tr>
-      <td><strong>${escapeHtml(sc.numero)}</strong></td>
-      <td>${turnoBadge(sc.turnoId)}</td>
-      <td>${escalaBadge(sc.escala || turno.escala)}</td>
-      <td><span class="badge badge-green">${Number(sc.heads || 0).toLocaleString('pt-BR')} heads</span></td>
-      <td style="color:var(--text-muted);font-size:12px">${escapeHtml(formatarDataIsoBr(sc.dataInicio))} até ${escapeHtml(formatarDataIsoBr(sc.dataFim))}</td>
-      <td style="text-align:right;white-space:nowrap">
-        ${pode('editar_scheduling') ? `<button class="btn btn-secondary btn-sm" onclick="editarScheduling('${id}')" style="margin-right:6px">Editar</button>` : ''}
-        ${pode('excluir_scheduling') ? `<button class="btn btn-danger btn-sm" onclick="confirmarExcluirScheduling('${id}')">Excluir</button>` : ''}
-        ${(!pode('editar_scheduling') && !pode('excluir_scheduling')) ? '<span style="color:var(--text-hint);font-size:12px">—</span>' : ''}
-      </td>
-    </tr>`;
-  }).join('');
-}
-
-function headsProgramadosNoDia(dataIso) {
-  if (!dataIso) return 0;
-  return schedulings.reduce((total, sc) => {
-    const ini = sc.dataInicio;
-    const fim = sc.dataFim;
-    if (!ini || !fim) return total;
-    if (dataIso >= ini && dataIso <= fim) return total + (Number(sc.heads) || 0);
-    return total;
-  }, 0);
-}
-
-function calcularHeadsProgramadosPeriodo(inicioIso, fimIso) {
-  if (!inicioIso && !fimIso) return 0;
-  const ini = inicioIso || fimIso;
-  const fim = fimIso || inicioIso;
-  if (!ini || !fim || fim < ini) return 0;
-  let atual = ini;
-  let total = 0;
-  let guard = 0;
-  while (atual && atual <= fim && guard < 4000) {
-    total += headsProgramadosNoDia(atual);
-    atual = somarDiasIso(atual, 1);
-    guard += 1;
-  }
-  return total;
-}
-
 // ════════════════════════════════════════
 //  LÓGICA DE ANOMALIAS (CIA / COA)
 // ════════════════════════════════════════
@@ -2313,8 +1999,6 @@ let anomaliasSyncInfo = {
   totalCarregado: 0,
   status: 'idle'
 };
-
-let ordemAnomalias = { coluna: 'data', direcao: 'desc' };
 
 function setAnomaliasSyncStatus(texto, tipo = '') {
   const el = document.getElementById('anomalia-sync-status');
@@ -2358,37 +2042,11 @@ function atualizarPainelSyncAnomalias(qtdFiltrada = null) {
   setText('anomalia-info-filtro', filtroTexto);
 }
 
-function obterPeriodoFiltroAnomalia() {
-  const inicio = document.getElementById('filtro-data-inicio-anomalia')?.value || '';
-  const fim = document.getElementById('filtro-data-fim-anomalia')?.value || '';
-  if (inicio && fim && fim < inicio) return { inicio: fim, fim: inicio };
-  return { inicio, fim };
-}
-
-function definirPeriodoAnomalia(tipo) {
-  const inputInicio = document.getElementById('filtro-data-inicio-anomalia');
-  const inputFim = document.getElementById('filtro-data-fim-anomalia');
-  if (!inputInicio || !inputFim) return;
-
-  if (tipo === 'ontem') {
-    const ontem = ontemIsoLocal();
-    inputInicio.value = ontem;
-    inputFim.value = ontem;
-  } else if (tipo === '7dias') {
-    const hoje = hojeIsoLocal();
-    inputInicio.value = somarDiasIso(hoje, -6);
-    inputFim.value = hoje;
-  } else {
-    const hoje = hojeIsoLocal();
-    inputInicio.value = hoje;
-    inputFim.value = hoje;
-  }
-  renderAnomalias();
-}
-
-// Compatibilidade com versões anteriores do HTML.
 function definirDataAnomalia(tipo) {
-  definirPeriodoAnomalia(tipo);
+  const input = document.getElementById('filtro-data-anomalia');
+  if (!input) return;
+  input.value = tipo === 'ontem' ? ontemIsoLocal() : hojeIsoLocal();
+  renderAnomalias();
 }
 
 function getPayloadListaAnomalias(payload) {
@@ -2445,8 +2103,7 @@ function parseDataMarcacaoParaOrdenacao(dataMarcacao, hora = '') {
   else if (/^\d{4}-\d{2}-\d{2}/.test(raw)) iso = raw.slice(0, 10);
 
   if (iso) {
-    const matchHora = horaTxt.match(/(\d{1,2})[:hH](\d{2})/);
-    const h = matchHora ? `${matchHora[1].padStart(2, '0')}:${matchHora[2]}` : '00:00';
+    const h = /^\d{1,2}:\d{2}/.test(horaTxt) ? horaTxt.padStart(5, '0') : '00:00';
     return new Date(`${iso}T${h}:00`).getTime();
   }
 
@@ -2541,222 +2198,373 @@ function assinarRealtimeAnomalias() {
   }
 }
 
-function parseHoraParaMinutos(hora) {
-  const txt = asText(hora).trim();
-  const match = txt.match(/(\d{1,2})[:hH](\d{2})/);
-  if (!match) return null;
-  const h = Number(match[1]);
-  const m = Number(match[2]);
-  if (!Number.isFinite(h) || !Number.isFinite(m) || h < 0 || h > 23 || m < 0 || m > 59) return null;
-  return h * 60 + m;
-}
-
-function obterTurnoHead(head) {
-  return head?.turnoId ? turnos.find(t => t.id === head.turnoId) : null;
-}
-
-function nomeTurnoPorId(turnoId) {
-  const turno = turnos.find(t => t.id === turnoId);
-  return turno?.nome || 'Turno não identificado';
-}
-
-function obterCausaRaizAutomatica(anomalia, head = null, turno = null) {
-  const tipo = asText(anomalia?.tipo).toUpperCase();
-  const turnoRef = turno || obterTurnoHead(head || {});
-  if (!head || !head.id) return { texto: 'Colaborador não cadastrado', status: 'error' };
-  if (!turnoRef) return { texto: 'Sem turno vinculado', status: 'error' };
-
-  const inicio = parseHoraParaMinutos(turnoRef.inicio);
-  const fim = parseHoraParaMinutos(turnoRef.fim);
-  const hora = parseHoraParaMinutos(anomalia?.hora);
-  if (hora === null) return { texto: 'Hora da ofensa inválida', status: 'error' };
-  if (inicio === null) return { texto: 'Início do turno pendente', status: 'warn' };
-
-  const deltaInicio = hora - inicio;
-  if (deltaInicio < 0) return { texto: 'Ofensa antes do início do turno', status: 'warn' };
-
-  if (tipo === 'CIA') {
-    if (deltaInicio <= 180) return { texto: 'Logou no HH sem Clock IN (Entrada Operação)', status: 'ok' };
-    if (deltaInicio <= 300) return { texto: 'Logou no HH sem Clock IN (Retorno Almoço)', status: 'ok' };
-    return { texto: 'CIA fora da janela automática', status: 'warn' };
-  }
-
-  if (tipo === 'COA') {
-    if (deltaInicio <= 180) return { texto: 'Clock IN duplicado', status: 'ok' };
-    if (deltaInicio <= 300) return { texto: 'Não bateu Clock OUT (saída para intervalo)', status: 'ok' };
-    if (fim === null) return { texto: 'Fim do turno pendente', status: 'warn' };
-    if (hora < (fim - 60)) return { texto: 'Clock IN duplicado', status: 'ok' };
-    return { texto: 'Não bateu Clock OUT (saída da operação)', status: 'ok' };
-  }
-
-  return { texto: 'Tipo de ofensa não identificado', status: 'warn' };
-}
-
-function contarPor(lista, chaveFn) {
-  const mapa = new Map();
-  lista.forEach(item => {
-    const chave = chaveFn(item);
-    if (!chave) return;
-    mapa.set(chave, (mapa.get(chave) || 0) + 1);
-  });
-  return mapa;
-}
-
-function maiorItemContagem(mapa) {
-  let melhor = null;
-  mapa.forEach((valor, chave) => {
-    if (!melhor || valor > melhor.valor || (valor === melhor.valor && asText(chave).localeCompare(asText(melhor.chave)) < 0)) {
-      melhor = { chave, valor };
-    }
-  });
-  return melhor;
-}
-
-function formatarPercentual(valor) {
-  if (!Number.isFinite(valor)) return '—';
-  return `${valor.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
-}
-
-function enriquecerAnomalia(anomalia) {
-  const extAnomalia = normalizeExt(anomalia.ext);
-  const head = heads.find(h => normalizeExt(h.ext) === extAnomalia) || {};
-  const turno = obterTurnoHead(head);
-  const causa = obterCausaRaizAutomatica(anomalia, head, turno);
-  return {
-    ...anomalia,
-    extNormalizado: extAnomalia,
-    head,
-    turno,
-    causaAutomatica: causa
-  };
-}
-
-function valorOrdenacaoAnomalia(item, coluna) {
-  if (coluna === 'data') return parseDataMarcacaoParaOrdenacao(item.data_marcacao, item.hora);
-  if (coluna === 'hora') return parseHoraParaMinutos(item.hora) ?? -1;
-  if (coluna === 'colaborador') return lower(item.head?.nome || item.extNormalizado || '');
-  if (coluna === 'turno') return lower(item.turno?.nome || '');
-  if (coluna === 'gestor') return lower(item.head?.gestor || '');
-  if (coluna === 'tipo') return lower(item.tipo);
-  if (coluna === 'causa') return lower(item.causaAutomatica?.texto || '');
-  return '';
-}
-
-function ordenarTabelaAnomalias(coluna) {
-  if (ordemAnomalias.coluna === coluna) {
-    ordemAnomalias.direcao = ordemAnomalias.direcao === 'asc' ? 'desc' : 'asc';
-  } else {
-    ordemAnomalias = { coluna, direcao: coluna === 'data' || coluna === 'hora' ? 'desc' : 'asc' };
-  }
-  renderAnomalias();
-}
-
-function aplicarOrdenacaoAnomalias(lista) {
-  const dir = ordemAnomalias.direcao === 'asc' ? 1 : -1;
-  return [...lista].sort((a, b) => {
-    const va = valorOrdenacaoAnomalia(a, ordemAnomalias.coluna);
-    const vb = valorOrdenacaoAnomalia(b, ordemAnomalias.coluna);
-    if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir;
-    return asText(va).localeCompare(asText(vb), 'pt-BR', { numeric: true, sensitivity: 'base' }) * dir;
-  });
-}
-
-function atualizarIndicadoresOrdenacaoAnomalias() {
-  ['data','colaborador','turno','gestor','tipo','hora','causa'].forEach(col => {
-    const el = document.getElementById(`sort-anom-${col}`);
-    if (!el) return;
-    el.textContent = ordemAnomalias.coluna === col ? (ordemAnomalias.direcao === 'asc' ? '↑' : '↓') : '↕';
-  });
-}
-
-function atualizarIndicadoresAnomalias(listaFiltrada, periodo) {
-  const cia = listaFiltrada.filter(a => asText(a.tipo).toUpperCase() === 'CIA');
-  const coa = listaFiltrada.filter(a => asText(a.tipo).toUpperCase() === 'COA');
-  const headsProgramados = calcularHeadsProgramadosPeriodo(periodo.inicio, periodo.fim);
-
-  document.getElementById('stat-anom-total').textContent = listaFiltrada.length;
-  document.getElementById('stat-cia').textContent = cia.length;
-  document.getElementById('stat-coa').textContent = coa.length;
-  document.getElementById('stat-heads-programados').textContent = headsProgramados.toLocaleString('pt-BR');
-
-  const pctCia = headsProgramados > 0 ? (cia.length / headsProgramados) * 100 : NaN;
-  const pctCoa = headsProgramados > 0 ? (coa.length / headsProgramados) * 100 : NaN;
-  document.getElementById('stat-pct-cia').textContent = formatarPercentual(pctCia);
-  document.getElementById('stat-pct-coa').textContent = formatarPercentual(pctCoa);
-  document.getElementById('stat-pct-cia-sub').textContent = headsProgramados ? `${cia.length} / ${headsProgramados.toLocaleString('pt-BR')}` : 'sem scheduling';
-  document.getElementById('stat-pct-coa-sub').textContent = headsProgramados ? `${coa.length} / ${headsProgramados.toLocaleString('pt-BR')}` : 'sem scheduling';
-
-  const topCia = maiorItemContagem(contarPor(cia, a => a.turno?.nome || 'Turno não identificado'));
-  const topCoa = maiorItemContagem(contarPor(coa, a => a.turno?.nome || 'Turno não identificado'));
-  const topCausa = maiorItemContagem(contarPor(listaFiltrada, a => a.causaAutomatica?.texto || '—'));
-
-  document.getElementById('stat-turno-cia').textContent = topCia?.chave || '—';
-  document.getElementById('stat-turno-cia-sub').textContent = `${topCia?.valor || 0} ofensa${(topCia?.valor || 0) !== 1 ? 's' : ''}`;
-  document.getElementById('stat-turno-coa').textContent = topCoa?.chave || '—';
-  document.getElementById('stat-turno-coa-sub').textContent = `${topCoa?.valor || 0} ofensa${(topCoa?.valor || 0) !== 1 ? 's' : ''}`;
-  document.getElementById('stat-causa-top').textContent = topCausa?.chave || '—';
-  document.getElementById('stat-causa-top-sub').textContent = `${topCausa?.valor || 0} ocorrência${(topCausa?.valor || 0) !== 1 ? 's' : ''}`;
-}
-
 function renderAnomalias() {
-  const periodo = obterPeriodoFiltroAnomalia();
+  const filtDataInput = document.getElementById('filtro-data-anomalia').value;
   const filtTipo = document.getElementById('filtro-tipo-anomalia').value;
   const buscaText = lower(document.getElementById('busca-anomalia').value);
 
-  let lista = anomalias
-    .filter(a => dataMarcacaoDentroPeriodo(a.data_marcacao, periodo.inicio, periodo.fim))
-    .map(enriquecerAnomalia);
+  let listaBase = anomalias.filter(a => dataMarcacaoMatchesFiltro(a.data_marcacao, filtDataInput));
 
   if (filtTipo !== 'AMBOS') {
-    lista = lista.filter(a => asText(a.tipo).toUpperCase() === filtTipo);
+    listaBase = listaBase.filter(a => asText(a.tipo).toUpperCase() === filtTipo);
   }
 
+  document.getElementById('stat-anom-total').textContent = listaBase.length;
+  document.getElementById('stat-cia').textContent = listaBase.filter(a => asText(a.tipo).toUpperCase() === 'CIA').length;
+  document.getElementById('stat-coa').textContent = listaBase.filter(a => asText(a.tipo).toUpperCase() === 'COA').length;
+
+  let lista = listaBase;
   if (buscaText) {
     lista = lista.filter(a => {
-      return a.extNormalizado.includes(buscaText)
-        || lower(a.head?.nome).includes(buscaText)
-        || lower(a.head?.gestor).includes(buscaText)
-        || lower(a.turno?.nome).includes(buscaText)
-        || lower(a.causaAutomatica?.texto).includes(buscaText);
+      const extAnomalia = normalizeExt(a.ext);
+      const head = heads.find(h => normalizeExt(h.ext) === extAnomalia) || {};
+      return extAnomalia.includes(buscaText) || lower(head.nome).includes(buscaText) || lower(head.gestor).includes(buscaText);
     });
   }
 
-  atualizarIndicadoresAnomalias(lista, periodo);
-  atualizarIndicadoresOrdenacaoAnomalias();
-
-  const listaOrdenada = aplicarOrdenacaoAnomalias(lista);
-  document.getElementById('anomalia-count').textContent = `${listaOrdenada.length} ofensa${listaOrdenada.length !== 1 ? 's' : ''}`;
-  atualizarPainelSyncAnomalias(listaOrdenada.length);
+  document.getElementById('anomalia-count').textContent = `${lista.length} ofensa${lista.length !== 1 ? 's' : ''}`;
+  atualizarPainelSyncAnomalias(lista.length);
 
   const tbody = document.getElementById('tbody-anomalias');
-  if (!listaOrdenada.length) {
+  if (!lista.length) {
     tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">✅</div><p>Nenhuma ofensa de ponto encontrada</p><span>Nenhum registro para os filtros atuais</span></div></td></tr>`;
     return;
   }
 
-  tbody.innerHTML = listaOrdenada.map(a => {
-    const head = a.head || {};
+  tbody.innerHTML = lista.map(a => {
+    const extAnomalia = normalizeExt(a.ext);
+    const head = heads.find(h => normalizeExt(h.ext) === extAnomalia) || {};
     const nomeVisual = head.nome ? `<strong>${escapeHtml(head.nome)}</strong>` : `<span style="color:var(--danger-text)">Colaborador não cadastrado</span>`;
-    const turnoVisual = a.turno ? turnoBadge(head.turnoId) : '<span style="color:var(--danger-text);font-size:12px">Sem turno</span>';
+    const turnoVisual = turnoBadge(head.turnoId);
     const gestorVisual = escapeHtml(head.gestor || '—');
     const tipo = asText(a.tipo).toUpperCase();
     const tipoBadge = tipo === 'CIA'
       ? `<span class="badge badge-orange">CIA</span>`
       : `<span class="badge badge-purple">COA</span>`;
-    const causa = a.causaAutomatica || { texto: '—', status: 'warn' };
-    const causaCls = causa.status === 'error' ? 'error' : causa.status === 'warn' ? 'warn' : '';
 
     return `<tr>
       <td style="color:var(--text-muted);font-size:13px">${escapeHtml(formatarDataMarcacao(a.data_marcacao))}</td>
       <td>
         ${nomeVisual}<br>
-        <span style="font-family:monospace;font-size:11px;color:var(--text-hint)">ext_${escapeHtml(a.extNormalizado || '—')}</span>
+        <span style="font-family:monospace;font-size:11px;color:var(--text-hint)">ext_${escapeHtml(extAnomalia || '—')}</span>
       </td>
       <td>${turnoVisual}</td>
       <td style="color:var(--text-muted);font-size:12px">${gestorVisual}</td>
       <td>${tipoBadge}</td>
       <td style="font-weight:700">${escapeHtml(a.hora || '—')}</td>
-      <td><span class="cause-chip ${causaCls}">${escapeHtml(causa.texto)}</span></td>
+      <td>
+        ${pode('tratar_anomalias') ? `
+        <select style="padding:4px 8px; border:1px solid var(--border); border-radius:4px; font-size:12px; color:var(--text-muted); background:transparent;">
+          <option value="">Aguardando tratativa...</option>
+          <option value="esquecimento">Esquecimento Operacional</option>
+          <option value="sistema">Falha no Relógio/Sistema</option>
+          <option value="dispensa">Dispensa Antecipada</option>
+        </select>` : '<span style="color:var(--text-hint);font-size:12px">Somente leitura</span>'}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+
+// ════════════════════════════════════════
+//  LÓGICA DE SCHEDULING
+// ════════════════════════════════════════
+const SCHEDULING_LOCAL_KEY = 'svc_scheduling_local_v1';
+
+function formatarDataIsoBr(iso) {
+  if (!iso) return '—';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(asText(iso))) return asText(iso);
+  const [ano, mes, dia] = iso.split('-');
+  return `${dia}/${mes}/${ano}`;
+}
+
+function normalizarGruposScheduling(value) {
+  if (Array.isArray(value)) {
+    return [...new Set(value.map(normalizarGrupoFolga).filter(Boolean))];
+  }
+
+  const raw = asText(value).trim();
+  if (!raw) return [];
+
+  if (raw.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return normalizarGruposScheduling(parsed);
+    } catch (_) {}
+  }
+
+  return [...new Set(raw
+    .split(/[,;|\/]+/)
+    .map(normalizarGrupoFolga)
+    .filter(Boolean))];
+}
+
+function obterGruposSelecionadosScheduling() {
+  return [...document.querySelectorAll('#sc-grupos-options input[type="checkbox"]:checked')]
+    .map(input => normalizarGrupoFolga(input.value))
+    .filter(Boolean);
+}
+
+function formatarGruposScheduling(sc, turno = null) {
+  const grupos = normalizarGruposScheduling(sc?.grupos || sc?.grupo || '');
+  const turnoRef = turno || turnos.find(t => t.id === sc?.turnoId);
+  if (!turnoRef || !turnoPossuiGrupos(turnoRef)) {
+    return '<span style="color:var(--text-hint);font-size:12px">Não se aplica</span>';
+  }
+  if (!grupos.length) {
+    return '<span class="bulk-result error">Grupo pendente</span>';
+  }
+  return grupos.map(g => `<span class="badge badge-blue" style="margin-right:4px">Grupo ${escapeHtml(g)}</span>`).join('');
+}
+
+function normalizarScheduling(row) {
+  const turnoId = row.turno_id || row.turnoId || row.turno || '';
+  const turno = turnos.find(t => t.id === turnoId);
+  return {
+    id: row.id || crypto.randomUUID?.() || `${asText(row.numero)}-${Date.now()}`,
+    numero: asText(row.numero || row.n_scheduling || row.scheduling || row['Nº Scheduling'] || row['N Scheduling']).trim(),
+    turnoId,
+    escala: row.escala || turno?.escala || '',
+    grupos: normalizarGruposScheduling(row.grupos || row.grupo || row.groups || row['Grupo(s)'] || row['Grupos'] || ''),
+    heads: Number(row.heads || row.n_heads || row.numero_heads || row['Nº de Heads'] || 0) || 0,
+    dataInicio: row.data_inicio || row.dataInicio || row.inicio || '',
+    dataFim: row.data_fim || row.dataFim || row.fim || ''
+  };
+}
+
+function carregarSchedulingsLocal() {
+  try {
+    const raw = localStorage.getItem(SCHEDULING_LOCAL_KEY);
+    schedulings = raw ? JSON.parse(raw).map(normalizarScheduling) : [];
+  } catch (_) {
+    schedulings = [];
+  }
+}
+
+function salvarSchedulingsLocal() {
+  localStorage.setItem(SCHEDULING_LOCAL_KEY, JSON.stringify(schedulings));
+}
+
+function setSchedulingStatus(texto, tipo = '') {
+  const el = document.getElementById('scheduling-sync-status');
+  if (!el) return;
+  el.textContent = texto;
+  el.className = `scheduling-status ${tipo}`.trim();
+}
+
+async function carregarSchedulings() {
+  try {
+    const { data, error } = await db.from('scheduling').select('*').order('data_inicio');
+    if (error) throw error;
+    schedulingLocalMode = false;
+    schedulings = (data || []).map(normalizarScheduling);
+    setSchedulingStatus('Base: Supabase · scheduling', 'ok');
+  } catch (error) {
+    console.warn('Tabela scheduling indisponível; usando localStorage:', error);
+    schedulingLocalMode = true;
+    carregarSchedulingsLocal();
+    setSchedulingStatus('Base: local deste navegador', 'warn');
+  }
+  setVisibleById('scheduling-local-note', schedulingLocalMode, 'block');
+}
+
+function onSchedulingTurnoChange(gruposSelecionados = null) {
+  const turnoId = document.getElementById('sc-turno')?.value;
+  const turno = turnos.find(t => t.id === turnoId);
+  const input = document.getElementById('sc-escala-label');
+  const wrap = document.getElementById('sc-grupos-wrap');
+  const options = document.getElementById('sc-grupos-options');
+  const hint = document.getElementById('sc-grupos-hint');
+
+  if (input) input.value = turno?.escala && ESCALAS[turno.escala] ? ESCALAS[turno.escala].label : '';
+  if (!wrap || !options) return;
+
+  const gruposEscala = turno?.escala && ESCALAS[turno.escala] ? ESCALAS[turno.escala].grupos || [] : [];
+  if (!turno || !gruposEscala.length) {
+    wrap.style.display = 'none';
+    options.innerHTML = '';
+    if (hint) hint.textContent = '';
+    return;
+  }
+
+  const selecionados = gruposSelecionados === null
+    ? obterGruposSelecionadosScheduling()
+    : normalizarGruposScheduling(gruposSelecionados);
+
+  options.innerHTML = gruposEscala.map(grupo => {
+    const checked = selecionados.includes(grupo) ? 'checked' : '';
+    return `<label class="scheduling-group-option"><input type="checkbox" value="${escapeHtml(grupo)}" ${checked}> Grupo ${escapeHtml(grupo)}</label>`;
+  }).join('');
+
+  const hints = {
+    espanhola: 'Selecione A, B ou ambos conforme o scheduling informado.',
+    '0430': 'Selecione A/B/C/D/E conforme o scheduling informado.',
+    '5x2_qqi': 'Selecione A/B/C/D. Na semana 22/06/2026 a 28/06/2026, o Grupo C está na quarta semana.',
+    consolidacao: 'Selecione A, B ou ambos conforme o scheduling informado.'
+  };
+  if (hint) hint.textContent = hints[turno.escala] || 'Selecione os grupos vinculados a este scheduling.';
+  wrap.style.display = 'flex';
+}
+
+function limparFormScheduling() {
+  ['sc-numero','sc-heads','sc-data-inicio','sc-data-fim'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const turno = document.getElementById('sc-turno');
+  if (turno) turno.value = '';
+  const options = document.getElementById('sc-grupos-options');
+  if (options) options.innerHTML = '';
+  onSchedulingTurnoChange([]);
+}
+
+function cancelarEdicaoScheduling() {
+  editingSchedulingId = null;
+  const label = document.getElementById('scheduling-form-label');
+  const btn = document.getElementById('btn-salvar-scheduling');
+  if (label) label.textContent = 'Cadastrar scheduling';
+  if (btn) btn.textContent = 'Salvar Scheduling';
+  limparFormScheduling();
+}
+
+async function salvarScheduling() {
+  if (!pode('criar_scheduling') && !pode('editar_scheduling')) { toast('Seu perfil não permite salvar scheduling.', 'error'); return; }
+
+  const numero = document.getElementById('sc-numero').value.trim();
+  const turnoId = document.getElementById('sc-turno').value;
+  const headsQtd = Number(document.getElementById('sc-heads').value || 0);
+  const dataInicio = document.getElementById('sc-data-inicio').value;
+  const dataFim = document.getElementById('sc-data-fim').value;
+  const turno = turnos.find(t => t.id === turnoId);
+  const gruposSelecionados = turnoPossuiGrupos(turno) ? obterGruposSelecionadosScheduling() : [];
+
+  if (!numero) { toast('Informe o Nº Scheduling.', 'error'); return; }
+  if (!turno) { toast('Selecione o turno do scheduling.', 'error'); return; }
+  if (turnoPossuiGrupos(turno) && !gruposSelecionados.length) { toast('Selecione pelo menos um grupo para este turno.', 'error'); return; }
+  if (!Number.isFinite(headsQtd) || headsQtd <= 0) { toast('Informe um Nº de Heads maior que zero.', 'error'); return; }
+  if (!dataInicio || !dataFim) { toast('Informe data início e data fim.', 'error'); return; }
+  if (dataFim < dataInicio) { toast('Data fim não pode ser anterior à data início.', 'error'); return; }
+
+  const duplicado = schedulings.find(sc => asText(sc.numero) === numero && sc.id !== editingSchedulingId);
+  if (duplicado) { toast('Já existe scheduling com este número.', 'error'); return; }
+
+  const btn = document.getElementById('btn-salvar-scheduling');
+  setButtonLoading(btn, true, editingSchedulingId ? 'Atualizando...' : 'Salvando...');
+  setCarregando('form-grid-scheduling', true);
+
+  try {
+    const localData = {
+      id: editingSchedulingId || crypto.randomUUID?.() || `${numero}-${Date.now()}`,
+      numero,
+      turnoId,
+      escala: turno.escala,
+      grupos: gruposSelecionados,
+      heads: Math.round(headsQtd),
+      dataInicio,
+      dataFim
+    };
+
+    if (schedulingLocalMode) {
+      if (editingSchedulingId) {
+        schedulings = schedulings.map(sc => sc.id === editingSchedulingId ? localData : sc);
+      } else {
+        schedulings.push(localData);
+      }
+      salvarSchedulingsLocal();
+    } else {
+      const dbData = {
+        numero,
+        turno_id: turnoId,
+        escala: turno.escala,
+        grupos: gruposSelecionados,
+        heads: Math.round(headsQtd),
+        data_inicio: dataInicio,
+        data_fim: dataFim
+      };
+      let error;
+      if (editingSchedulingId) {
+        ({ error } = await db.from('scheduling').update(dbData).eq('id', editingSchedulingId));
+      } else {
+        ({ error } = await db.from('scheduling').insert([dbData]));
+      }
+      if (error) throw error;
+      await carregarSchedulings();
+    }
+
+    toast(editingSchedulingId ? 'Scheduling atualizado com sucesso!' : 'Scheduling cadastrado com sucesso!', 'success');
+    cancelarEdicaoScheduling();
+    renderSchedulings();
+  } catch (error) {
+    toast('Erro ao salvar scheduling: ' + (error.message || error), 'error');
+  } finally {
+    setButtonLoading(btn, false);
+    setCarregando('form-grid-scheduling', false);
+  }
+}
+
+function editarScheduling(id) {
+  if (!pode('editar_scheduling')) { toast('Seu perfil não permite editar scheduling.', 'error'); return; }
+  const sc = schedulings.find(x => x.id === id);
+  if (!sc) return;
+  editingSchedulingId = id;
+  document.getElementById('sc-numero').value = sc.numero || '';
+  document.getElementById('sc-turno').value = sc.turnoId || '';
+  document.getElementById('sc-heads').value = sc.heads || '';
+  document.getElementById('sc-data-inicio').value = sc.dataInicio || '';
+  document.getElementById('sc-data-fim').value = sc.dataFim || '';
+  onSchedulingTurnoChange(sc.grupos || []);
+  document.getElementById('scheduling-form-label').textContent = 'Editar scheduling';
+  document.getElementById('btn-salvar-scheduling').textContent = 'Atualizar Scheduling';
+  document.getElementById('sc-numero').focus();
+  document.getElementById('page-scheduling')?.scrollIntoView({ behavior:'smooth' });
+}
+
+function confirmarExcluirScheduling(id) {
+  if (!pode('excluir_scheduling')) { toast('Seu perfil não permite excluir scheduling.', 'error'); return; }
+  const sc = schedulings.find(x => x.id === id);
+  if (!sc) return;
+  pendingDelete = { type:'scheduling', id };
+  document.getElementById('modal-msg').textContent = `Excluir o scheduling "${sc.numero}"? Esta ação não pode ser desfeita.`;
+  document.getElementById('btn-confirmar-excluir').onclick = executarExclusao;
+  document.getElementById('modal-excluir').classList.add('open');
+}
+
+function renderSchedulings() {
+  const count = document.getElementById('scheduling-count');
+  const tbody = document.getElementById('tbody-scheduling');
+  if (!tbody) return;
+
+  const busca = lower(document.getElementById('busca-scheduling')?.value || '');
+  const lista = schedulings.filter(sc => {
+    const turno = turnos.find(t => t.id === sc.turnoId) || {};
+    const gruposTxt = normalizarGruposScheduling(sc.grupos || sc.grupo || '').join(' ');
+    return !busca || lower(sc.numero).includes(busca) || lower(turno.nome).includes(busca) || lower(ESCALAS[sc.escala]?.label).includes(busca) || lower(gruposTxt).includes(busca);
+  }).sort((a,b) => asText(a.dataInicio).localeCompare(asText(b.dataInicio)) || asText(a.numero).localeCompare(asText(b.numero)));
+
+  if (count) count.textContent = `${lista.length} scheduling${lista.length !== 1 ? 's' : ''}`;
+  setVisibleById('scheduling-local-note', schedulingLocalMode, 'block');
+  setSchedulingStatus(schedulingLocalMode ? 'Base: local deste navegador' : 'Base: Supabase · scheduling', schedulingLocalMode ? 'warn' : 'ok');
+
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📅</div><p>${schedulings.length ? 'Nenhum scheduling encontrado' : 'Nenhum scheduling cadastrado'}</p><span>${schedulings.length ? 'Tente outros termos' : 'Cadastre a programação para calcular % CIA/COA por período'}</span></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = lista.map(sc => {
+    const id = safeId(sc.id);
+    const turno = turnos.find(t => t.id === sc.turnoId) || {};
+    return `<tr>
+      <td><strong>${escapeHtml(sc.numero)}</strong></td>
+      <td>${turnoBadge(sc.turnoId)}</td>
+      <td>${escalaBadge(sc.escala || turno.escala)}</td>
+      <td>${formatarGruposScheduling(sc, turno)}</td>
+      <td><span class="badge badge-green">${Number(sc.heads || 0).toLocaleString('pt-BR')} heads</span></td>
+      <td style="color:var(--text-muted);font-size:12px">${escapeHtml(formatarDataIsoBr(sc.dataInicio))} até ${escapeHtml(formatarDataIsoBr(sc.dataFim))}</td>
+      <td style="text-align:right;white-space:nowrap">
+        ${pode('editar_scheduling') ? `<button class="btn btn-secondary btn-sm" onclick="editarScheduling('${id}')" style="margin-right:6px">Editar</button>` : ''}
+        ${pode('excluir_scheduling') ? `<button class="btn btn-danger btn-sm" onclick="confirmarExcluirScheduling('${id}')">Excluir</button>` : ''}
+        ${(!pode('editar_scheduling') && !pode('excluir_scheduling')) ? '<span style="color:var(--text-hint);font-size:12px">—</span>' : ''}
+      </td>
     </tr>`;
   }).join('');
 }
@@ -2930,6 +2738,10 @@ async function executarExclusao() {
       const { error } = await db.from('turnos').delete().eq('id', pendingDelete.id);
       if (error) throw error;
       toast('Turno excluído com sucesso.', 'success');
+    } else if (pendingDelete.type === 'head') {
+      const { error } = await db.from('colaboradores').delete().eq('id', pendingDelete.id);
+      if (error) throw error;
+      toast('Colaborador excluído com sucesso.', 'success');
     } else if (pendingDelete.type === 'scheduling') {
       if (schedulingLocalMode) {
         schedulings = schedulings.filter(sc => sc.id !== pendingDelete.id);
@@ -2939,10 +2751,6 @@ async function executarExclusao() {
         if (error) throw error;
       }
       toast('Scheduling excluído com sucesso.', 'success');
-    } else {
-      const { error } = await db.from('colaboradores').delete().eq('id', pendingDelete.id);
-      if (error) throw error;
-      toast('Colaborador excluído com sucesso.', 'success');
     }
     fecharModal();
     await carregarDadosDoBanco();
