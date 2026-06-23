@@ -198,15 +198,6 @@
   /* Hint text */
   .field-hint { font-size: 11px; color: var(--text-hint); margin-top: 3px; }
 
-  /* Scheduling */
-  .scheduling-status { margin-left: auto; font-size: 11px; color: var(--text-hint); }
-  .scheduling-status.ok { color: var(--success-text); }
-  .scheduling-status.warn { color: var(--warn-text); }
-  .scheduling-groups { display:flex; flex-wrap:wrap; gap:8px; padding: 8px 0 2px; }
-  .scheduling-group-option { display:inline-flex; align-items:center; gap:6px; padding:6px 9px; border:1px solid var(--border); border-radius:999px; background:#fafafa; color:var(--text-muted); font-size:12px; font-weight:700; cursor:pointer; user-select:none; }
-  .scheduling-group-option input { accent-color: var(--meli-action); }
-  .scheduling-group-option:has(input:checked) { background:#e8f0fe; border-color:#c8d9fb; color:var(--meli-blue); }
-
 
   /* Autenticação / login */
   .auth-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: linear-gradient(135deg, var(--meli-yellow) 0%, #fff5a8 42%, var(--meli-bg) 42%); }
@@ -356,6 +347,44 @@
 
 
 
+
+  /* ── Anomalias: filtro de período ── */
+  .anomalia-period-filter { display:flex; align-items:center; gap:6px; }
+  .anomalia-period-filter label { font-size:11px; font-weight:600; color:var(--text-muted); white-space:nowrap; }
+  .anomalia-period-filter input[type="date"] { padding:7px 10px; border:1px solid var(--border); border-radius:var(--radius); font-family:inherit; font-size:13px; }
+
+  /* ── Anomalias: insight cards ── */
+  .insight-row { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:10px; padding:12px 20px; border-bottom:1px solid var(--border); background:#fafafa; }
+  .insight-card { border:1px solid #eee; border-radius:var(--radius); background:var(--surface); padding:10px 14px; }
+  .insight-card-label { font-size:10px; font-weight:700; color:var(--text-hint); text-transform:uppercase; letter-spacing:.04em; margin-bottom:5px; }
+  .insight-card-value { font-size:13px; font-weight:700; color:var(--text); line-height:1.3; }
+  .insight-card-sub { font-size:11px; color:var(--text-muted); margin-top:2px; }
+  .insight-pill { display:inline-block; padding:1px 7px; border-radius:20px; font-size:11px; font-weight:600; }
+  .insight-pill-cia { background:#fff3e0; color:#e65100; }
+  .insight-pill-coa { background:#f3eaff; color:#7B2FBE; }
+
+  /* ── Anomalias: KPI % CIA / COA ── */
+  .stat-card-pct .stat-value { font-size:20px; }
+  .stat-card-pct .stat-value small { font-size:13px; font-weight:500; opacity:.7; }
+  .stat-card-pct .stat-meta { font-size:11px; color:var(--text-hint); margin-top:2px; line-height:1.4; }
+  .stat-cia-pct { color:var(--warn-text); }
+  .stat-coa-pct { color:#7B2FBE; }
+
+  /* ── Tabela: cabeçalho ordenável ── */
+  th.sortable { cursor:pointer; user-select:none; white-space:nowrap; }
+  th.sortable:hover { background:#eef2ff; color:var(--meli-blue); }
+  th.sortable .sort-icon { margin-left:4px; opacity:.4; font-size:10px; }
+  th.sortable.sort-asc .sort-icon::after { content:'▲'; opacity:1; }
+  th.sortable.sort-desc .sort-icon::after { content:'▼'; opacity:1; }
+  th.sortable:not(.sort-asc):not(.sort-desc) .sort-icon::after { content:'⇅'; }
+
+  /* ── Causa raiz automática badge ── */
+  .causa-auto { font-size:11px; color:var(--text-muted); font-style:italic; }
+  .causa-badge { display:inline-block; padding:2px 7px; border-radius:4px; font-size:11px; font-weight:600; background:#f0f5ff; color:var(--meli-blue); }
+
+  /* ── Scheduling ── */
+  .sched-empty { padding:48px 24px; text-align:center; color:var(--text-muted); }
+  .sched-periodo { font-size:11px; color:var(--text-hint); }
 
   @media print {
     #auth-screen, .header, .sidebar, .sidebar-overlay, .toast, .modal-overlay,
@@ -508,7 +537,7 @@
           <option value="0430">04:30 — Folga fixa + rodízio domingo (grupos A/B/C/D/E)</option>
           <option value="6x1_dom">6x1 — Folga fixa domingo</option>
           <option value="5x2_fds">5x2 — Folga sábado e domingo</option>
-          <option value="5x2_qqi">5x2 especial — Folga qua/qui + 4º domingo</option>
+          <option value="5x2_qqi">5x2 especial — Qua/Qui + Domingo rotativo por grupo</option>
           <option value="consolidacao">Consolidação (Mista - Grupos A/B)</option>
         </select>
         <div id="escala-descricao" class="escala-info" style="display:none"></div>
@@ -537,83 +566,6 @@
         </tr></thead>
         <tbody id="tbody-turnos">
           <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🕐</div><p>Nenhum turno cadastrado</p><span>Preencha o formulário acima para começar</span></div></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-
-<div id="page-scheduling" class="page">
-
-  <div class="access-note" id="scheduling-local-note" style="display:none">Tabela <strong>scheduling</strong> não localizada no Supabase. Os registros desta tela serão salvos localmente neste navegador até a tabela ser criada.</div>
-
-  <div class="form-card card" id="card-form-scheduling" style="margin-bottom:24px">
-    <p class="section-label" id="scheduling-form-label">Cadastrar scheduling</p>
-    <div class="form-grid" id="form-grid-scheduling">
-
-      <div class="form-group">
-        <label>Nº Scheduling</label>
-        <input type="text" id="sc-numero" placeholder="Ex: 12345" maxlength="40">
-      </div>
-
-      <div class="form-group">
-        <label>Turno</label>
-        <select id="sc-turno" onchange="onSchedulingTurnoChange()">
-          <option value="">— Selecionar —</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>Escala</label>
-        <input type="text" id="sc-escala-label" placeholder="Automático pelo turno" disabled>
-      </div>
-
-      <div class="form-group" id="sc-grupos-wrap" style="display:none;grid-column:span 2">
-        <label>Grupo(s)</label>
-        <div class="scheduling-groups" id="sc-grupos-options"></div>
-        <span class="field-hint" id="sc-grupos-hint">Selecione quais grupos fazem parte deste scheduling.</span>
-      </div>
-
-      <div class="form-group">
-        <label>Nº de Heads</label>
-        <input type="number" id="sc-heads" min="0" step="1" placeholder="Ex: 25">
-      </div>
-
-      <div class="form-group">
-        <label>Data início</label>
-        <input type="date" id="sc-data-inicio">
-      </div>
-
-      <div class="form-group">
-        <label>Data fim</label>
-        <input type="date" id="sc-data-fim">
-      </div>
-
-    </div>
-    <div class="form-actions">
-      <button class="btn btn-primary" id="btn-salvar-scheduling" onclick="salvarScheduling()">Salvar Scheduling</button>
-      <button class="btn btn-secondary" onclick="cancelarEdicaoScheduling()">Limpar</button>
-      <span class="scheduling-status" id="scheduling-sync-status">Base: —</span>
-    </div>
-  </div>
-
-  <p class="section-label">Schedulings cadastrados</p>
-  <div class="card">
-    <div class="search-bar">
-      <div class="search-input-wrap">
-        <span class="search-icon">🔍</span>
-        <input type="text" placeholder="Buscar por nº scheduling, turno ou grupo..." id="busca-scheduling" oninput="renderSchedulings()">
-      </div>
-      <span class="count-badge" id="scheduling-count">0 schedulings</span>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr>
-          <th>Nº Scheduling</th><th>Turno</th><th>Escala</th><th>Grupo(s)</th><th>Heads</th><th>Período de referência</th><th style="text-align:right">Ações</th>
-        </tr></thead>
-        <tbody id="tbody-scheduling">
-          <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📅</div><p>Nenhum scheduling cadastrado</p><span>Cadastre a programação para calcular % CIA/COA por período</span></div></td></tr>
         </tbody>
       </table>
     </div>
@@ -752,73 +704,198 @@
 </div>
 
 <div id="page-anomalias" class="page">
+  <!-- KPI cards row: total + CIA + COA + %CIA + %COA -->
   <div class="stats-row">
-    <div class="stat-card"><div class="stat-label">Total de Ofensas</div><div class="stat-value" id="stat-anom-total">0</div><div class="stat-sub">no período filtrado</div></div>
-    <div class="stat-card"><div class="stat-label">CIA (Entrada)</div><div class="stat-value" style="color: var(--warn-text)" id="stat-cia">0</div><div class="stat-sub">Autogerados</div></div>
-    <div class="stat-card"><div class="stat-label">COA (Saída)</div><div class="stat-value" style="color: #7B2FBE" id="stat-coa">0</div><div class="stat-sub">Autogerados</div></div>
+    <div class="stat-card">
+      <div class="stat-label">Total de Ofensas</div>
+      <div class="stat-value" id="stat-anom-total">0</div>
+      <div class="stat-sub">no período filtrado</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">CIA (Entrada)</div>
+      <div class="stat-value" style="color:var(--warn-text)" id="stat-cia">0</div>
+      <div class="stat-sub">Autogerados</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">COA (Saída)</div>
+      <div class="stat-value" style="color:#7B2FBE" id="stat-coa">0</div>
+      <div class="stat-sub">Autogerados</div>
+    </div>
+    <div class="stat-card stat-card-pct">
+      <div class="stat-label">% CIA</div>
+      <div class="stat-value stat-cia-pct" id="stat-pct-cia">—</div>
+      <div class="stat-meta" id="stat-pct-cia-meta">Sem scheduling no período</div>
+    </div>
+    <div class="stat-card stat-card-pct">
+      <div class="stat-label">% COA</div>
+      <div class="stat-value stat-coa-pct" id="stat-pct-coa">—</div>
+      <div class="stat-meta" id="stat-pct-coa-meta">Sem scheduling no período</div>
+    </div>
   </div>
 
   <p class="section-label">Monitoramento de Ponto Autogerado</p>
   <div class="card">
-    <div class="search-bar">
-      <input type="date" id="filtro-data-anomalia" onchange="renderAnomalias()" style="padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-family: inherit;">
+    <!-- Barra de filtros -->
+    <div class="search-bar" style="flex-wrap:wrap;gap:8px">
+      <!-- Período -->
+      <div class="anomalia-period-filter">
+        <label>De</label>
+        <input type="date" id="filtro-data-inicio" onchange="renderAnomalias()" style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;">
+        <label>Até</label>
+        <input type="date" id="filtro-data-fim" onchange="renderAnomalias()" style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;">
+      </div>
       <span class="quick-date-actions">
         <button class="btn btn-secondary btn-sm" onclick="definirDataAnomalia('hoje')">Hoje</button>
         <button class="btn btn-secondary btn-sm" onclick="definirDataAnomalia('ontem')">Ontem</button>
+        <button class="btn btn-secondary btn-sm" onclick="definirDataAnomalia('semana')">Semana</button>
       </span>
-      
+
       <select id="filtro-tipo-anomalia" onchange="renderAnomalias()">
         <option value="AMBOS">Todos os Tipos (CIA/COA)</option>
         <option value="CIA">Somente CIA (Entrada)</option>
         <option value="COA">Somente COA (Saída)</option>
       </select>
 
-      <div class="search-input-wrap">
+      <div class="search-input-wrap" style="min-width:180px">
         <span class="search-icon">🔍</span>
-        <input type="text" placeholder="Buscar por colaborador ou EXT..." id="busca-anomalia" oninput="renderAnomalias()">
+        <input type="text" placeholder="Colaborador ou EXT..." id="busca-anomalia" oninput="renderAnomalias()">
       </div>
-      <button class="btn btn-secondary btn-sm" id="btn-atualizar-anomalias" onclick="carregarAnomalias({ manual: true })" style="height:34px; display:inline-flex; align-items:center; gap:6px;">
+      <button class="btn btn-secondary btn-sm" id="btn-atualizar-anomalias" onclick="carregarAnomalias({ manual: true })" style="height:34px;display:inline-flex;align-items:center;gap:6px;">
         <span>🔄 Atualizar</span>
       </button>
       <span class="sync-status" id="anomalia-sync-status">Última atualização: —</span>
       <span class="count-badge" id="anomalia-count">0 registros</span>
     </div>
+
+    <!-- Painel de sync -->
     <div class="sync-panel" id="anomalia-sync-panel">
-      <div class="sync-panel-item">
-        <span class="sync-panel-label">Última atualização</span>
-        <span class="sync-panel-value" id="anomalia-info-ultima">—</span>
+      <div class="sync-panel-item"><span class="sync-panel-label">Última atualização</span><span class="sync-panel-value" id="anomalia-info-ultima">—</span></div>
+      <div class="sync-panel-item"><span class="sync-panel-label">Fonte</span><span class="sync-panel-value" id="anomalia-info-fonte">—</span></div>
+      <div class="sync-panel-item"><span class="sync-panel-label">Registros carregados</span><span class="sync-panel-value" id="anomalia-info-total">0</span></div>
+      <div class="sync-panel-item"><span class="sync-panel-label">Período na base</span><span class="sync-panel-value" id="anomalia-info-periodo">—</span></div>
+      <div class="sync-panel-item"><span class="sync-panel-label">Filtro atual</span><span class="sync-panel-value" id="anomalia-info-filtro">0 exibidas</span></div>
+    </div>
+
+    <!-- Insight cards -->
+    <div class="insight-row" id="anomalia-insights">
+      <div class="insight-card">
+        <div class="insight-card-label">Turno mais ofensor — CIA</div>
+        <div class="insight-card-value" id="insight-turno-cia">—</div>
+        <div class="insight-card-sub" id="insight-turno-cia-sub"></div>
       </div>
-      <div class="sync-panel-item">
-        <span class="sync-panel-label">Fonte</span>
-        <span class="sync-panel-value" id="anomalia-info-fonte">—</span>
+      <div class="insight-card">
+        <div class="insight-card-label">Turno mais ofensor — COA</div>
+        <div class="insight-card-value" id="insight-turno-coa">—</div>
+        <div class="insight-card-sub" id="insight-turno-coa-sub"></div>
       </div>
-      <div class="sync-panel-item">
-        <span class="sync-panel-label">Registros carregados</span>
-        <span class="sync-panel-value" id="anomalia-info-total">0</span>
+      <div class="insight-card">
+        <div class="insight-card-label">Causa raiz mais freq. — CIA</div>
+        <div class="insight-card-value" id="insight-causa-cia">—</div>
+        <div class="insight-card-sub" id="insight-causa-cia-sub"></div>
       </div>
-      <div class="sync-panel-item">
-        <span class="sync-panel-label">Período na base</span>
-        <span class="sync-panel-value" id="anomalia-info-periodo">—</span>
-      </div>
-      <div class="sync-panel-item">
-        <span class="sync-panel-label">Filtro atual</span>
-        <span class="sync-panel-value" id="anomalia-info-filtro">0 exibidas</span>
+      <div class="insight-card">
+        <div class="insight-card-label">Causa raiz mais freq. — COA</div>
+        <div class="insight-card-value" id="insight-causa-coa">—</div>
+        <div class="insight-card-sub" id="insight-causa-coa-sub"></div>
       </div>
     </div>
+
+    <!-- Tabela com cabeçalhos ordenáveis -->
     <div class="table-wrap">
       <table>
-        <thead><tr>
-          <th>Data</th><th>Colaborador</th><th>Turno</th><th>Gestor</th><th>Tipo</th><th>Hora da Ofensa</th><th>Causa Raiz (Análise)</th>
-        </tr></thead>
+        <thead>
+          <tr id="thead-anomalias">
+            <th class="sortable" data-col="data" onclick="sortAnomalias('data')">Data <span class="sort-icon"></span></th>
+            <th class="sortable" data-col="colaborador" onclick="sortAnomalias('colaborador')">Colaborador <span class="sort-icon"></span></th>
+            <th>Turno</th>
+            <th class="sortable" data-col="gestor" onclick="sortAnomalias('gestor')">Gestor <span class="sort-icon"></span></th>
+            <th class="sortable" data-col="tipo" onclick="sortAnomalias('tipo')">Tipo <span class="sort-icon"></span></th>
+            <th class="sortable" data-col="hora" onclick="sortAnomalias('hora')">Hora da Ofensa <span class="sort-icon"></span></th>
+            <th class="sortable" data-col="causa" onclick="sortAnomalias('causa')">Causa Raiz (Análise) <span class="sort-icon"></span></th>
+          </tr>
+        </thead>
         <tbody id="tbody-anomalias">
           <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">⏳</div><p>Carregando dados de ponto...</p></div></td></tr>
         </tbody>
       </table>
     </div>
   </div>
-</div>  
+</div>
 
 
+
+<!-- ════════════════════════════════════════
+     SCHEDULING
+════════════════════════════════════════ -->
+<div id="page-scheduling" class="page">
+
+  <div class="form-card card" id="card-form-scheduling" style="margin-bottom:24px">
+    <p class="section-label" id="sched-form-label">Cadastrar Scheduling</p>
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>Nº Scheduling</label>
+        <input type="text" id="sched-numero" placeholder="Ex: SCH-2026-001" maxlength="60">
+      </div>
+
+      <div class="form-group">
+        <label>Turno</label>
+        <select id="sched-turno">
+          <option value="">— Selecionar —</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Nº de Heads</label>
+        <input type="number" id="sched-heads" placeholder="Ex: 15" min="1" max="999">
+      </div>
+
+      <div class="form-group">
+        <label>Data Início</label>
+        <input type="date" id="sched-data-inicio">
+      </div>
+
+      <div class="form-group">
+        <label>Data Fim</label>
+        <input type="date" id="sched-data-fim">
+      </div>
+
+      <div class="form-group" style="grid-column:span 2">
+        <label>Observação (opcional)</label>
+        <input type="text" id="sched-obs" placeholder="Ex: Reforço feriado, ajuste sazonal..." maxlength="200">
+      </div>
+
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" id="btn-salvar-sched" onclick="salvarScheduling()">Salvar Scheduling</button>
+      <button class="btn btn-secondary" onclick="cancelarEdicaoSched()">Limpar</button>
+    </div>
+  </div>
+
+  <p class="section-label">Schedulings cadastrados</p>
+  <div class="card">
+    <div class="search-bar">
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Buscar por número ou turno..." id="busca-sched" oninput="renderSchedulings()">
+      </div>
+      <select id="filtro-turno-sched" onchange="renderSchedulings()" style="min-width:140px">
+        <option value="">Todos os turnos</option>
+      </select>
+      <span class="count-badge" id="sched-count">0 schedulings</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Nº Scheduling</th><th>Turno</th><th>Escala</th><th>Heads</th><th>Período</th><th>Observação</th><th style="text-align:right">Ações</th>
+        </tr></thead>
+        <tbody id="tbody-schedulings">
+          <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📅</div><p>Nenhum scheduling cadastrado</p><span>Preencha o formulário acima para começar</span></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
 <div id="page-monitor" class="page">
 
@@ -1242,8 +1319,8 @@ const PERFIS_ACESSO = {
     gerar_crachas: true,
     criar_turnos: true, editar_turnos: true, excluir_turnos: true,
     criar_hc: true, editar_hc: true, excluir_hc: true, exportar_hc: true,
-    criar_scheduling: true, editar_scheduling: true, excluir_scheduling: true,
-    ver_anomalias: true, atualizar_anomalias: true, tratar_anomalias: true
+    ver_anomalias: true, atualizar_anomalias: true, tratar_anomalias: true,
+    criar_sched: true, editar_sched: true, excluir_sched: true
   },
   supervisor: {
     label: 'Supervisor',
@@ -1251,17 +1328,17 @@ const PERFIS_ACESSO = {
     gerar_crachas: true,
     criar_turnos: false, editar_turnos: false, excluir_turnos: false,
     criar_hc: true, editar_hc: true, excluir_hc: false, exportar_hc: true,
-    criar_scheduling: true, editar_scheduling: true, excluir_scheduling: false,
-    ver_anomalias: true, atualizar_anomalias: true, tratar_anomalias: true
+    ver_anomalias: true, atualizar_anomalias: true, tratar_anomalias: true,
+    criar_sched: true, editar_sched: true, excluir_sched: false
   },
   consulta: {
     label: 'Consulta',
-    tabs: ['headcount', 'scheduling', 'anomalias', 'monitor'],
+    tabs: ['headcount', 'anomalias', 'monitor'],
     gerar_crachas: false,
     criar_turnos: false, editar_turnos: false, excluir_turnos: false,
     criar_hc: false, editar_hc: false, excluir_hc: false, exportar_hc: false,
-    criar_scheduling: false, editar_scheduling: false, excluir_scheduling: false,
-    ver_anomalias: true, atualizar_anomalias: true, tratar_anomalias: false
+    ver_anomalias: true, atualizar_anomalias: true, tratar_anomalias: false,
+    criar_sched: false, editar_sched: false, excluir_sched: false
   }
 };
 
@@ -1375,9 +1452,8 @@ function limparSessaoLocal() {
   appInicializado = false;
   turnos = [];
   heads = [];
-  schedulings = [];
-  schedulingLocalMode = false;
   anomalias = [];
+  schedulings = [];
   if (anomaliasAutoRefreshTimer) clearInterval(anomaliasAutoRefreshTimer);
   anomaliasAutoRefreshTimer = null;
   if (anomaliasRealtimeChannel && db.removeChannel) db.removeChannel(anomaliasRealtimeChannel);
@@ -1462,21 +1538,18 @@ function aplicarControleAcesso() {
 
   setVisibleById('card-form-turnos', pode('criar_turnos') || pode('editar_turnos'));
   setVisibleById('card-form-hc', pode('criar_hc') || pode('editar_hc'));
-  setVisibleById('card-form-scheduling', pode('criar_scheduling') || pode('editar_scheduling'));
-  setVisibleById('scheduling-local-note', schedulingLocalMode, 'block');
   setVisibleById('hc-readonly-note', podeAcessarTab('headcount') && !pode('criar_hc') && !pode('editar_hc'), 'block');
   setVisibleById('btn-importar-hc', pode('criar_hc'), 'inline-flex');
   setVisibleById('btn-exportar-hc', pode('exportar_hc'), 'inline-flex');
   setVisibleById('btn-atualizar-anomalias', pode('atualizar_anomalias'), 'inline-flex');
   setVisibleById('card-form-crachas', pode('gerar_crachas'));
+  setVisibleById('card-form-scheduling', pode('criar_sched') || pode('editar_sched'));
 
   if (!podeAcessarTab('turnos')) cancelarEdicaoTurno();
   if (!pode('editar_hc') && !pode('criar_hc')) cancelarEdicaoHC();
-  if (!pode('editar_scheduling') && !pode('criar_scheduling')) cancelarEdicaoScheduling();
 
   renderTurnos();
   renderHeads();
-  renderSchedulings();
   renderAnomalias();
 }
 
@@ -1695,13 +1768,16 @@ function calcFolgaSemana(head, turno, dataRef) {
 // ════════════════════════════════════════
 let turnos = [];
 let heads  = [];
-let schedulings = [];
-let schedulingLocalMode = false;
 let anomalias = [];
+let schedulings = [];
 let editingTurnoId = null;
 let editingHcId = null;
-let editingSchedulingId = null;
+let editingSchedId = null;
 let pendingDelete = null;
+
+// Estado de ordenação da tabela de anomalias
+let anomaliasSortCol = 'data';
+let anomaliasSortDir = 'desc';
 
 function toast(msg, tipo='') {
   const el = document.getElementById('toast');
@@ -1744,11 +1820,24 @@ async function carregarDadosDoBanco() {
       status: h.status || 'ativo'
     }));
 
-    const filtroData = document.getElementById('filtro-data-anomalia');
-    if (filtroData && !filtroData.value) filtroData.value = hojeIsoLocal();
+    const { data: dataScheds, error: errScheds } = await db.from('schedulings').select('*').order('data_inicio', { ascending: false });
+    if (errScheds && errScheds.code !== 'PGRST116' && !errScheds.message?.includes('does not exist')) throw errScheds;
+    schedulings = (dataScheds || []).map(s => ({
+      id: s.id,
+      numero: s.numero,
+      turnoId: s.turno_id,
+      heads: s.heads,
+      dataInicio: s.data_inicio,
+      dataFim: s.data_fim,
+      obs: s.obs || ''
+    }));
+
+    const filtroInicio = document.getElementById('filtro-data-inicio');
+    const filtroFim = document.getElementById('filtro-data-fim');
+    if (filtroInicio && !filtroInicio.value) filtroInicio.value = hojeIsoLocal();
+    if (filtroFim && !filtroFim.value) filtroFim.value = hojeIsoLocal();
 
     atualizarSelectTurnos();
-    await carregarSchedulings();
     renderTurnos();
     renderHeads();
     renderSchedulings();
@@ -2043,9 +2132,31 @@ function atualizarPainelSyncAnomalias(qtdFiltrada = null) {
 }
 
 function definirDataAnomalia(tipo) {
-  const input = document.getElementById('filtro-data-anomalia');
-  if (!input) return;
-  input.value = tipo === 'ontem' ? ontemIsoLocal() : hojeIsoLocal();
+  const inicio = document.getElementById('filtro-data-inicio');
+  const fim = document.getElementById('filtro-data-fim');
+  if (!inicio || !fim) return;
+
+  const hoje = hojeIsoLocal();
+  const ontem = ontemIsoLocal();
+
+  if (tipo === 'hoje') {
+    inicio.value = hoje;
+    fim.value = hoje;
+  } else if (tipo === 'ontem') {
+    inicio.value = ontem;
+    fim.value = ontem;
+  } else if (tipo === 'semana') {
+    // segunda a hoje
+    const d = new Date();
+    const dow = d.getDay();
+    const diffSeg = (dow === 0 ? -6 : 1 - dow);
+    const seg = new Date(d);
+    seg.setDate(d.getDate() + diffSeg);
+    const offset = seg.getTimezoneOffset();
+    const segLocal = new Date(seg.getTime() - offset * 60000);
+    inicio.value = segLocal.toISOString().slice(0, 10);
+    fim.value = hoje;
+  }
   renderAnomalias();
 }
 
@@ -2198,12 +2309,261 @@ function assinarRealtimeAnomalias() {
   }
 }
 
+// ════════════════════════════════════════
+//  CAUSA RAIZ AUTOMÁTICA CIA / COA
+// ════════════════════════════════════════
+function horaParaMinutos(horaStr) {
+  if (!horaStr) return null;
+  const partes = asText(horaStr).trim().split(':');
+  if (partes.length < 2) return null;
+  const h = parseInt(partes[0], 10);
+  const m = parseInt(partes[1], 10);
+  if (isNaN(h) || isNaN(m)) return null;
+  return h * 60 + m;
+}
+
+function calcularCausaRaizAuto(anomalia) {
+  const tipo = asText(anomalia.tipo).toUpperCase();
+  const extAnomalia = normalizeExt(anomalia.ext);
+  const head = heads.find(h => normalizeExt(h.ext) === extAnomalia);
+  if (!head) return null;
+
+  const turno = turnos.find(t => t.id === head.turnoId);
+  if (!turno || !turno.inicio || !turno.fim) return null;
+
+  const minOfensa = horaParaMinutos(anomalia.hora);
+  const minInicio = horaParaMinutos(turno.inicio);
+  const minFim = horaParaMinutos(turno.fim);
+  if (minOfensa === null || minInicio === null || minFim === null) return null;
+
+  // delta em minutos desde o início do turno
+  let delta = minOfensa - minInicio;
+  // ajuste para turnos que passam da meia-noite (ex: fim < início)
+  if (delta < -120) delta += 1440; // tolerância de 2h negativo → adiciona 24h
+
+  const min3h = 180;
+  const min5h = 300;
+  // fim do turno em relação ao início
+  let duracaoTurno = minFim - minInicio;
+  if (duracaoTurno <= 0) duracaoTurno += 1440;
+  const min1hAntesDoFim = duracaoTurno - 60;
+
+  if (tipo === 'CIA') {
+    if (delta <= min3h) return 'Logou no HH sem Clock IN (Entrada Operação)';
+    if (delta <= min5h) return 'Logou no HH sem Clock IN (Retorno Almoço)';
+    return 'Logou no HH sem Clock IN (Retorno Almoço)';
+  }
+
+  if (tipo === 'COA') {
+    if (delta <= min3h) return 'Clock IN duplicado';
+    if (delta <= min5h) return 'Não bateu Clock OUT (saída para intervalo)';
+    if (delta <= min1hAntesDoFim) return 'Clock IN duplicado';
+    return 'Não bateu Clock OUT (saída da operação)';
+  }
+
+  return null;
+}
+
+// ════════════════════════════════════════
+//  ORDENAÇÃO DA TABELA DE ANOMALIAS
+// ════════════════════════════════════════
+function sortAnomalias(col) {
+  if (anomaliasSortCol === col) {
+    anomaliasSortDir = anomaliasSortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    anomaliasSortCol = col;
+    anomaliasSortDir = col === 'data' || col === 'hora' ? 'desc' : 'asc';
+  }
+  // Atualiza classes visuais nos th
+  document.querySelectorAll('#thead-anomalias th.sortable').forEach(th => {
+    th.classList.remove('sort-asc', 'sort-desc');
+    if (th.dataset.col === col) th.classList.add(anomaliasSortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+  });
+  renderAnomalias();
+}
+
+function aplicarOrdenacaoAnomalias(lista) {
+  return [...lista].sort((a, b) => {
+    let va, vb;
+    const extA = normalizeExt(a.ext);
+    const extB = normalizeExt(b.ext);
+    const headA = heads.find(h => normalizeExt(h.ext) === extA) || {};
+    const headB = heads.find(h => normalizeExt(h.ext) === extB) || {};
+
+    switch (anomaliasSortCol) {
+      case 'data':
+        va = parseDataMarcacaoParaOrdenacao(a.data_marcacao, a.hora);
+        vb = parseDataMarcacaoParaOrdenacao(b.data_marcacao, b.hora);
+        break;
+      case 'colaborador':
+        va = lower(headA.nome || extA);
+        vb = lower(headB.nome || extB);
+        break;
+      case 'gestor':
+        va = lower(headA.gestor || '');
+        vb = lower(headB.gestor || '');
+        break;
+      case 'tipo':
+        va = asText(a.tipo).toUpperCase();
+        vb = asText(b.tipo).toUpperCase();
+        break;
+      case 'hora':
+        va = horaParaMinutos(a.hora) ?? -1;
+        vb = horaParaMinutos(b.hora) ?? -1;
+        break;
+      case 'causa':
+        va = lower(calcularCausaRaizAuto(a) || '');
+        vb = lower(calcularCausaRaizAuto(b) || '');
+        break;
+      default:
+        va = 0; vb = 0;
+    }
+
+    if (va < vb) return anomaliasSortDir === 'asc' ? -1 : 1;
+    if (va > vb) return anomaliasSortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+}
+
+// ════════════════════════════════════════
+//  % CIA / COA via Scheduling
+// ════════════════════════════════════════
+function calcularHeadsProgramadosNoPeriodo(dataInicioIso, dataFimIso) {
+  // Soma os heads de cada scheduling que se sobrepõe ao período filtrado
+  // Retorna o total de "dias × heads" (denominador) para cada turno
+  // Para simplicidade: retorna a soma dos heads de todos schedulings que cobrem ao menos um dia do período
+  if (!schedulings.length) return 0;
+
+  let total = 0;
+  const inicio = dataInicioIso ? new Date(dataInicioIso + 'T00:00:00') : null;
+  const fim = dataFimIso ? new Date(dataFimIso + 'T23:59:59') : null;
+
+  schedulings.forEach(s => {
+    if (!s.dataInicio || !s.dataFim) return;
+    const sIni = new Date(s.dataInicio + 'T00:00:00');
+    const sFim = new Date(s.dataFim + 'T23:59:59');
+
+    // Verifica sobreposição de período
+    const overlap = (!inicio || sFim >= inicio) && (!fim || sIni <= fim);
+    if (!overlap) return;
+
+    // Calcula quantos dias do scheduling caem no período filtrado
+    const dIni = inicio ? (sIni > inicio ? sIni : inicio) : sIni;
+    const dFim = fim ? (sFim < fim ? sFim : fim) : sFim;
+    const dias = Math.max(0, Math.round((dFim - dIni) / 86400000) + 1);
+    total += (s.heads || 0) * dias;
+  });
+
+  return total;
+}
+
+function atualizarKpiPct(listaBase, dataInicioIso, dataFimIso) {
+  const qtdCia = listaBase.filter(a => asText(a.tipo).toUpperCase() === 'CIA').length;
+  const qtdCoa = listaBase.filter(a => asText(a.tipo).toUpperCase() === 'COA').length;
+  const headsTotal = calcularHeadsProgramadosNoPeriodo(dataInicioIso, dataFimIso);
+
+  const elPctCia = document.getElementById('stat-pct-cia');
+  const elPctCoa = document.getElementById('stat-pct-coa');
+  const elMetaCia = document.getElementById('stat-pct-cia-meta');
+  const elMetaCoa = document.getElementById('stat-pct-coa-meta');
+
+  if (!headsTotal) {
+    if (elPctCia) elPctCia.textContent = '—';
+    if (elPctCoa) elPctCoa.textContent = '—';
+    if (elMetaCia) elMetaCia.textContent = 'Sem scheduling no período';
+    if (elMetaCoa) elMetaCoa.textContent = 'Sem scheduling no período';
+    return;
+  }
+
+  const pctCia = (qtdCia / headsTotal * 100).toFixed(2);
+  const pctCoa = (qtdCoa / headsTotal * 100).toFixed(2);
+  if (elPctCia) elPctCia.innerHTML = `${pctCia}<small>%</small>`;
+  if (elPctCoa) elPctCoa.innerHTML = `${pctCoa}<small>%</small>`;
+  if (elMetaCia) elMetaCia.textContent = `${qtdCia} CIA ÷ ${headsTotal.toLocaleString('pt-BR')} heads×dias`;
+  if (elMetaCoa) elMetaCoa.textContent = `${qtdCoa} COA ÷ ${headsTotal.toLocaleString('pt-BR')} heads×dias`;
+}
+
+// ════════════════════════════════════════
+//  INSIGHTS (turno e causa mais freq.)
+// ════════════════════════════════════════
+function maisFrequente(lista, fn) {
+  const freq = {};
+  lista.forEach(item => {
+    const k = fn(item);
+    if (k) freq[k] = (freq[k] || 0) + 1;
+  });
+  const entries = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+  if (!entries.length) return null;
+  return { valor: entries[0][0], count: entries[0][1], total: lista.length };
+}
+
+function atualizarInsights(listaBase) {
+  const cias = listaBase.filter(a => asText(a.tipo).toUpperCase() === 'CIA');
+  const coas = listaBase.filter(a => asText(a.tipo).toUpperCase() === 'COA');
+
+  // Turno mais ofensor CIA
+  const turnoCia = maisFrequente(cias, a => {
+    const h = heads.find(hh => normalizeExt(hh.ext) === normalizeExt(a.ext));
+    const t = h ? turnos.find(tt => tt.id === h.turnoId) : null;
+    return t ? t.nome : null;
+  });
+  setText2('insight-turno-cia', turnoCia ? escapeHtml(turnoCia.valor) : '—');
+  setText2('insight-turno-cia-sub', turnoCia ? `${turnoCia.count} de ${turnoCia.total} ofensas CIA` : '');
+
+  // Turno mais ofensor COA
+  const turnoCoa = maisFrequente(coas, a => {
+    const h = heads.find(hh => normalizeExt(hh.ext) === normalizeExt(a.ext));
+    const t = h ? turnos.find(tt => tt.id === h.turnoId) : null;
+    return t ? t.nome : null;
+  });
+  setText2('insight-turno-coa', turnoCoa ? escapeHtml(turnoCoa.valor) : '—');
+  setText2('insight-turno-coa-sub', turnoCoa ? `${turnoCoa.count} de ${turnoCoa.total} ofensas COA` : '');
+
+  // Causa mais freq CIA
+  const causaCia = maisFrequente(cias, a => calcularCausaRaizAuto(a));
+  setText2('insight-causa-cia', causaCia ? escapeHtml(causaCia.valor) : '—');
+  setText2('insight-causa-cia-sub', causaCia ? `${causaCia.count} de ${causaCia.total} ofensas CIA` : '');
+
+  // Causa mais freq COA
+  const causaCoa = maisFrequente(coas, a => calcularCausaRaizAuto(a));
+  setText2('insight-causa-coa', causaCoa ? escapeHtml(causaCoa.valor) : '—');
+  setText2('insight-causa-coa-sub', causaCoa ? `${causaCoa.count} de ${causaCoa.total} ofensas COA` : '');
+}
+
+function setText2(id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = html;
+}
+
+// ════════════════════════════════════════
+//  RENDER ANOMALIAS (nova versão)
+// ════════════════════════════════════════
+function dataMarcacaoMatchesPeriodo(dataMarcacao, inicioIso, fimIso) {
+  const raw = asText(dataMarcacao).trim();
+  if (!raw) return false;
+  let iso = '';
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) iso = brToIso(raw);
+  else if (/^\d{4}-\d{2}-\d{2}/.test(raw)) iso = raw.slice(0, 10);
+  else {
+    const p = new Date(raw);
+    if (!isNaN(p.getTime())) {
+      const off = p.getTimezoneOffset();
+      iso = new Date(p.getTime() - off * 60000).toISOString().slice(0, 10);
+    }
+  }
+  if (!iso) return false;
+  if (inicioIso && iso < inicioIso) return false;
+  if (fimIso && iso > fimIso) return false;
+  return true;
+}
+
 function renderAnomalias() {
-  const filtDataInput = document.getElementById('filtro-data-anomalia').value;
-  const filtTipo = document.getElementById('filtro-tipo-anomalia').value;
+  const inicioIso = document.getElementById('filtro-data-inicio')?.value || '';
+  const fimIso    = document.getElementById('filtro-data-fim')?.value || '';
+  const filtTipo  = document.getElementById('filtro-tipo-anomalia').value;
   const buscaText = lower(document.getElementById('busca-anomalia').value);
 
-  let listaBase = anomalias.filter(a => dataMarcacaoMatchesFiltro(a.data_marcacao, filtDataInput));
+  let listaBase = anomalias.filter(a => dataMarcacaoMatchesPeriodo(a.data_marcacao, inicioIso, fimIso));
 
   if (filtTipo !== 'AMBOS') {
     listaBase = listaBase.filter(a => asText(a.tipo).toUpperCase() === filtTipo);
@@ -2213,6 +2573,9 @@ function renderAnomalias() {
   document.getElementById('stat-cia').textContent = listaBase.filter(a => asText(a.tipo).toUpperCase() === 'CIA').length;
   document.getElementById('stat-coa').textContent = listaBase.filter(a => asText(a.tipo).toUpperCase() === 'COA').length;
 
+  atualizarKpiPct(listaBase, inicioIso, fimIso);
+  atualizarInsights(listaBase);
+
   let lista = listaBase;
   if (buscaText) {
     lista = lista.filter(a => {
@@ -2221,6 +2584,8 @@ function renderAnomalias() {
       return extAnomalia.includes(buscaText) || lower(head.nome).includes(buscaText) || lower(head.gestor).includes(buscaText);
     });
   }
+
+  lista = aplicarOrdenacaoAnomalias(lista);
 
   document.getElementById('anomalia-count').textContent = `${lista.length} ofensa${lista.length !== 1 ? 's' : ''}`;
   atualizarPainelSyncAnomalias(lista.length);
@@ -2234,7 +2599,9 @@ function renderAnomalias() {
   tbody.innerHTML = lista.map(a => {
     const extAnomalia = normalizeExt(a.ext);
     const head = heads.find(h => normalizeExt(h.ext) === extAnomalia) || {};
-    const nomeVisual = head.nome ? `<strong>${escapeHtml(head.nome)}</strong>` : `<span style="color:var(--danger-text)">Colaborador não cadastrado</span>`;
+    const nomeVisual = head.nome
+      ? `<strong>${escapeHtml(head.nome)}</strong>`
+      : `<span style="color:var(--danger-text)">Não cadastrado</span>`;
     const turnoVisual = turnoBadge(head.turnoId);
     const gestorVisual = escapeHtml(head.gestor || '—');
     const tipo = asText(a.tipo).toUpperCase();
@@ -2242,8 +2609,13 @@ function renderAnomalias() {
       ? `<span class="badge badge-orange">CIA</span>`
       : `<span class="badge badge-purple">COA</span>`;
 
+    const causaAuto = calcularCausaRaizAuto(a);
+    const causaVisual = causaAuto
+      ? `<span class="causa-badge">${escapeHtml(causaAuto)}</span>`
+      : `<span class="causa-auto">Dados insuficientes</span>`;
+
     return `<tr>
-      <td style="color:var(--text-muted);font-size:13px">${escapeHtml(formatarDataMarcacao(a.data_marcacao))}</td>
+      <td style="color:var(--text-muted);font-size:13px;white-space:nowrap">${escapeHtml(formatarDataMarcacao(a.data_marcacao))}</td>
       <td>
         ${nomeVisual}<br>
         <span style="font-family:monospace;font-size:11px;color:var(--text-hint)">ext_${escapeHtml(extAnomalia || '—')}</span>
@@ -2251,320 +2623,8 @@ function renderAnomalias() {
       <td>${turnoVisual}</td>
       <td style="color:var(--text-muted);font-size:12px">${gestorVisual}</td>
       <td>${tipoBadge}</td>
-      <td style="font-weight:700">${escapeHtml(a.hora || '—')}</td>
-      <td>
-        ${pode('tratar_anomalias') ? `
-        <select style="padding:4px 8px; border:1px solid var(--border); border-radius:4px; font-size:12px; color:var(--text-muted); background:transparent;">
-          <option value="">Aguardando tratativa...</option>
-          <option value="esquecimento">Esquecimento Operacional</option>
-          <option value="sistema">Falha no Relógio/Sistema</option>
-          <option value="dispensa">Dispensa Antecipada</option>
-        </select>` : '<span style="color:var(--text-hint);font-size:12px">Somente leitura</span>'}
-      </td>
-    </tr>`;
-  }).join('');
-}
-
-
-// ════════════════════════════════════════
-//  LÓGICA DE SCHEDULING
-// ════════════════════════════════════════
-const SCHEDULING_LOCAL_KEY = 'svc_scheduling_local_v1';
-
-function formatarDataIsoBr(iso) {
-  if (!iso) return '—';
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(asText(iso))) return asText(iso);
-  const [ano, mes, dia] = iso.split('-');
-  return `${dia}/${mes}/${ano}`;
-}
-
-function normalizarGruposScheduling(value) {
-  if (Array.isArray(value)) {
-    return [...new Set(value.map(normalizarGrupoFolga).filter(Boolean))];
-  }
-
-  const raw = asText(value).trim();
-  if (!raw) return [];
-
-  if (raw.startsWith('[')) {
-    try {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return normalizarGruposScheduling(parsed);
-    } catch (_) {}
-  }
-
-  return [...new Set(raw
-    .split(/[,;|\/]+/)
-    .map(normalizarGrupoFolga)
-    .filter(Boolean))];
-}
-
-function obterGruposSelecionadosScheduling() {
-  return [...document.querySelectorAll('#sc-grupos-options input[type="checkbox"]:checked')]
-    .map(input => normalizarGrupoFolga(input.value))
-    .filter(Boolean);
-}
-
-function formatarGruposScheduling(sc, turno = null) {
-  const grupos = normalizarGruposScheduling(sc?.grupos || sc?.grupo || '');
-  const turnoRef = turno || turnos.find(t => t.id === sc?.turnoId);
-  if (!turnoRef || !turnoPossuiGrupos(turnoRef)) {
-    return '<span style="color:var(--text-hint);font-size:12px">Não se aplica</span>';
-  }
-  if (!grupos.length) {
-    return '<span class="bulk-result error">Grupo pendente</span>';
-  }
-  return grupos.map(g => `<span class="badge badge-blue" style="margin-right:4px">Grupo ${escapeHtml(g)}</span>`).join('');
-}
-
-function normalizarScheduling(row) {
-  const turnoId = row.turno_id || row.turnoId || row.turno || '';
-  const turno = turnos.find(t => t.id === turnoId);
-  return {
-    id: row.id || crypto.randomUUID?.() || `${asText(row.numero)}-${Date.now()}`,
-    numero: asText(row.numero || row.n_scheduling || row.scheduling || row['Nº Scheduling'] || row['N Scheduling']).trim(),
-    turnoId,
-    escala: row.escala || turno?.escala || '',
-    grupos: normalizarGruposScheduling(row.grupos || row.grupo || row.groups || row['Grupo(s)'] || row['Grupos'] || ''),
-    heads: Number(row.heads || row.n_heads || row.numero_heads || row['Nº de Heads'] || 0) || 0,
-    dataInicio: row.data_inicio || row.dataInicio || row.inicio || '',
-    dataFim: row.data_fim || row.dataFim || row.fim || ''
-  };
-}
-
-function carregarSchedulingsLocal() {
-  try {
-    const raw = localStorage.getItem(SCHEDULING_LOCAL_KEY);
-    schedulings = raw ? JSON.parse(raw).map(normalizarScheduling) : [];
-  } catch (_) {
-    schedulings = [];
-  }
-}
-
-function salvarSchedulingsLocal() {
-  localStorage.setItem(SCHEDULING_LOCAL_KEY, JSON.stringify(schedulings));
-}
-
-function setSchedulingStatus(texto, tipo = '') {
-  const el = document.getElementById('scheduling-sync-status');
-  if (!el) return;
-  el.textContent = texto;
-  el.className = `scheduling-status ${tipo}`.trim();
-}
-
-async function carregarSchedulings() {
-  try {
-    const { data, error } = await db.from('scheduling').select('*').order('data_inicio');
-    if (error) throw error;
-    schedulingLocalMode = false;
-    schedulings = (data || []).map(normalizarScheduling);
-    setSchedulingStatus('Base: Supabase · scheduling', 'ok');
-  } catch (error) {
-    console.warn('Tabela scheduling indisponível; usando localStorage:', error);
-    schedulingLocalMode = true;
-    carregarSchedulingsLocal();
-    setSchedulingStatus('Base: local deste navegador', 'warn');
-  }
-  setVisibleById('scheduling-local-note', schedulingLocalMode, 'block');
-}
-
-function onSchedulingTurnoChange(gruposSelecionados = null) {
-  const turnoId = document.getElementById('sc-turno')?.value;
-  const turno = turnos.find(t => t.id === turnoId);
-  const input = document.getElementById('sc-escala-label');
-  const wrap = document.getElementById('sc-grupos-wrap');
-  const options = document.getElementById('sc-grupos-options');
-  const hint = document.getElementById('sc-grupos-hint');
-
-  if (input) input.value = turno?.escala && ESCALAS[turno.escala] ? ESCALAS[turno.escala].label : '';
-  if (!wrap || !options) return;
-
-  const gruposEscala = turno?.escala && ESCALAS[turno.escala] ? ESCALAS[turno.escala].grupos || [] : [];
-  if (!turno || !gruposEscala.length) {
-    wrap.style.display = 'none';
-    options.innerHTML = '';
-    if (hint) hint.textContent = '';
-    return;
-  }
-
-  const selecionados = gruposSelecionados === null
-    ? obterGruposSelecionadosScheduling()
-    : normalizarGruposScheduling(gruposSelecionados);
-
-  options.innerHTML = gruposEscala.map(grupo => {
-    const checked = selecionados.includes(grupo) ? 'checked' : '';
-    return `<label class="scheduling-group-option"><input type="checkbox" value="${escapeHtml(grupo)}" ${checked}> Grupo ${escapeHtml(grupo)}</label>`;
-  }).join('');
-
-  const hints = {
-    espanhola: 'Selecione A, B ou ambos conforme o scheduling informado.',
-    '0430': 'Selecione A/B/C/D/E conforme o scheduling informado.',
-    '5x2_qqi': 'Selecione A/B/C/D. Na semana 22/06/2026 a 28/06/2026, o Grupo C está na quarta semana.',
-    consolidacao: 'Selecione A, B ou ambos conforme o scheduling informado.'
-  };
-  if (hint) hint.textContent = hints[turno.escala] || 'Selecione os grupos vinculados a este scheduling.';
-  wrap.style.display = 'flex';
-}
-
-function limparFormScheduling() {
-  ['sc-numero','sc-heads','sc-data-inicio','sc-data-fim'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  const turno = document.getElementById('sc-turno');
-  if (turno) turno.value = '';
-  const options = document.getElementById('sc-grupos-options');
-  if (options) options.innerHTML = '';
-  onSchedulingTurnoChange([]);
-}
-
-function cancelarEdicaoScheduling() {
-  editingSchedulingId = null;
-  const label = document.getElementById('scheduling-form-label');
-  const btn = document.getElementById('btn-salvar-scheduling');
-  if (label) label.textContent = 'Cadastrar scheduling';
-  if (btn) btn.textContent = 'Salvar Scheduling';
-  limparFormScheduling();
-}
-
-async function salvarScheduling() {
-  if (!pode('criar_scheduling') && !pode('editar_scheduling')) { toast('Seu perfil não permite salvar scheduling.', 'error'); return; }
-
-  const numero = document.getElementById('sc-numero').value.trim();
-  const turnoId = document.getElementById('sc-turno').value;
-  const headsQtd = Number(document.getElementById('sc-heads').value || 0);
-  const dataInicio = document.getElementById('sc-data-inicio').value;
-  const dataFim = document.getElementById('sc-data-fim').value;
-  const turno = turnos.find(t => t.id === turnoId);
-  const gruposSelecionados = turnoPossuiGrupos(turno) ? obterGruposSelecionadosScheduling() : [];
-
-  if (!numero) { toast('Informe o Nº Scheduling.', 'error'); return; }
-  if (!turno) { toast('Selecione o turno do scheduling.', 'error'); return; }
-  if (turnoPossuiGrupos(turno) && !gruposSelecionados.length) { toast('Selecione pelo menos um grupo para este turno.', 'error'); return; }
-  if (!Number.isFinite(headsQtd) || headsQtd <= 0) { toast('Informe um Nº de Heads maior que zero.', 'error'); return; }
-  if (!dataInicio || !dataFim) { toast('Informe data início e data fim.', 'error'); return; }
-  if (dataFim < dataInicio) { toast('Data fim não pode ser anterior à data início.', 'error'); return; }
-
-  const duplicado = schedulings.find(sc => asText(sc.numero) === numero && sc.id !== editingSchedulingId);
-  if (duplicado) { toast('Já existe scheduling com este número.', 'error'); return; }
-
-  const btn = document.getElementById('btn-salvar-scheduling');
-  setButtonLoading(btn, true, editingSchedulingId ? 'Atualizando...' : 'Salvando...');
-  setCarregando('form-grid-scheduling', true);
-
-  try {
-    const localData = {
-      id: editingSchedulingId || crypto.randomUUID?.() || `${numero}-${Date.now()}`,
-      numero,
-      turnoId,
-      escala: turno.escala,
-      grupos: gruposSelecionados,
-      heads: Math.round(headsQtd),
-      dataInicio,
-      dataFim
-    };
-
-    if (schedulingLocalMode) {
-      if (editingSchedulingId) {
-        schedulings = schedulings.map(sc => sc.id === editingSchedulingId ? localData : sc);
-      } else {
-        schedulings.push(localData);
-      }
-      salvarSchedulingsLocal();
-    } else {
-      const dbData = {
-        numero,
-        turno_id: turnoId,
-        escala: turno.escala,
-        grupos: gruposSelecionados,
-        heads: Math.round(headsQtd),
-        data_inicio: dataInicio,
-        data_fim: dataFim
-      };
-      let error;
-      if (editingSchedulingId) {
-        ({ error } = await db.from('scheduling').update(dbData).eq('id', editingSchedulingId));
-      } else {
-        ({ error } = await db.from('scheduling').insert([dbData]));
-      }
-      if (error) throw error;
-      await carregarSchedulings();
-    }
-
-    toast(editingSchedulingId ? 'Scheduling atualizado com sucesso!' : 'Scheduling cadastrado com sucesso!', 'success');
-    cancelarEdicaoScheduling();
-    renderSchedulings();
-  } catch (error) {
-    toast('Erro ao salvar scheduling: ' + (error.message || error), 'error');
-  } finally {
-    setButtonLoading(btn, false);
-    setCarregando('form-grid-scheduling', false);
-  }
-}
-
-function editarScheduling(id) {
-  if (!pode('editar_scheduling')) { toast('Seu perfil não permite editar scheduling.', 'error'); return; }
-  const sc = schedulings.find(x => x.id === id);
-  if (!sc) return;
-  editingSchedulingId = id;
-  document.getElementById('sc-numero').value = sc.numero || '';
-  document.getElementById('sc-turno').value = sc.turnoId || '';
-  document.getElementById('sc-heads').value = sc.heads || '';
-  document.getElementById('sc-data-inicio').value = sc.dataInicio || '';
-  document.getElementById('sc-data-fim').value = sc.dataFim || '';
-  onSchedulingTurnoChange(sc.grupos || []);
-  document.getElementById('scheduling-form-label').textContent = 'Editar scheduling';
-  document.getElementById('btn-salvar-scheduling').textContent = 'Atualizar Scheduling';
-  document.getElementById('sc-numero').focus();
-  document.getElementById('page-scheduling')?.scrollIntoView({ behavior:'smooth' });
-}
-
-function confirmarExcluirScheduling(id) {
-  if (!pode('excluir_scheduling')) { toast('Seu perfil não permite excluir scheduling.', 'error'); return; }
-  const sc = schedulings.find(x => x.id === id);
-  if (!sc) return;
-  pendingDelete = { type:'scheduling', id };
-  document.getElementById('modal-msg').textContent = `Excluir o scheduling "${sc.numero}"? Esta ação não pode ser desfeita.`;
-  document.getElementById('btn-confirmar-excluir').onclick = executarExclusao;
-  document.getElementById('modal-excluir').classList.add('open');
-}
-
-function renderSchedulings() {
-  const count = document.getElementById('scheduling-count');
-  const tbody = document.getElementById('tbody-scheduling');
-  if (!tbody) return;
-
-  const busca = lower(document.getElementById('busca-scheduling')?.value || '');
-  const lista = schedulings.filter(sc => {
-    const turno = turnos.find(t => t.id === sc.turnoId) || {};
-    const gruposTxt = normalizarGruposScheduling(sc.grupos || sc.grupo || '').join(' ');
-    return !busca || lower(sc.numero).includes(busca) || lower(turno.nome).includes(busca) || lower(ESCALAS[sc.escala]?.label).includes(busca) || lower(gruposTxt).includes(busca);
-  }).sort((a,b) => asText(a.dataInicio).localeCompare(asText(b.dataInicio)) || asText(a.numero).localeCompare(asText(b.numero)));
-
-  if (count) count.textContent = `${lista.length} scheduling${lista.length !== 1 ? 's' : ''}`;
-  setVisibleById('scheduling-local-note', schedulingLocalMode, 'block');
-  setSchedulingStatus(schedulingLocalMode ? 'Base: local deste navegador' : 'Base: Supabase · scheduling', schedulingLocalMode ? 'warn' : 'ok');
-
-  if (!lista.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📅</div><p>${schedulings.length ? 'Nenhum scheduling encontrado' : 'Nenhum scheduling cadastrado'}</p><span>${schedulings.length ? 'Tente outros termos' : 'Cadastre a programação para calcular % CIA/COA por período'}</span></div></td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML = lista.map(sc => {
-    const id = safeId(sc.id);
-    const turno = turnos.find(t => t.id === sc.turnoId) || {};
-    return `<tr>
-      <td><strong>${escapeHtml(sc.numero)}</strong></td>
-      <td>${turnoBadge(sc.turnoId)}</td>
-      <td>${escalaBadge(sc.escala || turno.escala)}</td>
-      <td>${formatarGruposScheduling(sc, turno)}</td>
-      <td><span class="badge badge-green">${Number(sc.heads || 0).toLocaleString('pt-BR')} heads</span></td>
-      <td style="color:var(--text-muted);font-size:12px">${escapeHtml(formatarDataIsoBr(sc.dataInicio))} até ${escapeHtml(formatarDataIsoBr(sc.dataFim))}</td>
-      <td style="text-align:right;white-space:nowrap">
-        ${pode('editar_scheduling') ? `<button class="btn btn-secondary btn-sm" onclick="editarScheduling('${id}')" style="margin-right:6px">Editar</button>` : ''}
-        ${pode('excluir_scheduling') ? `<button class="btn btn-danger btn-sm" onclick="confirmarExcluirScheduling('${id}')">Excluir</button>` : ''}
-        ${(!pode('editar_scheduling') && !pode('excluir_scheduling')) ? '<span style="color:var(--text-hint);font-size:12px">—</span>' : ''}
-      </td>
+      <td style="font-weight:700;white-space:nowrap">${escapeHtml(a.hora || '—')}</td>
+      <td>${causaVisual}</td>
     </tr>`;
   }).join('');
 }
@@ -2574,13 +2634,12 @@ function renderSchedulings() {
 // ════════════════════════════════════════
 function atualizarSelectTurnos() {
   const opts = turnos.map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.nome)}</option>`).join('');
-  const hcTurno = document.getElementById('hc-turno');
-  const filtroHc = document.getElementById('filtro-turno-hc');
-  const scTurno = document.getElementById('sc-turno');
-  if (hcTurno) hcTurno.innerHTML = '<option value="">— Selecionar —</option>' + opts;
-  if (filtroHc) filtroHc.innerHTML = '<option value="">Todos os turnos</option>' + opts;
-  if (scTurno) scTurno.innerHTML = '<option value="">— Selecionar —</option>' + opts;
-  onSchedulingTurnoChange();
+  document.getElementById('hc-turno').innerHTML = '<option value="">— Selecionar —</option>' + opts;
+  document.getElementById('filtro-turno-hc').innerHTML = '<option value="">Todos os turnos</option>' + opts;
+  const schedTurno = document.getElementById('sched-turno');
+  if (schedTurno) schedTurno.innerHTML = '<option value="">— Selecionar —</option>' + opts;
+  const filtroSchedTurno = document.getElementById('filtro-turno-sched');
+  if (filtroSchedTurno) filtroSchedTurno.innerHTML = '<option value="">Todos os turnos</option>' + opts;
 }
 
 function onHcTurnoChange() {
@@ -2730,7 +2789,6 @@ async function executarExclusao() {
   if (!pendingDelete) return;
   if (pendingDelete.type === 'turno' && !pode('excluir_turnos')) { toast('Seu perfil não permite excluir turnos.', 'error'); fecharModal(); return; }
   if (pendingDelete.type === 'head' && !pode('excluir_hc')) { toast('Seu perfil não permite excluir colaboradores.', 'error'); fecharModal(); return; }
-  if (pendingDelete.type === 'scheduling' && !pode('excluir_scheduling')) { toast('Seu perfil não permite excluir scheduling.', 'error'); fecharModal(); return; }
   const btn = document.getElementById('btn-confirmar-excluir');
   setButtonLoading(btn, true, 'Excluindo...');
   try {
@@ -2738,19 +2796,10 @@ async function executarExclusao() {
       const { error } = await db.from('turnos').delete().eq('id', pendingDelete.id);
       if (error) throw error;
       toast('Turno excluído com sucesso.', 'success');
-    } else if (pendingDelete.type === 'head') {
+    } else {
       const { error } = await db.from('colaboradores').delete().eq('id', pendingDelete.id);
       if (error) throw error;
       toast('Colaborador excluído com sucesso.', 'success');
-    } else if (pendingDelete.type === 'scheduling') {
-      if (schedulingLocalMode) {
-        schedulings = schedulings.filter(sc => sc.id !== pendingDelete.id);
-        salvarSchedulingsLocal();
-      } else {
-        const { error } = await db.from('scheduling').delete().eq('id', pendingDelete.id);
-        if (error) throw error;
-      }
-      toast('Scheduling excluído com sucesso.', 'success');
     }
     fecharModal();
     await carregarDadosDoBanco();
@@ -4153,6 +4202,138 @@ async function monitorExcluirSnapshot(snapshotId) {
     console.error(error);
     toast('Erro ao excluir snapshot: ' + (error.message || error), 'error');
   }
+}
+
+// ════════════════════════════════════════
+//  SCHEDULING — CRUD
+// ════════════════════════════════════════
+async function salvarScheduling() {
+  if (!pode('criar_sched') && !pode('editar_sched')) { toast('Seu perfil não permite salvar schedulings.', 'error'); return; }
+  const numero   = document.getElementById('sched-numero').value.trim();
+  const turnoId  = document.getElementById('sched-turno').value;
+  const headsVal = parseInt(document.getElementById('sched-heads').value, 10);
+  const dataIni  = document.getElementById('sched-data-inicio').value;
+  const dataFim  = document.getElementById('sched-data-fim').value;
+  const obs      = document.getElementById('sched-obs').value.trim();
+
+  if (!numero)          { toast('Informe o número do scheduling.', 'error'); return; }
+  if (!turnoId)         { toast('Selecione o turno.', 'error'); return; }
+  if (!headsVal || headsVal < 1) { toast('Informe o número de heads (mínimo 1).', 'error'); return; }
+  if (!dataIni)         { toast('Informe a data de início.', 'error'); return; }
+  if (!dataFim)         { toast('Informe a data de fim.', 'error'); return; }
+  if (dataFim < dataIni) { toast('Data de fim não pode ser anterior ao início.', 'error'); return; }
+
+  const btn = document.getElementById('btn-salvar-sched');
+  setButtonLoading(btn, true, editingSchedId ? 'Atualizando...' : 'Salvando...');
+
+  try {
+    const dbData = { numero, turno_id: turnoId, heads: headsVal, data_inicio: dataIni, data_fim: dataFim, obs: obs || null };
+    let error;
+    if (editingSchedId) {
+      ({ error } = await db.from('schedulings').update(dbData).eq('id', editingSchedId));
+    } else {
+      ({ error } = await db.from('schedulings').insert([dbData]));
+    }
+    if (error) throw error;
+    toast(editingSchedId ? 'Scheduling atualizado!' : 'Scheduling cadastrado!', 'success');
+    cancelarEdicaoSched();
+    await carregarDadosDoBanco();
+  } catch (error) {
+    toast('Erro ao salvar scheduling: ' + (error.message || error), 'error');
+  } finally {
+    setButtonLoading(btn, false);
+  }
+}
+
+function limparFormSched() {
+  ['sched-numero','sched-heads','sched-obs'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  const t = document.getElementById('sched-turno'); if (t) t.value = '';
+  const di = document.getElementById('sched-data-inicio'); if (di) di.value = '';
+  const df = document.getElementById('sched-data-fim'); if (df) df.value = '';
+}
+
+function cancelarEdicaoSched() {
+  editingSchedId = null;
+  const lbl = document.getElementById('sched-form-label');
+  if (lbl) lbl.textContent = 'Cadastrar Scheduling';
+  const btn = document.getElementById('btn-salvar-sched');
+  if (btn) btn.textContent = 'Salvar Scheduling';
+  limparFormSched();
+}
+
+function editarScheduling(id) {
+  if (!pode('editar_sched')) { toast('Seu perfil não permite editar schedulings.', 'error'); return; }
+  const s = schedulings.find(s => s.id === id);
+  if (!s) return;
+  editingSchedId = id;
+  document.getElementById('sched-numero').value = s.numero || '';
+  document.getElementById('sched-turno').value = s.turnoId || '';
+  document.getElementById('sched-heads').value = s.heads || '';
+  document.getElementById('sched-data-inicio').value = s.dataInicio || '';
+  document.getElementById('sched-data-fim').value = s.dataFim || '';
+  document.getElementById('sched-obs').value = s.obs || '';
+  document.getElementById('sched-form-label').textContent = 'Editar Scheduling';
+  document.getElementById('btn-salvar-sched').textContent = 'Atualizar Scheduling';
+  document.getElementById('page-scheduling').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function excluirScheduling(id) {
+  if (!pode('excluir_sched')) { toast('Seu perfil não permite excluir schedulings.', 'error'); return; }
+  if (!confirm('Excluir este scheduling? Esta ação não pode ser desfeita.')) return;
+  try {
+    const { error } = await db.from('schedulings').delete().eq('id', id);
+    if (error) throw error;
+    toast('Scheduling excluído.', 'success');
+    await carregarDadosDoBanco();
+  } catch (error) {
+    toast('Erro ao excluir: ' + (error.message || error), 'error');
+  }
+}
+
+function renderSchedulings() {
+  const busca = lower(document.getElementById('busca-sched')?.value || '');
+  const filtTurno = document.getElementById('filtro-turno-sched')?.value || '';
+
+  const lista = schedulings.filter(s => {
+    const t = turnos.find(tt => tt.id === s.turnoId);
+    const mb = !busca || lower(s.numero).includes(busca) || lower(t?.nome || '').includes(busca);
+    const mt = !filtTurno || s.turnoId === filtTurno;
+    return mb && mt;
+  });
+
+  const countEl = document.getElementById('sched-count');
+  if (countEl) countEl.textContent = `${lista.length} scheduling${lista.length !== 1 ? 's' : ''}`;
+
+  const tbody = document.getElementById('tbody-schedulings');
+  if (!tbody) return;
+
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📅</div><p>${schedulings.length ? 'Nenhum scheduling encontrado' : 'Nenhum scheduling cadastrado'}</p><span>${schedulings.length ? 'Tente outros termos' : 'Preencha o formulário acima para começar'}</span></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = lista.map(s => {
+    const t = turnos.find(tt => tt.id === s.turnoId);
+    const nomeTurno = t ? `<span class="badge" style="background:${t.cor}22;color:${t.cor};border:1px solid ${t.cor}44"><span class="turno-dot" style="background:${t.cor}"></span>${escapeHtml(t.nome)}</span>` : '<span style="color:var(--text-hint)">—</span>';
+    const escalaLabel = t ? escalaBadge(t.escala) : '—';
+    const periodo = s.dataInicio && s.dataFim
+      ? `<span class="sched-periodo">${escapeHtml(s.dataInicio.split('-').reverse().join('/'))} → ${escapeHtml(s.dataFim.split('-').reverse().join('/'))}</span>`
+      : '—';
+    const id = safeId(s.id);
+    return `<tr>
+      <td><strong>${escapeHtml(s.numero)}</strong></td>
+      <td>${nomeTurno}</td>
+      <td>${escalaLabel}</td>
+      <td style="font-weight:700">${s.heads}</td>
+      <td>${periodo}</td>
+      <td style="color:var(--text-muted);font-size:12px">${escapeHtml(s.obs || '—')}</td>
+      <td style="text-align:right;white-space:nowrap">
+        ${pode('editar_sched') ? `<button class="btn btn-secondary btn-sm" onclick="editarScheduling('${id}')" style="margin-right:6px">Editar</button>` : ''}
+        ${pode('excluir_sched') ? `<button class="btn btn-danger btn-sm" onclick="excluirScheduling('${id}')">Excluir</button>` : ''}
+        ${(!pode('editar_sched') && !pode('excluir_sched')) ? '<span style="color:var(--text-hint);font-size:12px">—</span>' : ''}
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 window.addEventListener('DOMContentLoaded', async function() {
