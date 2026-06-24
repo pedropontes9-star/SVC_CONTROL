@@ -840,9 +840,17 @@
 
       <div class="form-group">
         <label>Turno</label>
-        <select id="sched-turno">
+        <select id="sched-turno" onchange="onSchedTurnoChange()">
           <option value="">— Selecionar —</option>
         </select>
+      </div>
+
+      <div class="form-group" id="sched-grupo-wrap" style="display:none">
+        <label>Grupo</label>
+        <select id="sched-grupo">
+          <option value="">— Selecionar —</option>
+        </select>
+        <span class="form-hint" id="sched-grupo-hint"></span>
       </div>
 
       <div class="form-group">
@@ -887,7 +895,7 @@
     <div class="table-wrap">
       <table>
         <thead><tr>
-          <th>Nº Scheduling</th><th>Turno</th><th>Escala</th><th>Heads</th><th>Período</th><th>Observação</th><th style="text-align:right">Ações</th>
+          <th>Nº Scheduling</th><th>Turno</th><th>Grupo</th><th>Escala</th><th>Heads</th><th>Período</th><th>Observação</th><th style="text-align:right">Ações</th>
         </tr></thead>
         <tbody id="tbody-schedulings">
           <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📅</div><p>Nenhum scheduling cadastrado</p><span>Preencha o formulário acima para começar</span></div></td></tr>
@@ -1826,6 +1834,7 @@ async function carregarDadosDoBanco() {
       id: s.id,
       numero: s.numero,
       turnoId: s.turno_id,
+      grupo: s.grupo || null,
       heads: s.heads,
       dataInicio: s.data_inicio,
       dataFim: s.data_fim,
@@ -4207,6 +4216,34 @@ async function monitorExcluirSnapshot(snapshotId) {
 // ════════════════════════════════════════
 //  SCHEDULING — CRUD
 // ════════════════════════════════════════
+function onSchedTurnoChange() {
+  const turnoId = document.getElementById('sched-turno').value;
+  const turno = turnos.find(t => t.id === turnoId);
+  const wrap = document.getElementById('sched-grupo-wrap');
+  const sel  = document.getElementById('sched-grupo');
+  const hint = document.getElementById('sched-grupo-hint');
+
+  if (!turno || !ESCALAS[turno.escala] || !ESCALAS[turno.escala].grupos.length) {
+    wrap.style.display = 'none';
+    sel.innerHTML = '<option value="">— Selecionar —</option>';
+    sel.value = '';
+    hint.textContent = '';
+    return;
+  }
+
+  const grupos = ESCALAS[turno.escala].grupos;
+  sel.innerHTML = '<option value="">— Selecionar —</option>' + grupos.map(g => `<option value="${escapeHtml(g)}">Grupo ${escapeHtml(g)}</option>`).join('');
+
+  const hints = {
+    espanhola: 'A e B se complementam no ciclo de 4 semanas.',
+    '0430':    'A/B: folga Sáb · C/D: folga Seg · E: folga Dom sem rodízio',
+    '5x2_qqi': 'A/B/C/D em ciclo semanal.',
+    consolidacao: 'A e B revezam entre 6x1 e 5x2 a cada semana.'
+  };
+  hint.textContent = hints[turno.escala] || '';
+  wrap.style.display = 'flex';
+}
+
 async function salvarScheduling() {
   if (!pode('criar_sched') && !pode('editar_sched')) { toast('Seu perfil não permite salvar schedulings.', 'error'); return; }
   const numero   = document.getElementById('sched-numero').value.trim();
@@ -4215,9 +4252,15 @@ async function salvarScheduling() {
   const dataIni  = document.getElementById('sched-data-inicio').value;
   const dataFim  = document.getElementById('sched-data-fim').value;
   const obs      = document.getElementById('sched-obs').value.trim();
+  const grupoRaw = document.getElementById('sched-grupo')?.value || '';
+  const grupo    = normalizarGrupoFolga(grupoRaw);
 
   if (!numero)          { toast('Informe o número do scheduling.', 'error'); return; }
   if (!turnoId)         { toast('Selecione o turno.', 'error'); return; }
+
+  const turno = turnos.find(t => t.id === turnoId);
+  if (turnoPossuiGrupos(turno) && !grupo) { toast('Selecione o grupo para esta escala.', 'error'); return; }
+
   if (!headsVal || headsVal < 1) { toast('Informe o número de heads (mínimo 1).', 'error'); return; }
   if (!dataIni)         { toast('Informe a data de início.', 'error'); return; }
   if (!dataFim)         { toast('Informe a data de fim.', 'error'); return; }
@@ -4227,7 +4270,15 @@ async function salvarScheduling() {
   setButtonLoading(btn, true, editingSchedId ? 'Atualizando...' : 'Salvando...');
 
   try {
-    const dbData = { numero, turno_id: turnoId, heads: headsVal, data_inicio: dataIni, data_fim: dataFim, obs: obs || null };
+    const dbData = {
+      numero,
+      turno_id: turnoId,
+      grupo: turnoPossuiGrupos(turno) ? grupo : null,
+      heads: headsVal,
+      data_inicio: dataIni,
+      data_fim: dataFim,
+      obs: obs || null
+    };
     let error;
     if (editingSchedId) {
       ({ error } = await db.from('schedulings').update(dbData).eq('id', editingSchedId));
@@ -4250,6 +4301,13 @@ function limparFormSched() {
   const t = document.getElementById('sched-turno'); if (t) t.value = '';
   const di = document.getElementById('sched-data-inicio'); if (di) di.value = '';
   const df = document.getElementById('sched-data-fim'); if (df) df.value = '';
+  // Reset grupo
+  const wrap = document.getElementById('sched-grupo-wrap');
+  const sel  = document.getElementById('sched-grupo');
+  const hint = document.getElementById('sched-grupo-hint');
+  if (wrap) wrap.style.display = 'none';
+  if (sel)  { sel.innerHTML = '<option value="">— Selecionar —</option>'; sel.value = ''; }
+  if (hint) hint.textContent = '';
 }
 
 function cancelarEdicaoSched() {
@@ -4268,6 +4326,8 @@ function editarScheduling(id) {
   editingSchedId = id;
   document.getElementById('sched-numero').value = s.numero || '';
   document.getElementById('sched-turno').value = s.turnoId || '';
+  onSchedTurnoChange(); // popula campo grupo se necessário
+  if (s.grupo) document.getElementById('sched-grupo').value = s.grupo;
   document.getElementById('sched-heads').value = s.heads || '';
   document.getElementById('sched-data-inicio').value = s.dataInicio || '';
   document.getElementById('sched-data-fim').value = s.dataFim || '';
@@ -4319,10 +4379,14 @@ function renderSchedulings() {
     const periodo = s.dataInicio && s.dataFim
       ? `<span class="sched-periodo">${escapeHtml(s.dataInicio.split('-').reverse().join('/'))} → ${escapeHtml(s.dataFim.split('-').reverse().join('/'))}</span>`
       : '—';
+    const grupoVisual = s.grupo
+      ? `<span class="badge" style="background:#f0f5ff;color:var(--meli-blue);border:1px solid #c7d9ff">Grupo ${escapeHtml(s.grupo)}</span>`
+      : '<span style="color:var(--text-hint);font-size:12px">—</span>';
     const id = safeId(s.id);
     return `<tr>
       <td><strong>${escapeHtml(s.numero)}</strong></td>
       <td>${nomeTurno}</td>
+      <td>${grupoVisual}</td>
       <td>${escalaLabel}</td>
       <td style="font-weight:700">${s.heads}</td>
       <td>${periodo}</td>
