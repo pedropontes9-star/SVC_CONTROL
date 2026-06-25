@@ -4037,14 +4037,67 @@ function monitorResetDash() {
 // ───────────────────────────────────────
 //  Persistência no Supabase (snapshots)
 // ───────────────────────────────────────
+function monitorPeriodoHojeISO() {
+  const agora = new Date();
+  const inicio = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), 0, 0, 0, 0);
+  const fim = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate() + 1, 0, 0, 0, 0);
+  return { inicioISO: inicio.toISOString(), fimISO: fim.toISOString() };
+}
+
+function monitorFormatarHoraSnapshot(dataISO) {
+  if (!dataISO) return 'horário não identificado';
+  return new Date(dataISO).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+async function monitorBuscarSnapshotsHoje() {
+  const { inicioISO, fimISO } = monitorPeriodoHojeISO();
+  const { data, error } = await db.from('monitor_snapshots')
+    .select('id, criado_em, criado_por_nome')
+    .gte('criado_em', inicioISO)
+    .lt('criado_em', fimISO)
+    .order('criado_em', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+async function monitorExcluirSnapshots(ids) {
+  const idsValidos = (ids || []).filter(Boolean);
+  if (!idsValidos.length) return;
+
+  const { error } = await db.from('monitor_snapshots').delete().in('id', idsValidos);
+  if (error) throw error;
+}
+
 async function monitorSalvarSnapshotAtual() {
   const statusEl = document.getElementById('monitor-save-status');
-  if (statusEl) { statusEl.textContent = 'Salvando snapshot...'; statusEl.className = 'sync-status'; }
+  if (statusEl) { statusEl.textContent = 'Verificando histórico do dia...'; statusEl.className = 'sync-status'; }
 
   try {
     const { data: userData } = await db.auth.getUser();
     const userId = userData?.user?.id || null;
     const nomeUsuario = usuarioAtual?.nome || usuarioAtual?.login || null;
+
+    const snapshotsHoje = await monitorBuscarSnapshotsHoje();
+    if (snapshotsHoje.length) {
+      const snapshotMaisRecente = snapshotsHoje[0];
+      const hora = monitorFormatarHoraSnapshot(snapshotMaisRecente.criado_em);
+      const usuario = snapshotMaisRecente.criado_por_nome || 'usuário não identificado';
+      const prefixo = snapshotsHoje.length > 1
+        ? `Já existem ${snapshotsHoje.length} relatórios gerados hoje. O mais recente foi gerado às ${hora} por ${usuario}.`
+        : `Já existe um relatório gerado hoje às ${hora} por ${usuario}.`;
+
+      const confirmar = confirm(`${prefixo}\n\nDeseja sobrepor o relatório existente?`);
+      if (!confirmar) {
+        if (statusEl) { statusEl.textContent = 'Relatório gerado, mas não salvo. Histórico anterior mantido.'; statusEl.className = 'sync-status'; }
+        toast('Salvamento cancelado. O relatório anterior foi mantido.', '');
+        return;
+      }
+
+      if (statusEl) { statusEl.textContent = 'Sobrepondo relatório anterior...'; statusEl.className = 'sync-status'; }
+      await monitorExcluirSnapshots(snapshotsHoje.map(s => s.id));
+    }
+
+    if (statusEl) { statusEl.textContent = 'Salvando snapshot...'; statusEl.className = 'sync-status'; }
 
     const huSet = new Set(monitorAllData.map(r => String(r['HU']||'').trim()).filter(Boolean));
     let early=0, ontime=0, delay=0;
