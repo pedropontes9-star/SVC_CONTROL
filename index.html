@@ -359,6 +359,14 @@
   .insight-card-label { font-size:10px; font-weight:700; color:var(--text-hint); text-transform:uppercase; letter-spacing:.04em; margin-bottom:5px; }
   .insight-card-value { font-size:13px; font-weight:700; color:var(--text); line-height:1.3; }
   .insight-card-sub { font-size:11px; color:var(--text-muted); margin-top:2px; }
+
+  /* Sub-abas Indicador / Dashboard (Anomalias) */
+  .anom-chart-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:16px; padding:18px 20px 24px; }
+  .anom-chart-card { background:var(--surface); border:1px solid #eee; border-radius:var(--radius); padding:16px; box-shadow:var(--shadow); min-height:280px; }
+  .anom-chart-card-title { font-size:12px; font-weight:600; color:var(--meli-blue); text-transform:uppercase; letter-spacing:.03em; margin-bottom:12px; }
+  .anom-chart-card canvas { max-height:250px; }
+  .anom-chart-card-donut canvas { max-height:210px; max-width:210px; margin:0 auto; display:block; }
+  @media (max-width: 860px) { .anom-chart-grid { grid-template-columns:1fr; } }
   .insight-pill { display:inline-block; padding:1px 7px; border-radius:20px; font-size:11px; font-weight:600; }
   .insight-pill-cia { background:#fff3e0; color:#e65100; }
   .insight-pill-coa { background:#f3eaff; color:#7B2FBE; }
@@ -767,6 +775,16 @@
       <span class="count-badge" id="anomalia-count">0 registros</span>
     </div>
 
+    <!-- Sub-abas: Indicador / Dashboard -->
+    <div class="monitor-section-header" style="padding:14px 20px 0">
+      <span class="monitor-section-title">Visualização</span>
+      <div class="monitor-section-toggle">
+        <button class="monitor-toggle-btn anom-subtab-btn active" onclick="setAnomaliaSubTab('indicador', this)">Indicador</button>
+        <button class="monitor-toggle-btn anom-subtab-btn" onclick="setAnomaliaSubTab('dashboard', this)">Dashboard</button>
+      </div>
+    </div>
+
+    <div id="anom-tab-indicador">
     <!-- Painel de sync -->
     <div class="sync-panel" id="anomalia-sync-panel">
       <div class="sync-panel-item"><span class="sync-panel-label">Última atualização</span><span class="sync-panel-value" id="anomalia-info-ultima">—</span></div>
@@ -818,6 +836,41 @@
           <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">⏳</div><p>Carregando dados de ponto...</p></div></td></tr>
         </tbody>
       </table>
+    </div>
+    </div>
+
+    <div id="anom-tab-dashboard" style="display:none">
+      <div class="empty-state" id="anom-dash-empty" style="display:none">
+        <div class="empty-icon">📊</div>
+        <p>Nenhuma ofensa no período filtrado</p>
+        <span>Ajuste os filtros acima para visualizar os gráficos</span>
+      </div>
+      <div class="anom-chart-grid" id="anom-dash-grid">
+        <div class="anom-chart-card">
+          <div class="anom-chart-card-title">Evolução diária — CIA x COA</div>
+          <canvas id="anom-chart-evolucao"></canvas>
+        </div>
+        <div class="anom-chart-card">
+          <div class="anom-chart-card-title">Ranking por Turno</div>
+          <canvas id="anom-chart-turno"></canvas>
+        </div>
+        <div class="anom-chart-card">
+          <div class="anom-chart-card-title">Pareto de Causas Raiz</div>
+          <canvas id="anom-chart-causas"></canvas>
+        </div>
+        <div class="anom-chart-card">
+          <div class="anom-chart-card-title">Ranking por Gestor</div>
+          <canvas id="anom-chart-gestor"></canvas>
+        </div>
+        <div class="anom-chart-card">
+          <div class="anom-chart-card-title">Distribuição por Hora do Dia</div>
+          <canvas id="anom-chart-hora"></canvas>
+        </div>
+        <div class="anom-chart-card anom-chart-card-donut">
+          <div class="anom-chart-card-title">Proporção CIA x COA</div>
+          <canvas id="anom-chart-donut"></canvas>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1787,6 +1840,18 @@ let pendingDelete = null;
 let anomaliasSortCol = 'data';
 let anomaliasSortDir = 'desc';
 
+// Estado da sub-aba (Indicador / Dashboard) e cache da última lista filtrada
+let anomaliasSubTab = 'indicador';
+let anomaliasUltimaListaBase = [];
+
+// Instâncias dos gráficos do Dashboard de Anomalias
+let chartAnomEvolucao = null;
+let chartAnomTurno = null;
+let chartAnomCausas = null;
+let chartAnomGestor = null;
+let chartAnomHora = null;
+let chartAnomDonut = null;
+
 function toast(msg, tipo='') {
   const el = document.getElementById('toast');
   if (!el) return;
@@ -2676,6 +2741,9 @@ function renderAnomalias() {
   atualizarKpiPct(listaBase, inicioIso, fimIso);
   atualizarInsights(listaBase);
 
+  anomaliasUltimaListaBase = listaBase;
+  if (anomaliasSubTab === 'dashboard') renderAnomaliasDashboard(listaBase);
+
   let lista = listaBase;
   if (buscaText) {
     lista = lista.filter(a => {
@@ -2727,6 +2795,295 @@ function renderAnomalias() {
       <td>${causaVisual}</td>
     </tr>`;
   }).join('');
+}
+
+// ════════════════════════════════════════
+//  SUB-ABAS: INDICADOR / DASHBOARD (Anomalias)
+// ════════════════════════════════════════
+function setAnomaliaSubTab(tab, btnEl) {
+  anomaliasSubTab = tab;
+
+  document.querySelectorAll('.anom-subtab-btn').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+
+  const indicador = document.getElementById('anom-tab-indicador');
+  const dashboard = document.getElementById('anom-tab-dashboard');
+  if (indicador) indicador.style.display = tab === 'indicador' ? '' : 'none';
+  if (dashboard) dashboard.style.display = tab === 'dashboard' ? '' : 'none';
+
+  if (tab === 'dashboard') renderAnomaliasDashboard(anomaliasUltimaListaBase);
+}
+
+// ════════════════════════════════════════
+//  DASHBOARD DE ANOMALIAS — preparação dos dados
+// ════════════════════════════════════════
+function anomIsoData(raw) {
+  const r = asText(raw).trim();
+  if (!r) return '';
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(r)) return brToIso(r);
+  if (/^\d{4}-\d{2}-\d{2}/.test(r)) return r.slice(0, 10);
+  const p = new Date(r);
+  if (!isNaN(p.getTime())) {
+    const off = p.getTimezoneOffset();
+    return new Date(p.getTime() - off * 60000).toISOString().slice(0, 10);
+  }
+  return '';
+}
+
+function buildEvolucaoDiariaAnom(lista) {
+  const map = {};
+  lista.forEach(a => {
+    const iso = anomIsoData(a.data_marcacao);
+    if (!iso) return;
+    if (!map[iso]) map[iso] = { cia: 0, coa: 0 };
+    const t = asText(a.tipo).toUpperCase();
+    if (t === 'CIA') map[iso].cia++;
+    else if (t === 'COA') map[iso].coa++;
+  });
+  const isos = Object.keys(map).sort();
+  return {
+    labels: isos.map(iso => iso.split('-').reverse().join('/')),
+    cia: isos.map(iso => map[iso].cia),
+    coa: isos.map(iso => map[iso].coa)
+  };
+}
+
+function buildRankingTurnoAnom(lista) {
+  const map = {};
+  lista.forEach(a => {
+    const head = heads.find(h => normalizeExt(h.ext) === normalizeExt(a.ext));
+    const turno = head ? turnos.find(t => t.id === head.turnoId) : null;
+    const nome = turno ? turno.nome : 'Sem turno cadastrado';
+    if (!map[nome]) map[nome] = { cia: 0, coa: 0 };
+    const t = asText(a.tipo).toUpperCase();
+    if (t === 'CIA') map[nome].cia++;
+    else if (t === 'COA') map[nome].coa++;
+  });
+  const nomes = Object.keys(map).sort((a, b) => (map[b].cia + map[b].coa) - (map[a].cia + map[a].coa));
+  return { labels: nomes, cia: nomes.map(n => map[n].cia), coa: nomes.map(n => map[n].coa) };
+}
+
+function buildRankingGestorAnom(lista) {
+  const map = {};
+  lista.forEach(a => {
+    const head = heads.find(h => normalizeExt(h.ext) === normalizeExt(a.ext));
+    const gestor = asText(head?.gestor).trim() || 'Sem gestor';
+    if (!map[gestor]) map[gestor] = { cia: 0, coa: 0 };
+    const t = asText(a.tipo).toUpperCase();
+    if (t === 'CIA') map[gestor].cia++;
+    else if (t === 'COA') map[gestor].coa++;
+  });
+  const nomes = Object.keys(map)
+    .sort((a, b) => (map[b].cia + map[b].coa) - (map[a].cia + map[a].coa))
+    .slice(0, 10);
+  return { labels: nomes, cia: nomes.map(n => map[n].cia), coa: nomes.map(n => map[n].coa) };
+}
+
+function buildParetoCausasAnom(lista) {
+  const freq = {};
+  lista.forEach(a => {
+    const causa = calcularCausaRaizAuto(a) || 'Dados insuficientes';
+    freq[causa] = (freq[causa] || 0) + 1;
+  });
+  const entries = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  const total = lista.length || 1;
+  let acumulado = 0;
+  const labels = entries.map(e => e[0]);
+  const valores = entries.map(e => e[1]);
+  const pct = entries.map(e => { acumulado += e[1]; return +(acumulado / total * 100).toFixed(1); });
+  return { labels, valores, pct };
+}
+
+function buildDistribuicaoHoraAnom(lista) {
+  const buckets = ['00h–04h', '04h–08h', '08h–12h', '12h–16h', '16h–20h', '20h–24h'];
+  const map = buckets.map(() => ({ cia: 0, coa: 0 }));
+  lista.forEach(a => {
+    const min = horaParaMinutos(a.hora);
+    if (min === null) return;
+    const idx = Math.min(5, Math.max(0, Math.floor(min / 240)));
+    const t = asText(a.tipo).toUpperCase();
+    if (t === 'CIA') map[idx].cia++;
+    else if (t === 'COA') map[idx].coa++;
+  });
+  return { labels: buckets, cia: map.map(m => m.cia), coa: map.map(m => m.coa) };
+}
+
+// ════════════════════════════════════════
+//  DASHBOARD DE ANOMALIAS — renderização (Chart.js)
+// ════════════════════════════════════════
+function renderAnomaliasDashboard(listaBase) {
+  const lista = listaBase || [];
+  const grid = document.getElementById('anom-dash-grid');
+  const empty = document.getElementById('anom-dash-empty');
+
+  if (!lista.length) {
+    if (grid) grid.style.display = 'none';
+    if (empty) empty.style.display = '';
+    return;
+  }
+  if (grid) grid.style.display = '';
+  if (empty) empty.style.display = 'none';
+
+  renderChartEvolucaoAnom(lista);
+  renderChartTurnoAnom(lista);
+  renderChartCausasAnom(lista);
+  renderChartGestorAnom(lista);
+  renderChartHoraAnom(lista);
+  renderChartDonutAnom(lista);
+}
+
+function renderChartEvolucaoAnom(lista) {
+  const canvas = document.getElementById('anom-chart-evolucao');
+  if (!canvas) return;
+  const d = buildEvolucaoDiariaAnom(lista);
+  if (chartAnomEvolucao) chartAnomEvolucao.destroy();
+  chartAnomEvolucao = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: d.labels,
+      datasets: [
+        { label: 'CIA', data: d.cia, borderColor: '#FFAD00', backgroundColor: 'rgba(255,173,0,.12)', tension: .3, fill: true, pointRadius: 3 },
+        { label: 'COA', data: d.coa, borderColor: '#7B2FBE', backgroundColor: 'rgba(123,47,190,.10)', tension: .3, fill: true, pointRadius: 3 }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'top', labels: { font: { size: 12 }, boxWidth: 12 } } },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,0.05)' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+function renderChartTurnoAnom(lista) {
+  const canvas = document.getElementById('anom-chart-turno');
+  if (!canvas) return;
+  const d = buildRankingTurnoAnom(lista);
+  if (chartAnomTurno) chartAnomTurno.destroy();
+  chartAnomTurno = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: d.labels,
+      datasets: [
+        { label: 'CIA', data: d.cia, backgroundColor: '#FFAD00', borderRadius: 3 },
+        { label: 'COA', data: d.coa, backgroundColor: '#7B2FBE', borderRadius: 3 }
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: { legend: { position: 'top', labels: { font: { size: 12 }, boxWidth: 12 } } },
+      scales: {
+        x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,0.05)' } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+function renderChartGestorAnom(lista) {
+  const canvas = document.getElementById('anom-chart-gestor');
+  if (!canvas) return;
+  const d = buildRankingGestorAnom(lista);
+  if (chartAnomGestor) chartAnomGestor.destroy();
+  chartAnomGestor = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: d.labels,
+      datasets: [
+        { label: 'CIA', data: d.cia, backgroundColor: '#FFAD00', borderRadius: 3 },
+        { label: 'COA', data: d.coa, backgroundColor: '#7B2FBE', borderRadius: 3 }
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: { legend: { position: 'top', labels: { font: { size: 12 }, boxWidth: 12 } } },
+      scales: {
+        x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,0.05)' } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+function renderChartCausasAnom(lista) {
+  const canvas = document.getElementById('anom-chart-causas');
+  if (!canvas) return;
+  const d = buildParetoCausasAnom(lista);
+  if (chartAnomCausas) chartAnomCausas.destroy();
+  chartAnomCausas = new Chart(canvas, {
+    data: {
+      labels: d.labels,
+      datasets: [
+        { type: 'bar', label: 'Ocorrências', data: d.valores, backgroundColor: '#3483FA', borderRadius: 3, yAxisID: 'y' },
+        { type: 'line', label: '% Acumulado', data: d.pct, borderColor: '#F23D4F', backgroundColor: '#F23D4F', yAxisID: 'y1', tension: .25, pointRadius: 3 }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'top', labels: { font: { size: 12 }, boxWidth: 12 } } },
+      scales: {
+        x: { ticks: { font: { size: 10 }, maxRotation: 35, minRotation: 0 }, grid: { display: false } },
+        y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,0.05)' } },
+        y1: { position: 'right', min: 0, max: 100, grid: { display: false }, ticks: { callback: v => v + '%' } }
+      }
+    }
+  });
+}
+
+function renderChartHoraAnom(lista) {
+  const canvas = document.getElementById('anom-chart-hora');
+  if (!canvas) return;
+  const d = buildDistribuicaoHoraAnom(lista);
+  if (chartAnomHora) chartAnomHora.destroy();
+  chartAnomHora = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: d.labels,
+      datasets: [
+        { label: 'CIA', data: d.cia, backgroundColor: '#FFAD00', borderRadius: 3 },
+        { label: 'COA', data: d.coa, backgroundColor: '#7B2FBE', borderRadius: 3 }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'top', labels: { font: { size: 12 }, boxWidth: 12 } } },
+      scales: {
+        x: { stacked: true, grid: { display: false } },
+        y: { stacked: true, beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,0.05)' } }
+      }
+    }
+  });
+}
+
+function renderChartDonutAnom(lista) {
+  const canvas = document.getElementById('anom-chart-donut');
+  if (!canvas) return;
+  const cia = lista.filter(a => asText(a.tipo).toUpperCase() === 'CIA').length;
+  const coa = lista.filter(a => asText(a.tipo).toUpperCase() === 'COA').length;
+  if (chartAnomDonut) chartAnomDonut.destroy();
+  chartAnomDonut = new Chart(canvas, {
+    type: 'doughnut',
+    data: {
+      labels: ['CIA (Entrada)', 'COA (Saída)'],
+      datasets: [{ data: [cia, coa], backgroundColor: ['#FFAD00', '#7B2FBE'], borderWidth: 0 }]
+    },
+    options: {
+      responsive: true,
+      cutout: '65%',
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 12 }, boxWidth: 12 } },
+        tooltip: { callbacks: { label: ctx => {
+          const total = (cia + coa) || 1;
+          const pct = (ctx.raw / total * 100).toFixed(1);
+          return ` ${ctx.label}: ${ctx.raw} (${pct}%)`;
+        } } }
+      }
+    }
+  });
 }
 
 // ════════════════════════════════════════
