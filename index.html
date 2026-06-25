@@ -2437,39 +2437,109 @@ function aplicarOrdenacaoAnomalias(lista) {
 // ════════════════════════════════════════
 //  % CIA / COA via Scheduling
 // ════════════════════════════════════════
-function calcularHeadsProgramadosNoPeriodo(dataInicioIso, dataFimIso) {
-  // Soma os heads de cada scheduling que se sobrepõe ao período filtrado
-  // Retorna o total de "dias × heads" (denominador) para cada turno
-  // Para simplicidade: retorna a soma dos heads de todos schedulings que cobrem ao menos um dia do período
-  if (!schedulings.length) return 0;
+function isoParaDataLocal(iso) {
+  if (!iso) return null;
+  const partes = asText(iso).slice(0, 10).split('-').map(n => parseInt(n, 10));
+  if (partes.length !== 3 || partes.some(n => Number.isNaN(n))) return null;
+  return new Date(partes[0], partes[1] - 1, partes[2]);
+}
 
+function dataLocalParaIso(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function clonarDataLocal(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function adicionarDiasLocal(date, dias) {
+  const d = clonarDataLocal(date);
+  d.setDate(d.getDate() + dias);
+  return d;
+}
+
+function normalizarTextoComparacao(valor) {
+  return asText(valor)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+}
+
+function nomeDiaSemana(date) {
+  const nomes = ['domingo','segunda','terca','quarta','quinta','sexta','sabado'];
+  return nomes[date.getDay()] || '';
+}
+
+function folgaContemDia(folgaLabel, date) {
+  const folgaNorm = normalizarTextoComparacao(folgaLabel);
+  if (!folgaNorm) return false;
+  return folgaNorm.split('+').map(p => p.trim()).includes(nomeDiaSemana(date));
+}
+
+function schedulingTrabalhaNoDia(scheduling, date) {
+  const turno = turnos.find(t => t.id === scheduling.turnoId);
+
+  // Sem turno/escala cadastrada, não bloqueia o scheduling para evitar zerar o KPI por cadastro incompleto.
+  if (!turno || !turno.escala || !ESCALAS[turno.escala]) return true;
+
+  const grupo = normalizarGrupoFolga(scheduling.grupo);
+  const folgaSemana = calcFolgaSemana({ grupo }, turno, date);
+
+  // Se não foi possível calcular folga, considera o scheduling como trabalhado naquele dia.
+  if (!folgaSemana) return true;
+  return !folgaContemDia(folgaSemana, date);
+}
+
+function calcularHeadsProgramadosNoPeriodo(dataInicioIso, dataFimIso) {
+  // Soma os heads programados dia a dia, respeitando turno, grupo e folgas da escala.
+  // O denominador passa a ser "heads trabalhados no período", não dias corridos × heads.
+  if (!schedulings.length) return { total: 0, dias: 0, schedulings: 0 };
+
+  const inicioFiltro = isoParaDataLocal(dataInicioIso);
+  const fimFiltro = isoParaDataLocal(dataFimIso);
   let total = 0;
-  const inicio = dataInicioIso ? new Date(dataInicioIso + 'T00:00:00') : null;
-  const fim = dataFimIso ? new Date(dataFimIso + 'T23:59:59') : null;
+  const diasContados = new Set();
+  const schedsContados = new Set();
 
   schedulings.forEach(s => {
     if (!s.dataInicio || !s.dataFim) return;
-    const sIni = new Date(s.dataInicio + 'T00:00:00');
-    const sFim = new Date(s.dataFim + 'T23:59:59');
 
-    // Verifica sobreposição de período
-    const overlap = (!inicio || sFim >= inicio) && (!fim || sIni <= fim);
-    if (!overlap) return;
+    const sIni = isoParaDataLocal(s.dataInicio);
+    const sFim = isoParaDataLocal(s.dataFim);
+    if (!sIni || !sFim) return;
 
-    // Calcula quantos dias do scheduling caem no período filtrado
-    const dIni = inicio ? (sIni > inicio ? sIni : inicio) : sIni;
-    const dFim = fim ? (sFim < fim ? sFim : fim) : sFim;
-    const dias = Math.max(0, Math.round((dFim - dIni) / 86400000) + 1);
-    total += (s.heads || 0) * dias;
+    const dIni = inicioFiltro && inicioFiltro > sIni ? inicioFiltro : sIni;
+    const dFim = fimFiltro && fimFiltro < sFim ? fimFiltro : sFim;
+    if (dFim < dIni) return;
+
+    const headsDia = Number(s.heads || 0);
+    if (!headsDia || headsDia < 0) return;
+
+    for (let dia = clonarDataLocal(dIni); dia <= dFim; dia = adicionarDiasLocal(dia, 1)) {
+      if (!schedulingTrabalhaNoDia(s, dia)) continue;
+      total += headsDia;
+      diasContados.add(dataLocalParaIso(dia));
+      schedsContados.add(s.id || `${s.numero || ''}|${s.turnoId || ''}|${s.grupo || ''}|${s.dataInicio}|${s.dataFim}`);
+    }
   });
 
-  return total;
+  return {
+    total,
+    dias: diasContados.size,
+    schedulings: schedsContados.size
+  };
 }
 
 function atualizarKpiPct(listaBase, dataInicioIso, dataFimIso) {
   const qtdCia = listaBase.filter(a => asText(a.tipo).toUpperCase() === 'CIA').length;
   const qtdCoa = listaBase.filter(a => asText(a.tipo).toUpperCase() === 'COA').length;
-  const headsTotal = calcularHeadsProgramadosNoPeriodo(dataInicioIso, dataFimIso);
+  const denominador = calcularHeadsProgramadosNoPeriodo(dataInicioIso, dataFimIso);
+  const headsTotal = denominador.total;
 
   const elPctCia = document.getElementById('stat-pct-cia');
   const elPctCoa = document.getElementById('stat-pct-coa');
@@ -2479,17 +2549,20 @@ function atualizarKpiPct(listaBase, dataInicioIso, dataFimIso) {
   if (!headsTotal) {
     if (elPctCia) elPctCia.textContent = '—';
     if (elPctCoa) elPctCoa.textContent = '—';
-    if (elMetaCia) elMetaCia.textContent = 'Sem scheduling no período';
-    if (elMetaCoa) elMetaCoa.textContent = 'Sem scheduling no período';
+    if (elMetaCia) elMetaCia.textContent = 'Sem scheduling trabalhado no período';
+    if (elMetaCoa) elMetaCoa.textContent = 'Sem scheduling trabalhado no período';
     return;
   }
 
   const pctCia = (qtdCia / headsTotal * 100).toFixed(2);
   const pctCoa = (qtdCoa / headsTotal * 100).toFixed(2);
+  const baseMeta = `${headsTotal.toLocaleString('pt-BR')} heads trabalhados` +
+    (denominador.dias ? ` em ${denominador.dias} dia${denominador.dias !== 1 ? 's' : ''}` : '');
+
   if (elPctCia) elPctCia.innerHTML = `${pctCia}<small>%</small>`;
   if (elPctCoa) elPctCoa.innerHTML = `${pctCoa}<small>%</small>`;
-  if (elMetaCia) elMetaCia.textContent = `${qtdCia} CIA ÷ ${headsTotal.toLocaleString('pt-BR')} heads×dias`;
-  if (elMetaCoa) elMetaCoa.textContent = `${qtdCoa} COA ÷ ${headsTotal.toLocaleString('pt-BR')} heads×dias`;
+  if (elMetaCia) elMetaCia.textContent = `${qtdCia} CIA ÷ ${baseMeta}`;
+  if (elMetaCoa) elMetaCoa.textContent = `${qtdCoa} COA ÷ ${baseMeta}`;
 }
 
 // ════════════════════════════════════════
