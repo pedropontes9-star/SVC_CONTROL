@@ -2551,8 +2551,11 @@ function calcularHeadsProgramadosNoPeriodo(dataInicioIso, dataFimIso) {
 }
 
 function atualizarKpiPct(listaBase, dataInicioIso, dataFimIso) {
-  const qtdCia = listaBase.filter(a => asText(a.tipo).toUpperCase() === 'CIA').length;
-  const qtdCoa = listaBase.filter(a => asText(a.tipo).toUpperCase() === 'COA').length;
+  // Ofensores únicos por dia: um mesmo EXT no mesmo dia conta apenas 1 vez por tipo.
+  const unicosCia = new Set(listaBase.filter(a => asText(a.tipo).toUpperCase() === 'CIA').map(a => `${normalizeExt(a.ext)}|${asText(a.data_marcacao)}`));
+  const unicosCoa = new Set(listaBase.filter(a => asText(a.tipo).toUpperCase() === 'COA').map(a => `${normalizeExt(a.ext)}|${asText(a.data_marcacao)}`));
+  const qtdCia = unicosCia.size;
+  const qtdCoa = unicosCoa.size;
   const denominador = calcularHeadsProgramadosNoPeriodo(dataInicioIso, dataFimIso);
   const headsTotal = denominador.total;
 
