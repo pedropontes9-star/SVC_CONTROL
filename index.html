@@ -2248,9 +2248,24 @@ async function buscarAnomaliasDoSheets() {
 }
 
 async function buscarAnomaliasDoSupabase() {
-  const { data, error } = await db.from('marcacoes_auto').select('*');
-  if (error) throw error;
-  return normalizarPayloadAnomalias(data || []);
+  const PAGINA = 1000;
+  let todos = [];
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await db
+      .from('marcacoes_auto')
+      .select('*')
+      .range(from, from + PAGINA - 1);
+
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+    todos = todos.concat(data);
+    if (data.length < PAGINA) break;
+    from += PAGINA;
+  }
+
+  return normalizarPayloadAnomalias(todos);
 }
 
 async function carregarAnomalias(opcoes = {}) {
