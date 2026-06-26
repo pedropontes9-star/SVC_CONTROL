@@ -10,6 +10,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root {
     --meli-yellow: #FFE600;
@@ -721,12 +722,12 @@
     </div>
     <div class="stat-card">
       <div class="stat-label">CIA (Entrada)</div>
-      <div class="stat-value" style="color:var(--warn-text)" id="stat-cia">0</div>
+      <div class="stat-value" style="color:#00356C" id="stat-cia">0</div>
       <div class="stat-sub">Autogerados</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">COA (Saída)</div>
-      <div class="stat-value" style="color:#7B2FBE" id="stat-coa">0</div>
+      <div class="stat-value" style="color:#6BAADD" id="stat-coa">0</div>
       <div class="stat-sub">Autogerados</div>
     </div>
     <div class="stat-card stat-card-pct">
@@ -840,6 +841,9 @@
     </div>
 
     <div id="anom-tab-dashboard" style="display:none">
+      <div style="display:flex; justify-content:flex-end; padding:14px 20px 0">
+        <button class="btn btn-secondary btn-sm" onclick="exportarDashboardAnomaliasPNG()">⬇ Exportar PNG</button>
+      </div>
       <div class="empty-state" id="anom-dash-empty" style="display:none">
         <div class="empty-icon">📊</div>
         <p>Nenhuma ofensa no período filtrado</p>
@@ -2817,6 +2821,31 @@ function renderAnomalias() {
 // ════════════════════════════════════════
 //  SUB-ABAS: INDICADOR / DASHBOARD (Anomalias)
 // ════════════════════════════════════════
+function exportarDashboardAnomaliasPNG() {
+  const el = document.getElementById('anom-dash-grid');
+  if (!el || el.style.display === 'none') {
+    toast('Não há gráficos para exportar no período filtrado.', 'error');
+    return;
+  }
+  if (typeof html2canvas === 'undefined') {
+    toast('Biblioteca de exportação não carregou. Verifique sua conexão.', 'error');
+    return;
+  }
+  toast('Gerando imagem do dashboard...', '');
+  html2canvas(el, { backgroundColor: '#EBEBEB', scale: 2, useCORS: true }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = `dashboard-anomalias-${hojeIsoLocal()}.png`;
+    link.href = canvas.toDataURL('image/png');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast('Dashboard exportado com sucesso!', 'success');
+  }).catch(err => {
+    console.error(err);
+    toast('Erro ao exportar o dashboard: ' + (err.message || err), 'error');
+  });
+}
+
 function setAnomaliaSubTab(tab, btnEl) {
   anomaliasSubTab = tab;
 
