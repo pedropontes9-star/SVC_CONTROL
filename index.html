@@ -368,8 +368,8 @@
   .anom-chart-card-donut canvas { max-height:210px; max-width:210px; margin:0 auto; display:block; }
   @media (max-width: 860px) { .anom-chart-grid { grid-template-columns:1fr; } }
   .insight-pill { display:inline-block; padding:1px 7px; border-radius:20px; font-size:11px; font-weight:600; }
-  .insight-pill-cia { background:#fff3e0; color:#00356C; }
-  .insight-pill-coa { background:#f3eaff; color:#6BAADD; }
+  .insight-pill-cia { background:#fff3e0; color:#e65100; }
+  .insight-pill-coa { background:#f3eaff; color:#7B2FBE; }
 
   /* ── Anomalias: KPI % CIA / COA ── */
   .stat-card-pct .stat-value { font-size:20px; }
@@ -1843,6 +1843,7 @@ let anomaliasSortDir = 'desc';
 // Estado da sub-aba (Indicador / Dashboard) e cache da última lista filtrada
 let anomaliasSubTab = 'indicador';
 let anomaliasUltimaListaBase = [];
+let anomaliasUltimoPeriodo = { inicioIso: '', fimIso: '' };
 
 // Instâncias dos gráficos do Dashboard de Anomalias
 let chartAnomEvolucao = null;
@@ -2615,6 +2616,19 @@ function calcularHeadsProgramadosNoPeriodo(dataInicioIso, dataFimIso) {
   };
 }
 
+// Escala de cor dos cards de % CIA/COA: gradiente de verde de 0% a 5% (meta), vermelho acima da meta.
+function corEscalaPctAnomalia(pct) {
+  if (pct === null || pct === undefined || isNaN(pct)) return '';
+  if (pct > 5) return '#F23D4F';
+  const t = Math.max(0, Math.min(1, pct / 5));
+  const de = { r: 0xC8, g: 0xE6, b: 0xC9 }; // verde claro (0%)
+  const ate = { r: 0x00, g: 0xA6, b: 0x50 }; // verde forte, na meta (5%)
+  const r = Math.round(de.r + (ate.r - de.r) * t);
+  const g = Math.round(de.g + (ate.g - de.g) * t);
+  const b = Math.round(de.b + (ate.b - de.b) * t);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
 function atualizarKpiPct(listaBase, dataInicioIso, dataFimIso) {
   // Ofensores únicos por dia: um mesmo EXT no mesmo dia conta apenas 1 vez por tipo.
   const unicosCia = new Set(listaBase.filter(a => asText(a.tipo).toUpperCase() === 'CIA').map(a => `${normalizeExt(a.ext)}|${asText(a.data_marcacao)}`));
@@ -2630,20 +2644,22 @@ function atualizarKpiPct(listaBase, dataInicioIso, dataFimIso) {
   const elMetaCoa = document.getElementById('stat-pct-coa-meta');
 
   if (!headsTotal) {
-    if (elPctCia) elPctCia.textContent = '—';
-    if (elPctCoa) elPctCoa.textContent = '—';
+    if (elPctCia) { elPctCia.textContent = '—'; elPctCia.style.color = ''; }
+    if (elPctCoa) { elPctCoa.textContent = '—'; elPctCoa.style.color = ''; }
     if (elMetaCia) elMetaCia.textContent = 'Sem scheduling trabalhado no período';
     if (elMetaCoa) elMetaCoa.textContent = 'Sem scheduling trabalhado no período';
     return;
   }
 
-  const pctCia = (qtdCia / headsTotal * 100).toFixed(2);
-  const pctCoa = (qtdCoa / headsTotal * 100).toFixed(2);
+  const pctCiaNum = qtdCia / headsTotal * 100;
+  const pctCoaNum = qtdCoa / headsTotal * 100;
+  const pctCia = pctCiaNum.toFixed(2);
+  const pctCoa = pctCoaNum.toFixed(2);
   const baseMeta = `${headsTotal.toLocaleString('pt-BR')} heads trabalhados` +
     (denominador.dias ? ` em ${denominador.dias} dia${denominador.dias !== 1 ? 's' : ''}` : '');
 
-  if (elPctCia) elPctCia.innerHTML = `${pctCia}<small>%</small>`;
-  if (elPctCoa) elPctCoa.innerHTML = `${pctCoa}<small>%</small>`;
+  if (elPctCia) { elPctCia.innerHTML = `${pctCia}<small>%</small>`; elPctCia.style.color = corEscalaPctAnomalia(pctCiaNum); }
+  if (elPctCoa) { elPctCoa.innerHTML = `${pctCoa}<small>%</small>`; elPctCoa.style.color = corEscalaPctAnomalia(pctCoaNum); }
   if (elMetaCia) elMetaCia.textContent = `${qtdCia} CIA ÷ ${baseMeta}`;
   if (elMetaCoa) elMetaCoa.textContent = `${qtdCoa} COA ÷ ${baseMeta}`;
 }
@@ -2742,7 +2758,8 @@ function renderAnomalias() {
   atualizarInsights(listaBase);
 
   anomaliasUltimaListaBase = listaBase;
-  if (anomaliasSubTab === 'dashboard') renderAnomaliasDashboard(listaBase);
+  anomaliasUltimoPeriodo = { inicioIso, fimIso };
+  if (anomaliasSubTab === 'dashboard') renderAnomaliasDashboard(listaBase, inicioIso, fimIso);
 
   let lista = listaBase;
   if (buscaText) {
@@ -2811,7 +2828,7 @@ function setAnomaliaSubTab(tab, btnEl) {
   if (indicador) indicador.style.display = tab === 'indicador' ? '' : 'none';
   if (dashboard) dashboard.style.display = tab === 'dashboard' ? '' : 'none';
 
-  if (tab === 'dashboard') renderAnomaliasDashboard(anomaliasUltimaListaBase);
+  if (tab === 'dashboard') renderAnomaliasDashboard(anomaliasUltimaListaBase, anomaliasUltimoPeriodo.inicioIso, anomaliasUltimoPeriodo.fimIso);
 }
 
 // ════════════════════════════════════════
@@ -2830,22 +2847,51 @@ function anomIsoData(raw) {
   return '';
 }
 
-function buildEvolucaoDiariaAnom(lista) {
-  const map = {};
+function buildEvolucaoDiariaAnom(lista, inicioIso, fimIso) {
+  // Ofensores únicos por dia/tipo (mesma regra do KPI do topo: 1 EXT = 1 ofensa por dia)
+  const porDia = {};
   lista.forEach(a => {
     const iso = anomIsoData(a.data_marcacao);
     if (!iso) return;
-    if (!map[iso]) map[iso] = { cia: 0, coa: 0 };
+    if (!porDia[iso]) porDia[iso] = { ciaSet: new Set(), coaSet: new Set() };
     const t = asText(a.tipo).toUpperCase();
-    if (t === 'CIA') map[iso].cia++;
-    else if (t === 'COA') map[iso].coa++;
+    const extKey = normalizeExt(a.ext);
+    if (t === 'CIA') porDia[iso].ciaSet.add(extKey);
+    else if (t === 'COA') porDia[iso].coaSet.add(extKey);
   });
-  const isos = Object.keys(map).sort();
-  return {
-    labels: isos.map(iso => iso.split('-').reverse().join('/')),
-    cia: isos.map(iso => map[iso].cia),
-    coa: isos.map(iso => map[iso].coa)
-  };
+
+  // Dias considerados: o período selecionado no filtro (mesmo sem ofensas, aparece como 0%);
+  // se o período não estiver definido, cai para os dias com ofensas encontradas.
+  let dias;
+  const dIni = isoParaDataLocal(inicioIso);
+  const dFim = isoParaDataLocal(fimIso);
+  if (dIni && dFim && dFim >= dIni) {
+    dias = [];
+    for (let d = clonarDataLocal(dIni); d <= dFim; d = adicionarDiasLocal(d, 1)) {
+      dias.push(dataLocalParaIso(d));
+    }
+  } else {
+    dias = Object.keys(porDia).sort();
+  }
+
+  const labels = [];
+  const pctCia = [];
+  const pctCoa = [];
+
+  dias.forEach(iso => {
+    const headsDia = calcularHeadsProgramadosNoPeriodo(iso, iso).total;
+    const dadosDia = porDia[iso] || { ciaSet: new Set(), coaSet: new Set() };
+    labels.push(iso.split('-').reverse().join('/'));
+    if (!headsDia) {
+      pctCia.push(null);
+      pctCoa.push(null);
+    } else {
+      pctCia.push(+(dadosDia.ciaSet.size / headsDia * 100).toFixed(2));
+      pctCoa.push(+(dadosDia.coaSet.size / headsDia * 100).toFixed(2));
+    }
+  });
+
+  return { labels, pctCia, pctCoa };
 }
 
 function buildRankingTurnoAnom(lista) {
@@ -2911,7 +2957,7 @@ function buildDistribuicaoHoraAnom(lista) {
 // ════════════════════════════════════════
 //  DASHBOARD DE ANOMALIAS — renderização (Chart.js)
 // ════════════════════════════════════════
-function renderAnomaliasDashboard(listaBase) {
+function renderAnomaliasDashboard(listaBase, inicioIso, fimIso) {
   const lista = listaBase || [];
   const grid = document.getElementById('anom-dash-grid');
   const empty = document.getElementById('anom-dash-empty');
@@ -2924,7 +2970,7 @@ function renderAnomaliasDashboard(listaBase) {
   if (grid) grid.style.display = '';
   if (empty) empty.style.display = 'none';
 
-  renderChartEvolucaoAnom(lista);
+  renderChartEvolucaoAnom(lista, inicioIso, fimIso);
   renderChartTurnoAnom(lista);
   renderChartCausasAnom(lista);
   renderChartGestorAnom(lista);
@@ -2932,25 +2978,30 @@ function renderAnomaliasDashboard(listaBase) {
   renderChartDonutAnom(lista);
 }
 
-function renderChartEvolucaoAnom(lista) {
+function renderChartEvolucaoAnom(lista, inicioIso, fimIso) {
   const canvas = document.getElementById('anom-chart-evolucao');
   if (!canvas) return;
-  const d = buildEvolucaoDiariaAnom(lista);
+  const d = buildEvolucaoDiariaAnom(lista, inicioIso, fimIso);
+  const meta = d.labels.map(() => 5);
   if (chartAnomEvolucao) chartAnomEvolucao.destroy();
   chartAnomEvolucao = new Chart(canvas, {
     type: 'line',
     data: {
       labels: d.labels,
       datasets: [
-        { label: 'CIA', data: d.cia, borderColor: '#FFAD00', backgroundColor: 'rgba(255,173,0,.12)', tension: .3, fill: true, pointRadius: 3 },
-        { label: 'COA', data: d.coa, borderColor: '#7B2FBE', backgroundColor: 'rgba(123,47,190,.10)', tension: .3, fill: true, pointRadius: 3 }
+        { label: 'CIA', data: d.pctCia, borderColor: '#00356C', backgroundColor: 'rgba(0,53,108,.12)', tension: .3, fill: true, pointRadius: 3, spanGaps: true },
+        { label: 'COA', data: d.pctCoa, borderColor: '#6BAADD', backgroundColor: 'rgba(107,170,221,.15)', tension: .3, fill: true, pointRadius: 3, spanGaps: true },
+        { label: 'Meta (5%)', data: meta, borderColor: '#F23D4F', borderDash: [6, 4], borderWidth: 2, pointRadius: 0, fill: false, tension: 0 }
       ]
     },
     options: {
       responsive: true,
-      plugins: { legend: { position: 'top', labels: { font: { size: 12 }, boxWidth: 12 } } },
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 12 }, boxWidth: 12 } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw === null ? '—' : ctx.raw + '%'}` } }
+      },
       scales: {
-        y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,0.05)' } },
+        y: { beginAtZero: true, ticks: { precision: 0, callback: v => v + '%' }, grid: { color: 'rgba(0,0,0,0.05)' } },
         x: { grid: { display: false } }
       }
     }
@@ -2967,8 +3018,8 @@ function renderChartTurnoAnom(lista) {
     data: {
       labels: d.labels,
       datasets: [
-        { label: 'CIA', data: d.cia, backgroundColor: '#FFAD00', borderRadius: 3 },
-        { label: 'COA', data: d.coa, backgroundColor: '#7B2FBE', borderRadius: 3 }
+        { label: 'CIA', data: d.cia, backgroundColor: '#00356C', borderRadius: 3 },
+        { label: 'COA', data: d.coa, backgroundColor: '#6BAADD', borderRadius: 3 }
       ]
     },
     options: {
@@ -2993,8 +3044,8 @@ function renderChartGestorAnom(lista) {
     data: {
       labels: d.labels,
       datasets: [
-        { label: 'CIA', data: d.cia, backgroundColor: '#FFAD00', borderRadius: 3 },
-        { label: 'COA', data: d.coa, backgroundColor: '#7B2FBE', borderRadius: 3 }
+        { label: 'CIA', data: d.cia, backgroundColor: '#00356C', borderRadius: 3 },
+        { label: 'COA', data: d.coa, backgroundColor: '#6BAADD', borderRadius: 3 }
       ]
     },
     options: {
@@ -3044,8 +3095,8 @@ function renderChartHoraAnom(lista) {
     data: {
       labels: d.labels,
       datasets: [
-        { label: 'CIA', data: d.cia, backgroundColor: '#FFAD00', borderRadius: 3 },
-        { label: 'COA', data: d.coa, backgroundColor: '#7B2FBE', borderRadius: 3 }
+        { label: 'CIA', data: d.cia, backgroundColor: '#00356C', borderRadius: 3 },
+        { label: 'COA', data: d.coa, backgroundColor: '#6BAADD', borderRadius: 3 }
       ]
     },
     options: {
@@ -3069,7 +3120,7 @@ function renderChartDonutAnom(lista) {
     type: 'doughnut',
     data: {
       labels: ['CIA (Entrada)', 'COA (Saída)'],
-      datasets: [{ data: [cia, coa], backgroundColor: ['#FFAD00', '#7B2FBE'], borderWidth: 0 }]
+      datasets: [{ data: [cia, coa], backgroundColor: ['#00356C', '#6BAADD'], borderWidth: 0 }]
     },
     options: {
       responsive: true,
