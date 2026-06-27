@@ -3,9 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SRJ2 — Gestão Operacional</title>
-<link rel="icon" type="image/png" href="./srj2-favicon.png">
-<link rel="apple-touch-icon" href="./srj2-apple-touch-icon.png">
+<title>SVC — Gestão Operacional</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -36,10 +34,6 @@
 
   .header { background: var(--meli-yellow); padding: 0 24px; height: 52px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 0 rgba(0,0,0,0.10); position: sticky; top: 0; z-index: 200; }
   .logo-box { background: var(--meli-blue); color: #fff; padding: 4px 9px; border-radius: 4px; font-size: 12px; font-weight: 700; letter-spacing: .03em; }
-  .brand-logo { display: block; width: auto; object-fit: contain; flex-shrink: 0; }
-  .header-logo { height: 34px; }
-  .auth-logo { height: 42px; margin-right: 2px; }
-  .sidebar-logo { height: 42px; margin-top: -4px; }
   .header h1 { font-size: 16px; font-weight: 600; color: var(--meli-blue); }
   .header-divider { width: 1px; height: 20px; background: rgba(45,50,119,.25); }
   .header-sub { font-size: 12px; color: var(--meli-blue); opacity: .7; font-weight: 500; }
@@ -374,6 +368,10 @@
   .anom-chart-card canvas { max-height:250px; }
   .anom-chart-card-donut canvas { max-height:210px; max-width:210px; margin:0 auto; display:block; }
   @media (max-width: 860px) { .anom-chart-grid { grid-template-columns:1fr; } }
+
+  /* Registro de Absenteísmo (ABS) */
+  .abs-step2-card { border:1px solid #eee; border-radius:var(--radius); padding:14px; margin-bottom:12px; background:#fafafa; }
+  .abs-step2-card-head { display:flex; align-items:center; gap:8px; font-size:14px; }
   .insight-pill { display:inline-block; padding:1px 7px; border-radius:20px; font-size:11px; font-weight:600; }
   .insight-pill-cia { background:#fff3e0; color:#e65100; }
   .insight-pill-coa { background:#f3eaff; color:#7B2FBE; }
@@ -422,9 +420,9 @@
 <div id="auth-screen" class="auth-screen">
   <div class="auth-card">
     <div class="auth-brand">
-      <img class="brand-logo auth-logo" src="./srj2-logo.png" alt="SRJ2">
+      <div class="logo-box">SVC</div>
       <div>
-        <div class="auth-title">Gestão Operacional</div>
+        <div class="auth-title">Acesso Operacional</div>
         <div style="font-size:12px;color:var(--text-muted);font-weight:600">SVC SRJ2 — 3PL / MELI</div>
       </div>
     </div>
@@ -455,7 +453,7 @@
 
 <header class="header">
   <button class="menu-toggle" type="button" onclick="abrirMenuLateral()" aria-label="Abrir menu de navegação" title="Menu">☰</button>
-  <img class="brand-logo header-logo" src="./srj2-logo.png" alt="SRJ2">
+  <div class="logo-box">SVC</div>
   <h1>Gestão Operacional</h1>
   <div class="header-divider"></div>
   <span class="header-sub">SVC SRJ2 — 3PL / MELI</span>
@@ -468,7 +466,7 @@
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="fecharMenuLateral()"></div>
 <aside class="sidebar" id="sidebar" aria-label="Menu de navegação" aria-hidden="true">
   <div class="sidebar-head">
-    <img class="brand-logo sidebar-logo" src="./srj2-logo.png" alt="SRJ2">
+    <div class="logo-box">SVC</div>
     <div>
       <div class="sidebar-title">Gestão Operacional</div>
       <div class="sidebar-subtitle">SVC SRJ2 — 3PL / MELI</div>
@@ -485,6 +483,7 @@
         <button class="tab-btn nav-item active" id="tab-headcount" data-tab="headcount" onclick="switchTab('headcount',this)"><span class="nav-icon">👥</span><span>Headcount</span></button>
         <button class="tab-btn nav-item" id="tab-turnos" data-tab="turnos" onclick="switchTab('turnos',this)"><span class="nav-icon">🕐</span><span>Turnos</span></button>
         <button class="tab-btn nav-item" id="tab-scheduling" data-tab="scheduling" onclick="switchTab('scheduling',this)"><span class="nav-icon">📅</span><span>Scheduling</span></button>
+        <button class="tab-btn nav-item" id="tab-abs" data-tab="abs" onclick="switchTab('abs',this)"><span class="nav-icon">🩺</span><span>ABS</span></button>
       </div>
     </section>
     <section class="nav-group" data-nav-group="controles">
@@ -968,6 +967,89 @@
   </div>
 </div>
 
+<div id="page-abs" class="page">
+  <!-- KPI cards: ABS do dia, % ABS, colaborador mais recorrente, turno com maior ABS -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">ABS do dia</div>
+      <div class="stat-value" id="abs-stat-hoje">0</div>
+      <div class="stat-sub">colaboradores ausentes hoje</div>
+    </div>
+    <div class="stat-card stat-card-pct">
+      <div class="stat-label">% ABS</div>
+      <div class="stat-value" id="abs-stat-pct">—</div>
+      <div class="stat-meta" id="abs-stat-pct-meta">Sem scheduling no período</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Colaborador mais recorrente</div>
+      <div class="stat-value" style="font-size:16px;line-height:1.3" id="abs-stat-colaborador">—</div>
+      <div class="stat-sub" id="abs-stat-colaborador-sub"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Turno com maior ABS</div>
+      <div class="stat-value" style="font-size:16px;line-height:1.3" id="abs-stat-turno">—</div>
+      <div class="stat-sub" id="abs-stat-turno-sub"></div>
+    </div>
+  </div>
+
+  <p class="section-label">Registro de Absenteísmo</p>
+  <div class="card">
+    <!-- Barra de filtros -->
+    <div class="search-bar" style="flex-wrap:wrap;gap:8px">
+      <div class="anomalia-period-filter">
+        <label>De</label>
+        <input type="date" id="abs-filtro-data-inicio" onchange="renderAbsenteismo()" style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;">
+        <label>Até</label>
+        <input type="date" id="abs-filtro-data-fim" onchange="renderAbsenteismo()" style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;">
+      </div>
+      <span class="quick-date-actions">
+        <button class="btn btn-secondary btn-sm" onclick="definirDataAbs('hoje')">Hoje</button>
+        <button class="btn btn-secondary btn-sm" onclick="definirDataAbs('ontem')">Ontem</button>
+        <button class="btn btn-secondary btn-sm" onclick="definirDataAbs('semana')">Semana</button>
+      </span>
+
+      <select id="abs-filtro-motivo" onchange="renderAbsenteismo()">
+        <option value="TODOS">Todos os motivos</option>
+        <option value="atestado">Atestado</option>
+        <option value="falta_injustificada">Falta injustificada</option>
+        <option value="aguardando_retorno">Aguardando retorno</option>
+      </select>
+
+      <div class="search-input-wrap" style="min-width:180px">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Colaborador ou EXT..." id="abs-busca" oninput="renderAbsenteismo()">
+      </div>
+
+      <button class="btn btn-primary btn-sm" id="btn-registrar-abs" onclick="abrirModalAbsRegistro()" style="height:34px;display:inline-flex;align-items:center;gap:6px;">
+        <span>➕ Registrar Absenteísmo</span>
+      </button>
+      <span class="count-badge" id="abs-count">0 registros</span>
+    </div>
+
+    <!-- Tabela -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Colaborador</th>
+            <th>Turno</th>
+            <th>Gestor</th>
+            <th>Motivo</th>
+            <th>Período (Atestado)</th>
+            <th>Anexo</th>
+            <th>Registrado por</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-abs">
+          <tr><td colspan="9"><div class="empty-state"><div class="empty-icon">⏳</div><p>Carregando registros...</p></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <div id="page-monitor" class="page">
 
   <div class="cracha-intro">
@@ -1243,6 +1325,53 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-abs-registro">
+  <div class="modal modal-lg" onclick="event.stopPropagation()">
+    <h3 id="abs-modal-titulo">Registrar Absenteísmo — Etapa 1 de 2: Selecionar colaboradores</h3>
+
+    <div id="abs-step-1">
+      <div class="form-grid" style="margin-bottom:10px">
+        <div class="form-group">
+          <label>Data do registro</label>
+          <input type="date" id="abs-data-registro">
+        </div>
+      </div>
+      <div class="search-input-wrap" style="margin-bottom:10px;flex:none">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="abs-busca-colaborador" placeholder="Buscar colaborador ou EXT..." oninput="renderListaAbsColaboradores()">
+      </div>
+      <div class="table-wrap" style="max-height:340px;overflow-y:auto">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:36px"><input type="checkbox" id="abs-check-todos" onchange="toggleTodosAbsColaboradores(this.checked)"></th>
+              <th>Colaborador</th>
+              <th>EXT</th>
+              <th>Turno</th>
+            </tr>
+          </thead>
+          <tbody id="abs-tbody-colaboradores">
+            <tr><td colspan="4"><div class="empty-state"><div class="empty-icon">👥</div><p>Nenhum colaborador disponível</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:8px"><span id="abs-contagem-selecionados">0</span> colaborador(es) selecionado(s)</p>
+    </div>
+
+    <div id="abs-step-2" style="display:none">
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Defina o motivo do absenteísmo para cada colaborador selecionado.</p>
+      <div id="abs-step2-lista"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="fecharModalAbsRegistro()">Cancelar</button>
+      <button class="btn btn-secondary btn-sm" id="btn-abs-voltar" style="display:none" onclick="voltarAbsEtapa1()">Voltar</button>
+      <button class="btn btn-primary btn-sm" id="btn-abs-avancar" onclick="avancarAbsEtapa2()" disabled>Avançar</button>
+      <button class="btn btn-primary btn-sm" id="btn-abs-confirmar" style="display:none" onclick="confirmarRegistroAbsenteismo()">Confirmar registro</button>
+    </div>
+  </div>
+</div>
+
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1386,21 +1515,23 @@ const EXIGIR_CADASTRO_PERFIL = true; // Com a tabela svc_usuarios configurada, t
 const PERFIS_ACESSO = {
   admin: {
     label: 'Administrador',
-    tabs: ['turnos', 'headcount', 'scheduling', 'anomalias', 'monitor', 'crachas'],
+    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'monitor', 'crachas'],
     gerar_crachas: true,
     criar_turnos: true, editar_turnos: true, excluir_turnos: true,
     criar_hc: true, editar_hc: true, excluir_hc: true, exportar_hc: true,
     ver_anomalias: true, atualizar_anomalias: true, tratar_anomalias: true,
-    criar_sched: true, editar_sched: true, excluir_sched: true
+    criar_sched: true, editar_sched: true, excluir_sched: true,
+    registrar_abs: true, ver_todos_abs: true, excluir_abs: true
   },
   supervisor: {
     label: 'Supervisor',
-    tabs: ['turnos', 'headcount', 'scheduling', 'anomalias', 'monitor', 'crachas'],
+    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'monitor', 'crachas'],
     gerar_crachas: true,
     criar_turnos: false, editar_turnos: false, excluir_turnos: false,
     criar_hc: true, editar_hc: true, excluir_hc: false, exportar_hc: true,
     ver_anomalias: true, atualizar_anomalias: true, tratar_anomalias: true,
-    criar_sched: true, editar_sched: true, excluir_sched: false
+    criar_sched: true, editar_sched: true, excluir_sched: false,
+    registrar_abs: true, ver_todos_abs: false, excluir_abs: false
   },
   consulta: {
     label: 'Consulta',
@@ -1409,7 +1540,8 @@ const PERFIS_ACESSO = {
     criar_turnos: false, editar_turnos: false, excluir_turnos: false,
     criar_hc: false, editar_hc: false, excluir_hc: false, exportar_hc: false,
     ver_anomalias: true, atualizar_anomalias: true, tratar_anomalias: false,
-    criar_sched: false, editar_sched: false, excluir_sched: false
+    criar_sched: false, editar_sched: false, excluir_sched: false,
+    registrar_abs: false, ver_todos_abs: false, excluir_abs: false
   }
 };
 
@@ -1615,6 +1747,7 @@ function aplicarControleAcesso() {
   setVisibleById('btn-atualizar-anomalias', pode('atualizar_anomalias'), 'inline-flex');
   setVisibleById('card-form-crachas', pode('gerar_crachas'));
   setVisibleById('card-form-scheduling', pode('criar_sched') || pode('editar_sched'));
+  setVisibleById('btn-registrar-abs', pode('registrar_abs'), 'inline-flex');
 
   if (!podeAcessarTab('turnos')) cancelarEdicaoTurno();
   if (!pode('editar_hc') && !pode('criar_hc')) cancelarEdicaoHC();
@@ -1622,6 +1755,7 @@ function aplicarControleAcesso() {
   renderTurnos();
   renderHeads();
   renderAnomalias();
+  renderAbsenteismo();
 }
 
 async function inicializarAuth() {
@@ -1846,6 +1980,12 @@ let editingHcId = null;
 let editingSchedId = null;
 let pendingDelete = null;
 
+// Estado do módulo ABS (Absenteísmo)
+let absRegistros = [];
+let absColaboradoresFiltrados = [];
+let absSelecionados = new Set();
+let absDetalhes = {};
+
 // Estado de ordenação da tabela de anomalias
 let anomaliasSortCol = 'data';
 let anomaliasSortDir = 'desc';
@@ -1922,12 +2062,18 @@ async function carregarDadosDoBanco() {
     if (filtroInicio && !filtroInicio.value) filtroInicio.value = hojeIsoLocal();
     if (filtroFim && !filtroFim.value) filtroFim.value = hojeIsoLocal();
 
+    const absFiltroInicio = document.getElementById('abs-filtro-data-inicio');
+    const absFiltroFim = document.getElementById('abs-filtro-data-fim');
+    if (absFiltroInicio && !absFiltroInicio.value) absFiltroInicio.value = hojeIsoLocal();
+    if (absFiltroFim && !absFiltroFim.value) absFiltroFim.value = hojeIsoLocal();
+
     atualizarSelectTurnos();
     renderTurnos();
     renderHeads();
     renderSchedulings();
     atualizarStats();
     await carregarAnomalias({ silencioso: true, renderizar: true });
+    await carregarAbsenteismo();
     aplicarControleAcesso();
   } catch (error) {
     console.error(error);
@@ -1995,6 +2141,10 @@ function switchTab(tab, btn) {
 
   if (tab === 'scheduling') {
     renderSchedulings();
+  }
+
+  if (tab === 'abs') {
+    renderAbsenteismo();
   }
 
   if (tab === 'monitor') {
@@ -3332,6 +3482,7 @@ async function executarExclusao() {
   if (!pendingDelete) return;
   if (pendingDelete.type === 'turno' && !pode('excluir_turnos')) { toast('Seu perfil não permite excluir turnos.', 'error'); fecharModal(); return; }
   if (pendingDelete.type === 'head' && !pode('excluir_hc')) { toast('Seu perfil não permite excluir colaboradores.', 'error'); fecharModal(); return; }
+  if (pendingDelete.type === 'abs' && !pode('excluir_abs')) { toast('Seu perfil não permite excluir registros de absenteísmo.', 'error'); fecharModal(); return; }
   const btn = document.getElementById('btn-confirmar-excluir');
   setButtonLoading(btn, true, 'Excluindo...');
   try {
@@ -3339,6 +3490,10 @@ async function executarExclusao() {
       const { error } = await db.from('turnos').delete().eq('id', pendingDelete.id);
       if (error) throw error;
       toast('Turno excluído com sucesso.', 'success');
+    } else if (pendingDelete.type === 'abs') {
+      const { error } = await db.from('absenteismo').delete().eq('id', pendingDelete.id);
+      if (error) throw error;
+      toast('Registro de absenteísmo excluído.', 'success');
     } else {
       const { error } = await db.from('colaboradores').delete().eq('id', pendingDelete.id);
       if (error) throw error;
@@ -3356,6 +3511,453 @@ async function executarExclusao() {
 function fecharModal() {
   document.getElementById('modal-excluir').classList.remove('open');
   pendingDelete = null;
+}
+
+// ════════════════════════════════════════
+//  ABS — ABSENTEÍSMO (carregamento e helpers)
+// ════════════════════════════════════════
+async function carregarAbsenteismo() {
+  try {
+    const { data, error } = await db.from('absenteismo').select('*').order('data_abs', { ascending: false });
+    if (error) {
+      if (error.code === '42P01' || /does not exist/i.test(error.message || '')) {
+        absRegistros = [];
+        console.warn('Tabela "absenteismo" ainda não existe no Supabase.');
+        return;
+      }
+      throw error;
+    }
+    absRegistros = (data || []).map(a => ({
+      id: a.id,
+      colaboradorId: a.colaborador_id,
+      ext: a.colaborador_ext,
+      nome: a.colaborador_nome,
+      turnoId: a.turno_id,
+      gestor: a.gestor,
+      dataAbs: a.data_abs,
+      motivo: a.motivo,
+      periodoInicio: a.periodo_inicio,
+      periodoFim: a.periodo_fim,
+      anexoNome: a.anexo_nome,
+      anexoBase64: a.anexo_base64,
+      registradoPor: a.registrado_por,
+      criadoEm: a.criado_em
+    }));
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao carregar registros de absenteísmo: ' + (error.message || error), 'error');
+  }
+}
+
+function normalizarNomeGestor(nome) {
+  return asText(nome).trim().toLowerCase();
+}
+
+function listaColaboradoresParaAbs() {
+  const ativos = heads.filter(h => lower(h.status || 'ativo') === 'ativo');
+  if (obterPerfilAtual().ver_todos_abs) return ativos;
+  const meuNome = normalizarNomeGestor(usuarioAtual?.nome);
+  if (!meuNome) return [];
+  return ativos.filter(h => normalizarNomeGestor(h.gestor) === meuNome);
+}
+
+function absChave(a) {
+  if (a.colaboradorId != null) return `id_${a.colaboradorId}`;
+  if (a.ext) return `ext_${normalizeExt(a.ext)}`;
+  return `row_${a.id}`;
+}
+
+function absDataMatchesPeriodo(dataAbsIso, inicioIso, fimIso) {
+  if (!dataAbsIso) return false;
+  if (inicioIso && dataAbsIso < inicioIso) return false;
+  if (fimIso && dataAbsIso > fimIso) return false;
+  return true;
+}
+
+function definirDataAbs(tipo) {
+  const inicio = document.getElementById('abs-filtro-data-inicio');
+  const fim = document.getElementById('abs-filtro-data-fim');
+  if (!inicio || !fim) return;
+
+  const hoje = hojeIsoLocal();
+  const ontem = ontemIsoLocal();
+
+  if (tipo === 'hoje') {
+    inicio.value = hoje;
+    fim.value = hoje;
+  } else if (tipo === 'ontem') {
+    inicio.value = ontem;
+    fim.value = ontem;
+  } else if (tipo === 'semana') {
+    const d = new Date();
+    const dow = d.getDay();
+    const diffSeg = (dow === 0 ? -6 : 1 - dow);
+    const seg = new Date(d);
+    seg.setDate(d.getDate() + diffSeg);
+    const offset = seg.getTimezoneOffset();
+    const segLocal = new Date(seg.getTime() - offset * 60000);
+    inicio.value = segLocal.toISOString().slice(0, 10);
+    fim.value = hoje;
+  }
+  renderAbsenteismo();
+}
+
+// ════════════════════════════════════════
+//  ABS — fluxo de registro (Etapa 1: seleção / Etapa 2: motivo)
+// ════════════════════════════════════════
+function abrirModalAbsRegistro() {
+  if (!pode('registrar_abs')) { toast('Seu perfil não permite registrar absenteísmo.', 'error'); return; }
+  absSelecionados = new Set();
+  absDetalhes = {};
+  absColaboradoresFiltrados = listaColaboradoresParaAbs();
+
+  const dataInput = document.getElementById('abs-data-registro');
+  if (dataInput) dataInput.value = hojeIsoLocal();
+  const buscaInput = document.getElementById('abs-busca-colaborador');
+  if (buscaInput) buscaInput.value = '';
+  const checkTodos = document.getElementById('abs-check-todos');
+  if (checkTodos) checkTodos.checked = false;
+
+  mostrarAbsEtapa(1);
+  renderListaAbsColaboradores();
+  document.getElementById('modal-abs-registro').classList.add('open');
+}
+
+function fecharModalAbsRegistro() {
+  document.getElementById('modal-abs-registro').classList.remove('open');
+  absSelecionados = new Set();
+  absDetalhes = {};
+}
+
+function mostrarAbsEtapa(etapa) {
+  const titulo = document.getElementById('abs-modal-titulo');
+  const step1 = document.getElementById('abs-step-1');
+  const step2 = document.getElementById('abs-step-2');
+  if (step1) step1.style.display = etapa === 1 ? '' : 'none';
+  if (step2) step2.style.display = etapa === 2 ? '' : 'none';
+  setVisibleById('btn-abs-avancar', etapa === 1, 'inline-flex');
+  setVisibleById('btn-abs-voltar', etapa === 2, 'inline-flex');
+  setVisibleById('btn-abs-confirmar', etapa === 2, 'inline-flex');
+  if (titulo) {
+    titulo.textContent = etapa === 1
+      ? 'Registrar Absenteísmo — Etapa 1 de 2: Selecionar colaboradores'
+      : 'Registrar Absenteísmo — Etapa 2 de 2: Motivo do ABS';
+  }
+}
+
+function absListaFiltradaModal() {
+  const termo = lower(document.getElementById('abs-busca-colaborador')?.value || '');
+  if (!termo) return absColaboradoresFiltrados;
+  return absColaboradoresFiltrados.filter(h => lower(h.nome).includes(termo) || lower(h.ext).includes(termo));
+}
+
+function renderListaAbsColaboradores() {
+  const tbody = document.getElementById('abs-tbody-colaboradores');
+  if (!tbody) return;
+  const lista = absListaFiltradaModal();
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">🔍</div><p>Nenhum colaborador encontrado</p></div></td></tr>`;
+    atualizarContagemAbsSelecionados();
+    return;
+  }
+  tbody.innerHTML = lista.map(h => {
+    const turno = turnos.find(t => t.id === h.turnoId);
+    const marcado = absSelecionados.has(String(h.id)) ? 'checked' : '';
+    return `<tr>
+      <td><input type="checkbox" ${marcado} onchange="toggleAbsSelecionado('${h.id}', this.checked)"></td>
+      <td>${escapeHtml(h.nome)}</td>
+      <td>${escapeHtml(h.ext || '—')}</td>
+      <td>${turno ? escapeHtml(turno.nome) : '—'}</td>
+    </tr>`;
+  }).join('');
+  atualizarContagemAbsSelecionados();
+}
+
+function toggleAbsSelecionado(id, checked) {
+  if (checked) absSelecionados.add(String(id));
+  else absSelecionados.delete(String(id));
+  atualizarContagemAbsSelecionados();
+}
+
+function toggleTodosAbsColaboradores(checked) {
+  const lista = absListaFiltradaModal();
+  lista.forEach(h => {
+    if (checked) absSelecionados.add(String(h.id));
+    else absSelecionados.delete(String(h.id));
+  });
+  renderListaAbsColaboradores();
+}
+
+function atualizarContagemAbsSelecionados() {
+  const el = document.getElementById('abs-contagem-selecionados');
+  if (el) el.textContent = absSelecionados.size;
+  const btn = document.getElementById('btn-abs-avancar');
+  if (btn) btn.disabled = absSelecionados.size === 0;
+}
+
+function avancarAbsEtapa2() {
+  if (!absSelecionados.size) return;
+  absDetalhes = {};
+  absSelecionados.forEach(id => {
+    absDetalhes[id] = { motivo: '', periodoInicio: '', periodoFim: '', anexoNome: '', anexoBase64: '' };
+  });
+  renderAbsEtapa2();
+  mostrarAbsEtapa(2);
+}
+
+function voltarAbsEtapa1() {
+  mostrarAbsEtapa(1);
+  renderListaAbsColaboradores();
+}
+
+function renderAbsEtapa2() {
+  const container = document.getElementById('abs-step2-lista');
+  if (!container) return;
+  const ids = Array.from(absSelecionados);
+  container.innerHTML = ids.map(id => {
+    const h = heads.find(hh => String(hh.id) === String(id)) || {};
+    const turno = turnos.find(t => t.id === h.turnoId);
+    return `
+    <div class="abs-step2-card">
+      <div class="abs-step2-card-head"><strong>${escapeHtml(h.nome || 'Colaborador')}</strong> <span class="badge badge-blue">${turno ? escapeHtml(turno.nome) : 'Sem turno'}</span></div>
+      <div class="form-grid" style="margin-top:10px;margin-bottom:0">
+        <div class="form-group" style="grid-column:span 2">
+          <label>Motivo</label>
+          <select onchange="onAbsMotivoChange('${h.id}', this)">
+            <option value="">Selecione...</option>
+            <option value="atestado">Atestado</option>
+            <option value="falta_injustificada">Falta injustificada</option>
+            <option value="aguardando_retorno">Aguardando retorno</option>
+          </select>
+        </div>
+      </div>
+      <div class="abs-atestado-fields" style="display:none">
+        <div class="form-grid" style="margin-top:10px;margin-bottom:0">
+          <div class="form-group">
+            <label>Período — início *</label>
+            <input type="date" onchange="onAbsPeriodoChange('${h.id}', 'inicio', this.value)">
+          </div>
+          <div class="form-group">
+            <label>Período — fim *</label>
+            <input type="date" onchange="onAbsPeriodoChange('${h.id}', 'fim', this.value)">
+          </div>
+          <div class="form-group" style="grid-column:span 2">
+            <label>Atestado (opcional)</label>
+            <input type="file" accept=".pdf,.jpg,.jpeg,.png,image/*" onchange="onAbsAnexoChange('${h.id}', this)">
+            <span class="field-hint">PDF ou imagem, até 5MB.</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function onAbsMotivoChange(id, selectEl) {
+  const det = absDetalhes[id];
+  if (!det) return;
+  det.motivo = selectEl.value;
+  const card = selectEl.closest('.abs-step2-card');
+  const campos = card ? card.querySelector('.abs-atestado-fields') : null;
+  if (campos) campos.style.display = selectEl.value === 'atestado' ? '' : 'none';
+}
+
+function onAbsPeriodoChange(id, campo, valor) {
+  const det = absDetalhes[id];
+  if (!det) return;
+  if (campo === 'inicio') det.periodoInicio = valor;
+  else det.periodoFim = valor;
+}
+
+function onAbsAnexoChange(id, inputEl) {
+  const det = absDetalhes[id];
+  if (!det) return;
+  const file = inputEl.files && inputEl.files[0];
+  if (!file) { det.anexoNome = ''; det.anexoBase64 = ''; return; }
+  if (file.size > 5 * 1024 * 1024) {
+    toast('Arquivo muito grande. O limite é 5MB.', 'error');
+    inputEl.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => { det.anexoNome = file.name; det.anexoBase64 = reader.result; };
+  reader.onerror = () => toast('Erro ao ler o arquivo do atestado.', 'error');
+  reader.readAsDataURL(file);
+}
+
+async function confirmarRegistroAbsenteismo() {
+  const dataRegistro = document.getElementById('abs-data-registro')?.value || hojeIsoLocal();
+  const ids = Array.from(absSelecionados);
+  if (!ids.length) return;
+
+  for (const id of ids) {
+    const det = absDetalhes[id];
+    const h = heads.find(hh => String(hh.id) === String(id));
+    const nomeColab = h ? h.nome : 'colaborador selecionado';
+    if (!det || !det.motivo) {
+      toast(`Selecione o motivo do ABS para ${nomeColab}.`, 'error');
+      return;
+    }
+    if (det.motivo === 'atestado') {
+      if (!det.periodoInicio || !det.periodoFim) {
+        toast(`Informe o período do atestado de ${nomeColab}.`, 'error');
+        return;
+      }
+      if (det.periodoFim < det.periodoInicio) {
+        toast(`Período do atestado de ${nomeColab} está inválido (fim antes do início).`, 'error');
+        return;
+      }
+    }
+  }
+
+  const btn = document.getElementById('btn-abs-confirmar');
+  setButtonLoading(btn, true, 'Registrando...');
+  try {
+    const linhas = ids.map(id => {
+      const h = heads.find(hh => String(hh.id) === String(id));
+      const turno = h ? turnos.find(t => t.id === h.turnoId) : null;
+      const det = absDetalhes[id];
+      return {
+        colaborador_id: h ? h.id : null,
+        colaborador_ext: h ? h.ext : null,
+        colaborador_nome: h ? h.nome : null,
+        turno_id: turno ? turno.id : null,
+        gestor: h ? h.gestor : null,
+        data_abs: dataRegistro,
+        motivo: det.motivo,
+        periodo_inicio: det.motivo === 'atestado' ? det.periodoInicio : null,
+        periodo_fim: det.motivo === 'atestado' ? det.periodoFim : null,
+        anexo_nome: det.motivo === 'atestado' ? (det.anexoNome || null) : null,
+        anexo_base64: det.motivo === 'atestado' ? (det.anexoBase64 || null) : null,
+        registrado_por: usuarioAtual?.nome || usuarioAtual?.usuario || null
+      };
+    });
+
+    const { error } = await db.from('absenteismo').insert(linhas);
+    if (error) throw error;
+
+    toast(`Absenteísmo registrado para ${linhas.length} colaborador(es).`, 'success');
+    fecharModalAbsRegistro();
+    await carregarAbsenteismo();
+    renderAbsenteismo();
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao registrar absenteísmo: ' + (error.message || error), 'error');
+  } finally {
+    setButtonLoading(btn, false);
+  }
+}
+
+// ════════════════════════════════════════
+//  ABS — tela inicial (KPIs + tabela)
+// ════════════════════════════════════════
+function motivoBadgeAbs(motivo) {
+  const map = {
+    atestado: ['badge-blue', 'Atestado'],
+    falta_injustificada: ['badge-red', 'Falta injustificada'],
+    aguardando_retorno: ['badge-orange', 'Aguardando retorno']
+  };
+  const [cls, label] = map[motivo] || ['badge-gray', motivo || '—'];
+  return `<span class="badge ${cls}">${escapeHtml(label)}</span>`;
+}
+
+function confirmarExcluirAbs(id) {
+  if (!pode('excluir_abs')) { toast('Seu perfil não permite excluir registros de absenteísmo.', 'error'); return; }
+  const a = absRegistros.find(r => String(r.id) === String(id));
+  if (!a) return;
+  pendingDelete = { type: 'abs', id: a.id };
+  document.getElementById('modal-msg').textContent = `Excluir o registro de absenteísmo de "${a.nome || 'colaborador'}"? Esta ação não pode ser desfeita.`;
+  document.getElementById('btn-confirmar-excluir').onclick = executarExclusao;
+  document.getElementById('modal-excluir').classList.add('open');
+}
+
+function renderTabelaAbsenteismo(lista) {
+  const tbody = document.getElementById('tbody-abs');
+  if (!tbody) return;
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">🗂️</div><p>Nenhum registro de absenteísmo no período filtrado</p></div></td></tr>`;
+    return;
+  }
+  const ordenada = [...lista].sort((a, b) => (b.dataAbs || '').localeCompare(a.dataAbs || ''));
+  tbody.innerHTML = ordenada.map(a => {
+    const h = heads.find(hh => String(hh.id) === String(a.colaboradorId)) || null;
+    const turno = h ? turnos.find(t => t.id === h.turnoId) : (a.turnoId ? turnos.find(t => t.id === a.turnoId) : null);
+    const gestor = h ? h.gestor : a.gestor;
+    const dataFmt = a.dataAbs ? a.dataAbs.split('-').reverse().join('/') : '—';
+    const periodo = (a.motivo === 'atestado' && a.periodoInicio && a.periodoFim)
+      ? `${a.periodoInicio.split('-').reverse().join('/')} – ${a.periodoFim.split('-').reverse().join('/')}`
+      : '—';
+    const anexo = a.anexoBase64
+      ? `<a href="${a.anexoBase64}" download="${escapeHtml(a.anexoNome || 'atestado')}" class="badge badge-blue" style="text-decoration:none">📎 Ver</a>`
+      : '<span style="color:var(--text-hint);font-size:12px">—</span>';
+    const acoes = pode('excluir_abs')
+      ? `<button class="btn btn-secondary btn-sm" onclick="confirmarExcluirAbs('${a.id}')">Excluir</button>`
+      : '<span style="color:var(--text-hint);font-size:12px">—</span>';
+    return `<tr>
+      <td>${dataFmt}</td>
+      <td>${escapeHtml(a.nome || '—')}</td>
+      <td>${turno ? escapeHtml(turno.nome) : '—'}</td>
+      <td>${escapeHtml(gestor || '—')}</td>
+      <td>${motivoBadgeAbs(a.motivo)}</td>
+      <td>${periodo}</td>
+      <td>${anexo}</td>
+      <td>${escapeHtml(a.registradoPor || '—')}</td>
+      <td>${acoes}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderAbsenteismo() {
+  const inicioIso = document.getElementById('abs-filtro-data-inicio')?.value || '';
+  const fimIso = document.getElementById('abs-filtro-data-fim')?.value || '';
+  const filtroMotivo = document.getElementById('abs-filtro-motivo')?.value || 'TODOS';
+  const buscaText = lower(document.getElementById('abs-busca')?.value || '');
+
+  let listaBase = absRegistros.filter(a => absDataMatchesPeriodo(a.dataAbs, inicioIso, fimIso));
+  if (filtroMotivo !== 'TODOS') listaBase = listaBase.filter(a => a.motivo === filtroMotivo);
+
+  // KPI: ABS do dia (hoje, independente do filtro de período)
+  const hoje = hojeIsoLocal();
+  const qtdHoje = new Set(absRegistros.filter(a => a.dataAbs === hoje).map(absChave)).size;
+  setText2('abs-stat-hoje', String(qtdHoje));
+
+  // KPI: % ABS (mesma métrica de %CIA/%COA) sobre o período filtrado
+  const unicosAbs = new Set(listaBase.map(absChave));
+  const denom = calcularHeadsProgramadosNoPeriodo(inicioIso, fimIso);
+  const headsTotal = denom.total;
+  const elPct = document.getElementById('abs-stat-pct');
+  const elPctMeta = document.getElementById('abs-stat-pct-meta');
+  if (!headsTotal) {
+    if (elPct) elPct.textContent = '—';
+    if (elPctMeta) elPctMeta.textContent = 'Sem scheduling trabalhado no período';
+  } else {
+    const pct = unicosAbs.size / headsTotal * 100;
+    const baseMeta = `${headsTotal.toLocaleString('pt-BR')} heads trabalhados` +
+      (denom.dias ? ` em ${denom.dias} dia${denom.dias !== 1 ? 's' : ''}` : '');
+    if (elPct) elPct.innerHTML = `${pct.toFixed(2)}<small>%</small>`;
+    if (elPctMeta) elPctMeta.textContent = `${unicosAbs.size} ABS ÷ ${baseMeta}`;
+  }
+
+  // KPI: Colaborador mais recorrente
+  const colabFreq = maisFrequente(listaBase, a => a.nome || a.ext);
+  setText2('abs-stat-colaborador', colabFreq ? escapeHtml(colabFreq.valor) : '—');
+  setText2('abs-stat-colaborador-sub', colabFreq ? `${colabFreq.count} ocorrência${colabFreq.count !== 1 ? 's' : ''}` : '');
+
+  // KPI: Turno com maior ABS
+  const turnoFreq = maisFrequente(listaBase, a => {
+    const h = heads.find(hh => String(hh.id) === String(a.colaboradorId));
+    const t = h ? turnos.find(tt => tt.id === h.turnoId) : (a.turnoId ? turnos.find(tt => tt.id === a.turnoId) : null);
+    return t ? t.nome : null;
+  });
+  setText2('abs-stat-turno', turnoFreq ? escapeHtml(turnoFreq.valor) : '—');
+  setText2('abs-stat-turno-sub', turnoFreq ? `${turnoFreq.count} ocorrência${turnoFreq.count !== 1 ? 's' : ''}` : '');
+
+  setText2('abs-count', `${listaBase.length} registro${listaBase.length !== 1 ? 's' : ''}`);
+
+  let listaTabela = listaBase;
+  if (buscaText) {
+    listaTabela = listaTabela.filter(a => lower(a.nome).includes(buscaText) || lower(a.ext).includes(buscaText));
+  }
+  renderTabelaAbsenteismo(listaTabela);
 }
 
 function tplBadge(tpl) {
