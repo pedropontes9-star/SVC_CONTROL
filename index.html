@@ -3670,34 +3670,41 @@ function renderListaAbsColaboradores() {
     return;
   }
 
-  // Agrupa por gestor (gaveta)
+  // Agrupa por turno cadastrado (gaveta por horário)
   const grupos = {};
   lista.forEach(h => {
-    const gestor = asText(h.gestor).trim() || 'Sem gestor definido';
-    if (!grupos[gestor]) grupos[gestor] = [];
-    grupos[gestor].push(h);
+    const turno = turnos.find(t => t.id === h.turnoId);
+    const chave = turno ? String(turno.id) : 'sem_turno';
+    if (!grupos[chave]) grupos[chave] = { turno, itens: [] };
+    grupos[chave].itens.push(h);
   });
-  const gestoresOrdenados = Object.keys(grupos).sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
-  wrap.innerHTML = gestoresOrdenados.map(gestor => {
-    const colaboradoresGrupo = grupos[gestor];
+  const chavesOrdenadas = Object.keys(grupos).sort((a, b) => {
+    if (a === 'sem_turno') return 1;
+    if (b === 'sem_turno') return -1;
+    return asText(grupos[a].turno?.inicio).localeCompare(asText(grupos[b].turno?.inicio));
+  });
+
+  wrap.innerHTML = chavesOrdenadas.map(chave => {
+    const { turno, itens: colaboradoresGrupo } = grupos[chave];
     const totalGrupo = colaboradoresGrupo.length;
     const marcadosGrupo = colaboradoresGrupo.filter(h => absSelecionados.has(String(h.id))).length;
+    const tituloGrupo = turno ? turno.nome : 'Sem turno definido';
+    const horarioGrupo = turno ? `${turno.inicio || '—'} – ${turno.fim || '—'}` : '';
     const linhas = colaboradoresGrupo.map(h => {
-      const turno = turnos.find(t => t.id === h.turnoId);
       const marcado = absSelecionados.has(String(h.id)) ? 'checked' : '';
       return `<tr>
         <td><input type="checkbox" data-hid="${h.id}" ${marcado} onchange="toggleAbsSelecionadoEl(this)"></td>
         <td>${escapeHtml(h.nome)}</td>
         <td>${escapeHtml(h.ext || '—')}</td>
-        <td>${turno ? escapeHtml(turno.nome) : '—'}</td>
+        <td>${escapeHtml(h.gestor || '—')}</td>
       </tr>`;
     }).join('');
     return `
     <div class="abs-gaveta">
       <button type="button" class="abs-gaveta-toggle" onclick="toggleAbsGaveta(this)">
         <span class="abs-gaveta-title">
-          <strong>${escapeHtml(gestor)}</strong>
+          <strong>${escapeHtml(tituloGrupo)}${horarioGrupo ? ` <span style="font-weight:400;color:var(--text-muted)">(${escapeHtml(horarioGrupo)})</span>` : ''}</strong>
           <span class="abs-gaveta-contador">${marcadosGrupo}/${totalGrupo} selecionado(s)</span>
         </span>
         <span class="abs-gaveta-chevron">⌄</span>
@@ -3709,7 +3716,7 @@ function renderListaAbsColaboradores() {
               <th style="width:36px"><input type="checkbox" class="abs-gaveta-check-todos" ${totalGrupo > 0 && marcadosGrupo === totalGrupo ? 'checked' : ''} onchange="toggleGavetaAbs(this)"></th>
               <th>Colaborador</th>
               <th>EXT</th>
-              <th>Turno</th>
+              <th>Gestor</th>
             </tr>
           </thead>
           <tbody>${linhas}</tbody>
