@@ -1527,8 +1527,8 @@ const PERFIS_ACESSO = {
     criar_sched: true, editar_sched: true, excluir_sched: true,
     registrar_abs: true, ver_todos_abs: true, excluir_abs: true
   },
-  supervisor: {
-    label: 'Supervisor',
+  coordenador: {
+    label: 'Coordenador',
     tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'monitor', 'crachas'],
     gerar_crachas: true,
     criar_turnos: false, editar_turnos: false, excluir_turnos: false,
@@ -1537,8 +1537,8 @@ const PERFIS_ACESSO = {
     criar_sched: true, editar_sched: true, excluir_sched: false,
     registrar_abs: true, ver_todos_abs: false, excluir_abs: false
   },
-  consulta: {
-    label: 'Consulta',
+  auditor: {
+    label: 'Auditor',
     tabs: ['headcount', 'anomalias', 'monitor'],
     gerar_crachas: false,
     criar_turnos: false, editar_turnos: false, excluir_turnos: false,
@@ -1567,8 +1567,8 @@ function usuarioParaEmailAuth(usuario) {
 }
 
 function obterPerfilAtual() {
-  const perfil = usuarioAtual?.perfil || 'consulta';
-  return PERFIS_ACESSO[perfil] || PERFIS_ACESSO.consulta;
+  const perfil = usuarioAtual?.perfil || 'auditor';
+  return PERFIS_ACESSO[perfil] || PERFIS_ACESSO.auditor;
 }
 
 function pode(permissao) {
@@ -1674,7 +1674,7 @@ async function carregarPerfilUsuario(session) {
   const email = lower(user.email);
   const usuarioBase = email.endsWith(`@${AUTH_EMAIL_DOMAIN}`) ? email.split('@')[0] : email;
   const fallbackAdmin = usuarioBase === 'admin.srj2';
-  let perfil = fallbackAdmin ? 'admin' : 'consulta';
+  let perfil = fallbackAdmin ? 'admin' : 'auditor';
   let usuario = fallbackAdmin ? 'Admin.srj2' : usuarioBase;
   let nome = fallbackAdmin ? 'Admin SRJ2' : usuarioBase;
 
@@ -1702,7 +1702,7 @@ async function carregarPerfilUsuario(session) {
     console.warn('Perfil não encontrado em svc_usuarios; usando perfil padrão/fallback:', error);
   }
 
-  if (!PERFIS_ACESSO[perfil]) perfil = 'consulta';
+  if (!PERFIS_ACESSO[perfil]) perfil = 'auditor';
   return { id: user.id, email, usuario, nome, perfil };
 }
 
