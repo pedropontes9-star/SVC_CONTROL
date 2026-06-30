@@ -3200,49 +3200,55 @@ function renderConsolidado() {
   const fim = document.getElementById('cons-filtro-data-fim')?.value || '';
   const busca = lower(document.getElementById('cons-busca')?.value || '');
 
-  // Filtra anomalias do período
-  let anomaliasFiltradas = anomalias.filter(a => {
-    const dataOk = (!inicio || a.data >= inicio) && (!fim || a.data <= fim);
-    const buscaOk = !busca ||
-      lower(a.nome).includes(busca) ||
-      lower(a.ext).includes(busca) ||
-      lower(a.gestor || '').includes(busca);
-    return dataOk && buscaOk;
-  });
+  // Filtra anomalias do período (mesma lógica usada na aba Indicador)
+  let anomaliasFiltradas = anomalias.filter(a => dataMarcacaoMatchesPeriodo(a.data_marcacao, inicio, fim));
 
-  // Agrega por colaborador
+  // Agrega por colaborador, cruzando pelo EXT normalizado com a base de colaboradores
   const mapa = {};
 
   anomaliasFiltradas.forEach(a => {
-    if (!mapa[a.colaboradorId]) {
-      mapa[a.colaboradorId] = {
-        id: a.colaboradorId,
-        nome: a.nome,
-        ext: a.ext,
-        groot: a.groot,
-        gestor: a.gestor,
+    const extAnomalia = normalizeExt(a.ext);
+    if (!extAnomalia) return;
+
+    if (!mapa[extAnomalia]) {
+      const head = heads.find(h => normalizeExt(h.ext) === extAnomalia) || null;
+      mapa[extAnomalia] = {
+        id: head ? head.id : null,
+        nome: head ? head.nome : '',
+        ext: extAnomalia,
+        groot: head ? head.groot : null,
+        gestor: head ? head.gestor : null,
+        cadastrado: !!head,
         cia: 0,
         coa: 0,
         total: 0
       };
     }
-    if (a.tipo === 'CIA') mapa[a.colaboradorId].cia++;
-    if (a.tipo === 'COA') mapa[a.colaboradorId].coa++;
-    mapa[a.colaboradorId].total++;
+
+    const tipo = asText(a.tipo).toUpperCase();
+    if (tipo === 'CIA') mapa[extAnomalia].cia++;
+    if (tipo === 'COA') mapa[extAnomalia].coa++;
+    mapa[extAnomalia].total++;
   });
 
-  // Filtra apenas quem tem mais de 2 ofensas
-  let dados = Object.values(mapa).filter(d => d.total > 2);
+  // Filtra por busca (nome, ext ou gestor) e por mais de 2 ofensas
+  let dados = Object.values(mapa).filter(d => {
+    if (d.total <= 2) return false;
+    if (!busca) return true;
+    return lower(d.nome || '').includes(busca) ||
+           lower(d.ext || '').includes(busca) ||
+           lower(d.gestor || '').includes(busca);
+  });
 
-  // Adiciona informação de medida
+  // Adiciona informação de medida (somente para colaboradores cadastrados, com id válido)
   dados = dados.map(d => {
-    const jaTemMedida = temMedidaAplicada(d.id);
-    const proxima = determinarProximaMedida(d.id);
+    const jaTemMedida = d.id ? temMedidaAplicada(d.id) : false;
+    const proxima = d.id ? determinarProximaMedida(d.id) : '—';
     return {
       ...d,
       medidaAplicada: jaTemMedida,
       proximaMedida: proxima,
-      ultimaMedida: historicoMedidas.find(m => m.colaborador_id === d.id)?.tipo_medida || null
+      ultimaMedida: d.id ? (historicoMedidas.find(m => m.colaborador_id === d.id)?.tipo_medida || null) : null
     };
   });
 
@@ -3252,8 +3258,8 @@ function renderConsolidado() {
     let valB = b[consolidadoSortColumn];
 
     if (consolidadoSortColumn === 'nome') {
-      valA = lower(valA);
-      valB = lower(valB);
+      valA = lower(valA || '');
+      valB = lower(valB || '');
     }
 
     if (valA < valB) return consolidadoSortDirection === 'asc' ? -1 : 1;
@@ -3278,13 +3284,17 @@ function renderConsolidado() {
       ? `<span class="badge badge-green">Aplicada</span>`
       : `<span class="badge badge-orange">Pendente</span>`;
 
-    const btnHTML = d.total > 2
+    const nomeVisual = d.cadastrado
+      ? `<strong>${escapeHtml(d.nome)}</strong>`
+      : `<span style="color:var(--danger-text)">Não cadastrado</span>`;
+
+    const btnHTML = d.id
       ? `<button class="btn btn-primary btn-sm" onclick="abrirModalAplicarMedida('${d.id}')">Aplicar Medida</button>`
-      : '';
+      : `<span style="color:var(--text-hint);font-size:12px">Colaborador não cadastrado</span>`;
 
     return `
       <tr>
-        <td><strong>${escapeHtml(d.nome)}</strong></td>
+        <td>${nomeVisual}</td>
         <td style="font-family:monospace;font-size:12px">${escapeHtml(d.ext || '—')}</td>
         <td style="font-family:monospace;font-size:12px">${escapeHtml(d.groot || '—')}</td>
         <td>${escapeHtml(d.gestor || '—')}</td>
