@@ -791,10 +791,10 @@
     <div class="monitor-section-header" style="padding:14px 20px 0">
       <span class="monitor-section-title">Visualização</span>
       <div class="monitor-section-toggle">
-  <button class="monitor-toggle-btn anom-subtab-btn active" onclick="setAnomaliaSubTab('indicador', this)">Indicador</button>
-  <button class="monitor-toggle-btn anom-subtab-btn" onclick="setAnomaliaSubTab('dashboard', this)">Dashboard</button>
-  <button class="monitor-toggle-btn anom-subtab-btn" onclick="setAnomaliaSubTab('consolidado', this)">Consolidado</button>
-</div>
+        <button class="monitor-toggle-btn anom-subtab-btn active" onclick="setAnomaliaSubTab('indicador', this)">Indicador</button>
+        <button class="monitor-toggle-btn anom-subtab-btn" onclick="setAnomaliaSubTab('dashboard', this)">Dashboard</button>
+        <button class="monitor-toggle-btn anom-subtab-btn" onclick="setAnomaliaSubTab('consolidado', this)">Consolidado</button>
+      </div>
     </div>
 
     <div id="anom-tab-indicador">
@@ -856,37 +856,6 @@
       <div style="display:flex; justify-content:flex-end; padding:14px 20px 0">
         <button class="btn btn-secondary btn-sm" onclick="exportarDashboardAnomaliasPNG()">⬇ Exportar PNG</button>
       </div>
-      <!-- Modal Aplicar Medida Administrativa -->
-<div class="modal-overlay" id="modal-aplicar-medida">
-  <div class="modal" style="max-width: 500px;">
-    <h3>Aplicar Medida Administrativa</h3>
-    
-    <div style="margin: 12px 0 20px;">
-      <strong id="medida-colaborador-nome" style="font-size:15px"></strong><br>
-      <span style="font-size:13px; color:var(--text-muted)">
-        Total de ofensas no período: <strong id="medida-total-ofensas"></strong>
-      </span>
-    </div>
-
-    <div class="form-group">
-      <label>Medida que será aplicada</label>
-      <input type="text" id="medida-tipo" readonly style="background:#f5f5f5; font-weight:600">
-    </div>
-
-    <div class="form-group">
-      <label>Observação (opcional)</label>
-      <textarea id="medida-observacao" rows="3" placeholder="Descreva o feedback ou justificativa..." 
-                style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px; resize:vertical"></textarea>
-    </div>
-
-    <div class="modal-actions">
-      <button class="btn btn-secondary btn-sm" onclick="fecharModalMedida()">Cancelar</button>
-      <button class="btn btn-primary btn-sm" id="btn-confirmar-medida" onclick="confirmarAplicarMedida()">
-        Confirmar e Registrar
-      </button>
-    </div>
-  </div>
-</div>Me
       <div class="empty-state" id="anom-dash-empty" style="display:none">
         <div class="empty-icon">📊</div>
         <p>Nenhuma ofensa no período filtrado</p>
@@ -917,6 +886,55 @@
           <div class="anom-chart-card-title">Proporção CIA x COA</div>
           <canvas id="anom-chart-donut"></canvas>
         </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════
+         NOVA ABA: CONSOLIDADO - MEDIDAS ADMINISTRATIVAS
+    ════════════════════════════════════════ -->
+    <div id="anom-tab-consolidado" style="display:none">
+      <!-- Scorecard de Medidas -->
+      <div class="stats-row" id="consolidado-scorecards" style="margin:20px 20px 0;">
+        <!-- Preenchido via JavaScript -->
+      </div>
+
+      <!-- Filtros -->
+      <div class="search-bar" style="flex-wrap:wrap; gap:8px">
+        <div class="anomalia-period-filter">
+          <label>De</label>
+          <input type="date" id="cons-filtro-data-inicio" onchange="renderConsolidado()">
+          <label>Até</label>
+          <input type="date" id="cons-filtro-data-fim" onchange="renderConsolidado()">
+        </div>
+        <div class="search-input-wrap" style="min-width:220px">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Buscar colaborador ou gestor..." id="cons-busca" oninput="renderConsolidado()">
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="renderConsolidado()">↻ Atualizar</button>
+        <span class="count-badge" id="cons-count">0 elegíveis</span>
+      </div>
+
+      <!-- Tabela Consolidado -->
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="sortable" onclick="sortConsolidado('nome')">Colaborador</th>
+              <th>EXT</th>
+              <th>Groot ID</th>
+              <th>Gestor</th>
+              <th class="sortable" onclick="sortConsolidado('cia')">CIA</th>
+              <th class="sortable" onclick="sortConsolidado('coa')">COA</th>
+              <th class="sortable" onclick="sortConsolidado('total')">Total</th>
+              <th>Próxima Medida</th>
+              <th>Status</th>
+              <th style="text-align:right; width:140px">Ação</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-consolidado">
+            <tr><td colspan="10"><div class="empty-state"><p>Carregando dados...</p></div></td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -1359,6 +1377,35 @@
     <div class="modal-actions">
       <button class="btn btn-secondary btn-sm" onclick="fecharModal()">Cancelar</button>
       <button class="btn btn-danger btn-sm" id="btn-confirmar-excluir">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Aplicar Medida Administrativa -->
+<div class="modal-overlay" id="modal-aplicar-medida">
+  <div class="modal" style="max-width: 500px;" onclick="event.stopPropagation()">
+    <h3>Aplicar Medida Administrativa</h3>
+
+    <div style="margin: 12px 0 20px;">
+      <strong id="medida-colaborador-nome" style="font-size:15px"></strong><br>
+      <span style="font-size:13px; color:var(--text-muted)">
+        Total de ofensas no período: <strong id="medida-total-ofensas"></strong>
+      </span>
+    </div>
+    <div class="form-group">
+      <label>Medida que será aplicada</label>
+      <input type="text" id="medida-tipo" readonly style="background:#f5f5f5; font-weight:600">
+    </div>
+    <div class="form-group">
+      <label>Observação (opcional)</label>
+      <textarea id="medida-observacao" rows="3" placeholder="Descreva o feedback ou justificativa..."
+                style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px; resize:vertical"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="fecharModalMedida()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" id="btn-confirmar-medida" onclick="confirmarAplicarMedida()">
+        Confirmar e Registrar
+      </button>
     </div>
   </div>
 </div>
@@ -2026,6 +2073,20 @@ let anomaliasSubTab = 'indicador';
 let anomaliasUltimaListaBase = [];
 let anomaliasUltimoPeriodo = { inicioIso: '', fimIso: '' };
 
+// ── Consolidado / Medidas Administrativas ──
+let historicoMedidas = [];
+let consolidadoSortColumn = 'total';
+let consolidadoSortDirection = 'desc';
+
+// Ordem progressiva das medidas
+const ORDEM_MEDIDAS = [
+  'Feedback',
+  'Advertência',
+  'Suspensão 1 dia',
+  'Suspensão 3 dias',
+  'Justa Causa'
+];
+
 // Instâncias dos gráficos do Dashboard de Anomalias
 let chartAnomEvolucao = null;
 let chartAnomTurno = null;
@@ -2105,6 +2166,7 @@ async function carregarDadosDoBanco() {
     atualizarStats();
     await carregarAnomalias({ silencioso: true, renderizar: true });
     await carregarAbsenteismo();
+    await carregarHistoricoMedidas();
     aplicarControleAcesso();
   } catch (error) {
     console.error(error);
@@ -3041,11 +3103,287 @@ function setAnomaliaSubTab(tab, btnEl) {
 
   const indicador = document.getElementById('anom-tab-indicador');
   const dashboard = document.getElementById('anom-tab-dashboard');
+  const consolidado = document.getElementById('anom-tab-consolidado');
   if (indicador) indicador.style.display = tab === 'indicador' ? '' : 'none';
   if (dashboard) dashboard.style.display = tab === 'dashboard' ? '' : 'none';
+  if (consolidado) consolidado.style.display = tab === 'consolidado' ? '' : 'none';
 
   if (tab === 'dashboard') renderAnomaliasDashboard(anomaliasUltimaListaBase, anomaliasUltimoPeriodo.inicioIso, anomaliasUltimoPeriodo.fimIso);
+  if (tab === 'consolidado') renderConsolidado();
 }
+
+// ════════════════════════════════════════
+//  CONSOLIDADO — MEDIDAS ADMINISTRATIVAS
+// ════════════════════════════════════════
+
+// Carrega histórico de medidas do Supabase
+async function carregarHistoricoMedidas() {
+  try {
+    const { data, error } = await db
+      .from('historico_medidas')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    historicoMedidas = data || [];
+  } catch (error) {
+    console.error('Erro ao carregar histórico de medidas:', error);
+    historicoMedidas = [];
+  }
+}
+
+// Atualiza o scorecard de medidas
+function atualizarScorecardMedidas(dados) {
+  const container = document.getElementById('consolidado-scorecards');
+  if (!container) return;
+
+  const totalElegiveis = dados.length;
+  const comMedida = dados.filter(d => d.medidaAplicada).length;
+  const semMedida = totalElegiveis - comMedida;
+
+  // Conta por tipo de medida já aplicada
+  const contagemPorTipo = {};
+  ORDEM_MEDIDAS.forEach(tipo => contagemPorTipo[tipo] = 0);
+
+  dados.forEach(d => {
+    if (d.ultimaMedida) {
+      contagemPorTipo[d.ultimaMedida] = (contagemPorTipo[d.ultimaMedida] || 0) + 1;
+    }
+  });
+
+  container.innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Elegíveis para Medida</div>
+      <div class="stat-value">${totalElegiveis}</div>
+      <div class="stat-sub">Total > 2 ofensas</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Com Medida Aplicada</div>
+      <div class="stat-value" style="color:#00A650">${comMedida}</div>
+      <div class="stat-sub">Já receberam alguma medida</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pendentes de Medida</div>
+      <div class="stat-value" style="color:#F23D4F">${semMedida}</div>
+      <div class="stat-sub">Precisam de ação</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Maior Medida Aplicada</div>
+      <div class="stat-value" style="font-size:15px">${ORDEM_MEDIDAS.find(t => contagemPorTipo[t] > 0) || 'Nenhuma'}</div>
+    </div>
+  `;
+}
+
+// Determina a próxima medida que deve ser aplicada
+function determinarProximaMedida(colaboradorId) {
+  const registros = historicoMedidas.filter(m => m.colaborador_id === colaboradorId);
+  const quantidade = registros.length;
+
+  if (quantidade >= ORDEM_MEDIDAS.length) {
+    return 'Justa Causa (Limite atingido)';
+  }
+  return ORDEM_MEDIDAS[quantidade];
+}
+
+// Verifica se o colaborador já tem medida aplicada
+function temMedidaAplicada(colaboradorId) {
+  return historicoMedidas.some(m => m.colaborador_id === colaboradorId);
+}
+
+// Função principal que renderiza a aba Consolidado
+function renderConsolidado() {
+  const tbody = document.getElementById('tbody-consolidado');
+  const countEl = document.getElementById('cons-count');
+  if (!tbody) return;
+
+  const inicio = document.getElementById('cons-filtro-data-inicio')?.value || '';
+  const fim = document.getElementById('cons-filtro-data-fim')?.value || '';
+  const busca = lower(document.getElementById('cons-busca')?.value || '');
+
+  // Filtra anomalias do período
+  let anomaliasFiltradas = anomalias.filter(a => {
+    const dataOk = (!inicio || a.data >= inicio) && (!fim || a.data <= fim);
+    const buscaOk = !busca ||
+      lower(a.nome).includes(busca) ||
+      lower(a.ext).includes(busca) ||
+      lower(a.gestor || '').includes(busca);
+    return dataOk && buscaOk;
+  });
+
+  // Agrega por colaborador
+  const mapa = {};
+
+  anomaliasFiltradas.forEach(a => {
+    if (!mapa[a.colaboradorId]) {
+      mapa[a.colaboradorId] = {
+        id: a.colaboradorId,
+        nome: a.nome,
+        ext: a.ext,
+        groot: a.groot,
+        gestor: a.gestor,
+        cia: 0,
+        coa: 0,
+        total: 0
+      };
+    }
+    if (a.tipo === 'CIA') mapa[a.colaboradorId].cia++;
+    if (a.tipo === 'COA') mapa[a.colaboradorId].coa++;
+    mapa[a.colaboradorId].total++;
+  });
+
+  // Filtra apenas quem tem mais de 2 ofensas
+  let dados = Object.values(mapa).filter(d => d.total > 2);
+
+  // Adiciona informação de medida
+  dados = dados.map(d => {
+    const jaTemMedida = temMedidaAplicada(d.id);
+    const proxima = determinarProximaMedida(d.id);
+    return {
+      ...d,
+      medidaAplicada: jaTemMedida,
+      proximaMedida: proxima,
+      ultimaMedida: historicoMedidas.find(m => m.colaborador_id === d.id)?.tipo_medida || null
+    };
+  });
+
+  // Ordenação
+  dados.sort((a, b) => {
+    let valA = a[consolidadoSortColumn];
+    let valB = b[consolidadoSortColumn];
+
+    if (consolidadoSortColumn === 'nome') {
+      valA = lower(valA);
+      valB = lower(valB);
+    }
+
+    if (valA < valB) return consolidadoSortDirection === 'asc' ? -1 : 1;
+    if (valA > valB) return consolidadoSortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  // Renderiza scorecard
+  atualizarScorecardMedidas(dados);
+
+  // Renderiza tabela
+  if (dados.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><p>Nenhum colaborador com mais de 2 ofensas no período</p></div></td></tr>`;
+    if (countEl) countEl.textContent = '0 elegíveis';
+    return;
+  }
+
+  if (countEl) countEl.textContent = `${dados.length} elegíveis`;
+
+  tbody.innerHTML = dados.map(d => {
+    const statusHTML = d.medidaAplicada
+      ? `<span class="badge badge-green">Aplicada</span>`
+      : `<span class="badge badge-orange">Pendente</span>`;
+
+    const btnHTML = d.total > 2
+      ? `<button class="btn btn-primary btn-sm" onclick="abrirModalAplicarMedida('${d.id}')">Aplicar Medida</button>`
+      : '';
+
+    return `
+      <tr>
+        <td><strong>${escapeHtml(d.nome)}</strong></td>
+        <td style="font-family:monospace;font-size:12px">${escapeHtml(d.ext || '—')}</td>
+        <td style="font-family:monospace;font-size:12px">${escapeHtml(d.groot || '—')}</td>
+        <td>${escapeHtml(d.gestor || '—')}</td>
+        <td style="text-align:center"><span class="badge badge-blue">${d.cia}</span></td>
+        <td style="text-align:center"><span class="badge badge-purple">${d.coa}</span></td>
+        <td style="text-align:center"><strong style="font-size:15px">${d.total}</strong></td>
+        <td><span class="badge" style="background:#f0f5ff;color:#2D3277">${escapeHtml(d.proximaMedida)}</span></td>
+        <td>${statusHTML}</td>
+        <td style="text-align:right">${btnHTML}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// Função de ordenação da tabela Consolidado
+function sortConsolidado(column) {
+  if (consolidadoSortColumn === column) {
+    consolidadoSortDirection = consolidadoSortDirection === 'asc' ? 'desc' : 'asc';
+  } else {
+    consolidadoSortColumn = column;
+    consolidadoSortDirection = column === 'total' ? 'desc' : 'asc';
+  }
+  renderConsolidado();
+}
+
+// Abre o modal para aplicar medida
+function abrirModalAplicarMedida(colaboradorId) {
+  const dados = document.querySelectorAll('#tbody-consolidado tr');
+  // Encontra os dados do colaborador na tabela atual
+  const row = Array.from(dados).find(r => r.innerHTML.includes(colaboradorId));
+  if (!row) return;
+
+  const nome = row.querySelector('strong')?.textContent || '';
+  const total = row.querySelectorAll('td')[6]?.textContent || '0';
+
+  const proximaMedida = determinarProximaMedida(colaboradorId);
+
+  document.getElementById('medida-colaborador-nome').textContent = nome;
+  document.getElementById('medida-total-ofensas').textContent = total;
+  document.getElementById('medida-tipo').value = proximaMedida;
+  document.getElementById('medida-observacao').value = '';
+
+  // Guarda o ID para usar no confirmar
+  window.medidaColaboradorIdAtual = colaboradorId;
+
+  document.getElementById('modal-aplicar-medida').classList.add('open');
+}
+
+function fecharModalMedida() {
+  document.getElementById('modal-aplicar-medida').classList.remove('open');
+  window.medidaColaboradorIdAtual = null;
+}
+
+// Confirma e salva a medida no Supabase
+async function confirmarAplicarMedida() {
+  const colaboradorId = window.medidaColaboradorIdAtual;
+  if (!colaboradorId) return;
+
+  const tipoMedida = document.getElementById('medida-tipo').value;
+  const observacao = document.getElementById('medida-observacao').value.trim();
+  const btn = document.getElementById('btn-confirmar-medida');
+
+  const colaborador = heads.find(h => h.id === colaboradorId);
+  if (!colaborador) {
+    toast('Colaborador não encontrado.', 'error');
+    return;
+  }
+
+  setButtonLoading(btn, true, 'Salvando...');
+
+  try {
+    const { error } = await db.from('historico_medidas').insert([{
+      colaborador_id: colaboradorId,
+      colaborador_nome: colaborador.nome,
+      ext: colaborador.ext,
+      groot_id: colaborador.groot,
+      tipo_medida: tipoMedida,
+      status: 'Aplicada',
+      observacao: observacao || null,
+      registrado_por: usuarioAtual?.nome || usuarioAtual?.usuario || 'Sistema'
+    }]);
+
+    if (error) throw error;
+
+    toast(`Medida "${tipoMedida}" registrada com sucesso!`, 'success');
+    fecharModalMedida();
+
+    // Recarrega histórico e atualiza a tela
+    await carregarHistoricoMedidas();
+    renderConsolidado();
+
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao salvar medida: ' + (error.message || error), 'error');
+  } finally {
+    setButtonLoading(btn, false);
+  }
+}
+
 
 // ════════════════════════════════════════
 //  DASHBOARD DE ANOMALIAS — preparação dos dados
@@ -5725,320 +6063,6 @@ window.addEventListener('DOMContentLoaded', async function() {
     mostrarLogin('Erro ao inicializar o login: ' + (error.message || error));
   }
 });
-// ═══════════════════════════════════════════════════════════════
-//  NOVA FUNCIONALIDADE: ABA CONSOLIDADO + MEDIDAS ADMINISTRATIVAS
-// ═══════════════════════════════════════════════════════════════
-
-let historicoMedidas = [];
-let consolidadoSortColumn = 'total';
-let consolidadoSortDirection = 'desc';
-
-// Ordem progressiva das medidas
-const ORDEM_MEDIDAS = [
-  'Feedback',
-  'Advertência',
-  'Suspensão 1 dia',
-  'Suspensão 3 dias',
-  'Justa Causa'
-];
-
-// Carrega histórico de medidas do Supabase
-async function carregarHistoricoMedidas() {
-  try {
-    const { data, error } = await db
-      .from('historico_medidas')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    historicoMedidas = data || [];
-  } catch (error) {
-    console.error('Erro ao carregar histórico de medidas:', error);
-    historicoMedidas = [];
-  }
-}
-
-// Atualiza o scorecard de medidas
-function atualizarScorecardMedidas(dados) {
-  const container = document.getElementById('consolidado-scorecards');
-  if (!container) return;
-
-  const totalElegiveis = dados.length;
-  const comMedida = dados.filter(d => d.medidaAplicada).length;
-  const semMedida = totalElegiveis - comMedida;
-
-  // Conta por tipo de medida já aplicada
-  const contagemPorTipo = {};
-  ORDEM_MEDIDAS.forEach(tipo => contagemPorTipo[tipo] = 0);
-
-  dados.forEach(d => {
-    if (d.ultimaMedida) {
-      contagemPorTipo[d.ultimaMedida] = (contagemPorTipo[d.ultimaMedida] || 0) + 1;
-    }
-  });
-
-  container.innerHTML = `
-    <div class="stat-card">
-      <div class="stat-label">Elegíveis para Medida</div>
-      <div class="stat-value">${totalElegiveis}</div>
-      <div class="stat-sub">Total > 2 ofensas</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Com Medida Aplicada</div>
-      <div class="stat-value" style="color:#00A650">${comMedida}</div>
-      <div class="stat-sub">Já receberam alguma medida</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Pendentes de Medida</div>
-      <div class="stat-value" style="color:#F23D4F">${semMedida}</div>
-      <div class="stat-sub">Precisam de ação</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Maior Medida Aplicada</div>
-      <div class="stat-value" style="font-size:15px">${ORDEM_MEDIDAS.find(t => contagemPorTipo[t] > 0) || 'Nenhuma'}</div>
-    </div>
-  `;
-}
-
-// Determina a próxima medida que deve ser aplicada
-function determinarProximaMedida(colaboradorId) {
-  const registros = historicoMedidas.filter(m => m.colaborador_id === colaboradorId);
-  const quantidade = registros.length;
-
-  if (quantidade >= ORDEM_MEDIDAS.length) {
-    return 'Justa Causa (Limite atingido)';
-  }
-  return ORDEM_MEDIDAS[quantidade];
-}
-
-// Verifica se o colaborador já tem medida aplicada
-function temMedidaAplicada(colaboradorId) {
-  return historicoMedidas.some(m => m.colaborador_id === colaboradorId);
-}
-
-// Função principal que renderiza a aba Consolidado
-function renderConsolidado() {
-  const tbody = document.getElementById('tbody-consolidado');
-  const countEl = document.getElementById('cons-count');
-  if (!tbody) return;
-
-  const inicio = document.getElementById('cons-filtro-data-inicio')?.value || '';
-  const fim = document.getElementById('cons-filtro-data-fim')?.value || '';
-  const busca = lower(document.getElementById('cons-busca')?.value || '');
-
-  // Filtra anomalias do período
-  let anomaliasFiltradas = anomalias.filter(a => {
-    const dataOk = (!inicio || a.data >= inicio) && (!fim || a.data <= fim);
-    const buscaOk = !busca || 
-      lower(a.nome).includes(busca) || 
-      lower(a.ext).includes(busca) || 
-      lower(a.gestor || '').includes(busca);
-    return dataOk && buscaOk;
-  });
-
-  // Agrega por colaborador
-  const mapa = {};
-
-  anomaliasFiltradas.forEach(a => {
-    if (!mapa[a.colaboradorId]) {
-      mapa[a.colaboradorId] = {
-        id: a.colaboradorId,
-        nome: a.nome,
-        ext: a.ext,
-        groot: a.groot,
-        gestor: a.gestor,
-        cia: 0,
-        coa: 0,
-        total: 0
-      };
-    }
-    if (a.tipo === 'CIA') mapa[a.colaboradorId].cia++;
-    if (a.tipo === 'COA') mapa[a.colaboradorId].coa++;
-    mapa[a.colaboradorId].total++;
-  });
-
-  // Filtra apenas quem tem mais de 2 ofensas
-  let dados = Object.values(mapa).filter(d => d.total > 2);
-
-  // Adiciona informação de medida
-  dados = dados.map(d => {
-    const jaTemMedida = temMedidaAplicada(d.id);
-    const proxima = determinarProximaMedida(d.id);
-    return {
-      ...d,
-      medidaAplicada: jaTemMedida,
-      proximaMedida: proxima,
-      ultimaMedida: historicoMedidas.find(m => m.colaborador_id === d.id)?.tipo_medida || null
-    };
-  });
-
-  // Ordenação
-  dados.sort((a, b) => {
-    let valA = a[consolidadoSortColumn];
-    let valB = b[consolidadoSortColumn];
-
-    if (consolidadoSortColumn === 'nome') {
-      valA = lower(valA);
-      valB = lower(valB);
-    }
-
-    if (valA < valB) return consolidadoSortDirection === 'asc' ? -1 : 1;
-    if (valA > valB) return consolidadoSortDirection === 'asc' ? 1 : -1;
-    return 0;
-  });
-
-  // Renderiza scorecard
-  atualizarScorecardMedidas(dados);
-
-  // Renderiza tabela
-  if (dados.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><p>Nenhum colaborador com mais de 2 ofensas no período</p></div></td></tr>`;
-    countEl.textContent = '0 elegíveis';
-    return;
-  }
-
-  countEl.textContent = `${dados.length} elegíveis`;
-
-  tbody.innerHTML = dados.map(d => {
-    const statusHTML = d.medidaAplicada 
-      ? `<span class="badge badge-green">Aplicada</span>` 
-      : `<span class="badge badge-orange">Pendente</span>`;
-
-    const btnHTML = d.total > 2 
-      ? `<button class="btn btn-primary btn-sm" onclick="abrirModalAplicarMedida('${d.id}')">Aplicar Medida</button>`
-      : '';
-
-    return `
-      <tr>
-        <td><strong>${escapeHtml(d.nome)}</strong></td>
-        <td style="font-family:monospace;font-size:12px">${escapeHtml(d.ext || '—')}</td>
-        <td style="font-family:monospace;font-size:12px">${escapeHtml(d.groot || '—')}</td>
-        <td>${escapeHtml(d.gestor || '—')}</td>
-        <td style="text-align:center"><span class="badge badge-blue">${d.cia}</span></td>
-        <td style="text-align:center"><span class="badge badge-purple">${d.coa}</span></td>
-        <td style="text-align:center"><strong style="font-size:15px">${d.total}</strong></td>
-        <td><span class="badge" style="background:#f0f5ff;color:#2D3277">${escapeHtml(d.proximaMedida)}</span></td>
-        <td>${statusHTML}</td>
-        <td style="text-align:right">${btnHTML}</td>
-      </tr>
-    `;
-  }).join('');
-}
-
-// Função de ordenação da tabela Consolidado
-function sortConsolidado(column) {
-  if (consolidadoSortColumn === column) {
-    consolidadoSortDirection = consolidadoSortDirection === 'asc' ? 'desc' : 'asc';
-  } else {
-    consolidadoSortColumn = column;
-    consolidadoSortDirection = column === 'total' ? 'desc' : 'asc';
-  }
-  renderConsolidado();
-}
-
-// Abre o modal para aplicar medida
-function abrirModalAplicarMedida(colaboradorId) {
-  const dados = document.querySelectorAll('#tbody-consolidado tr');
-  // Encontra os dados do colaborador na tabela atual
-  const row = Array.from(dados).find(r => r.innerHTML.includes(colaboradorId));
-  if (!row) return;
-
-  const nome = row.querySelector('strong')?.textContent || '';
-  const total = row.querySelectorAll('td')[6]?.textContent || '0';
-
-  const proximaMedida = determinarProximaMedida(colaboradorId);
-
-  document.getElementById('medida-colaborador-nome').textContent = nome;
-  document.getElementById('medida-total-ofensas').textContent = total;
-  document.getElementById('medida-tipo').value = proximaMedida;
-  document.getElementById('medida-observacao').value = '';
-
-  // Guarda o ID para usar no confirmar
-  window.medidaColaboradorIdAtual = colaboradorId;
-
-  document.getElementById('modal-aplicar-medida').classList.add('open');
-}
-
-function fecharModalMedida() {
-  document.getElementById('modal-aplicar-medida').classList.remove('open');
-  window.medidaColaboradorIdAtual = null;
-}
-
-// Confirma e salva a medida no Supabase
-async function confirmarAplicarMedida() {
-  const colaboradorId = window.medidaColaboradorIdAtual;
-  if (!colaboradorId) return;
-
-  const tipoMedida = document.getElementById('medida-tipo').value;
-  const observacao = document.getElementById('medida-observacao').value.trim();
-  const btn = document.getElementById('btn-confirmar-medida');
-
-  const colaborador = heads.find(h => h.id === colaboradorId);
-  if (!colaborador) {
-    toast('Colaborador não encontrado.', 'error');
-    return;
-  }
-
-  setButtonLoading(btn, true, 'Salvando...');
-
-  try {
-    const { error } = await db.from('historico_medidas').insert([{
-      colaborador_id: colaboradorId,
-      colaborador_nome: colaborador.nome,
-      ext: colaborador.ext,
-      groot_id: colaborador.groot,
-      tipo_medida: tipoMedida,
-      status: 'Aplicada',
-      observacao: observacao || null,
-      registrado_por: usuarioAtual?.nome || usuarioAtual?.usuario || 'Sistema'
-    }]);
-
-    if (error) throw error;
-
-    toast(`Medida "${tipoMedida}" registrada com sucesso!`, 'success');
-    fecharModalMedida();
-
-    // Recarrega histórico e atualiza a tela
-    await carregarHistoricoMedidas();
-    renderConsolidado();
-
-  } catch (error) {
-    console.error(error);
-    toast('Erro ao salvar medida: ' + (error.message || error), 'error');
-  } finally {
-    setButtonLoading(btn, false);
-  }
-}
-
-// Atualiza a função de trocar de sub-aba para incluir Consolidado
-function setAnomaliaSubTab(tab, btn) {
-  // Esconde todas as abas
-  document.getElementById('anom-tab-indicador').style.display = 'none';
-  document.getElementById('anom-tab-dashboard').style.display = 'none';
-  document.getElementById('anom-tab-consolidado').style.display = 'none';
-
-  // Mostra a aba selecionada
-  if (tab === 'consolidado') {
-    document.getElementById('anom-tab-consolidado').style.display = 'block';
-    renderConsolidado();
-  } else if (tab === 'indicador') {
-    document.getElementById('anom-tab-indicador').style.display = 'block';
-  } else if (tab === 'dashboard') {
-    document.getElementById('anom-tab-dashboard').style.display = 'block';
-  }
-
-  // Atualiza botões ativos
-  document.querySelectorAll('.anom-subtab-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-}
-
-// Carrega histórico de medidas ao iniciar o sistema (adicione isso na função de inicialização)
-async function inicializarMedidas() {
-  await carregarHistoricoMedidas();
-  // Se quiser que carregue automaticamente ao entrar na aba Anomalias, pode chamar aqui também
-}
-
-// Chame essa função na inicialização do app (dentro do DOMContentLoaded ou após login)
 </script>
 
 </body>
