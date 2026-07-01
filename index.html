@@ -902,9 +902,9 @@
       <div class="search-bar" style="flex-wrap:wrap; gap:8px">
         <div class="anomalia-period-filter">
           <label>De</label>
-          <input type="date" id="cons-filtro-data-inicio" onchange="renderConsolidado()">
+          <input type="date" id="cons-filtro-data-inicio" onchange="aplicarFiltroConsolidadoNoFiltroAnomalias()">
           <label>Até</label>
-          <input type="date" id="cons-filtro-data-fim" onchange="renderConsolidado()">
+          <input type="date" id="cons-filtro-data-fim" onchange="aplicarFiltroConsolidadoNoFiltroAnomalias()">
         </div>
         <div class="search-input-wrap" style="min-width:220px">
           <span class="search-icon">🔍</span>
@@ -2154,6 +2154,8 @@ async function carregarDadosDoBanco() {
     if (filtroInicio && !filtroInicio.value) filtroInicio.value = hojeIsoLocal();
     if (filtroFim && !filtroFim.value) filtroFim.value = hojeIsoLocal();
 
+    sincronizarFiltroConsolidadoComAnomalias();
+
     const absFiltroInicio = document.getElementById('abs-filtro-data-inicio');
     const absFiltroFim = document.getElementById('abs-filtro-data-fim');
     if (absFiltroInicio && !absFiltroInicio.value) absFiltroInicio.value = hojeIsoLocal();
@@ -3013,6 +3015,10 @@ function renderAnomalias() {
   anomaliasUltimaListaBase = listaBase;
   anomaliasUltimoPeriodo = { inicioIso, fimIso };
   if (anomaliasSubTab === 'dashboard') renderAnomaliasDashboard(listaBase, inicioIso, fimIso);
+  if (anomaliasSubTab === 'consolidado') {
+    sincronizarFiltroConsolidadoComAnomalias();
+    renderConsolidado();
+  }
 
   let lista = listaBase;
   if (buscaText) {
@@ -3095,6 +3101,36 @@ function exportarDashboardAnomaliasPNG() {
   });
 }
 
+
+function getPeriodoFiltroAnomalias() {
+  return {
+    inicioIso: document.getElementById('filtro-data-inicio')?.value || '',
+    fimIso: document.getElementById('filtro-data-fim')?.value || ''
+  };
+}
+
+function sincronizarFiltroConsolidadoComAnomalias() {
+  const { inicioIso, fimIso } = getPeriodoFiltroAnomalias();
+  const consInicio = document.getElementById('cons-filtro-data-inicio');
+  const consFim = document.getElementById('cons-filtro-data-fim');
+  if (consInicio && consInicio.value !== inicioIso) consInicio.value = inicioIso;
+  if (consFim && consFim.value !== fimIso) consFim.value = fimIso;
+  return { inicioIso, fimIso };
+}
+
+function aplicarFiltroConsolidadoNoFiltroAnomalias() {
+  const consInicio = document.getElementById('cons-filtro-data-inicio')?.value || '';
+  const consFim = document.getElementById('cons-filtro-data-fim')?.value || '';
+  const inicio = document.getElementById('filtro-data-inicio');
+  const fim = document.getElementById('filtro-data-fim');
+
+  if (inicio && inicio.value !== consInicio) inicio.value = consInicio;
+  if (fim && fim.value !== consFim) fim.value = consFim;
+
+  // Renderiza a aba Anomalias inteira para que Indicador, Dashboard e Consolidado usem o mesmo período.
+  renderAnomalias();
+}
+
 function setAnomaliaSubTab(tab, btnEl) {
   anomaliasSubTab = tab;
 
@@ -3109,7 +3145,10 @@ function setAnomaliaSubTab(tab, btnEl) {
   if (consolidado) consolidado.style.display = tab === 'consolidado' ? '' : 'none';
 
   if (tab === 'dashboard') renderAnomaliasDashboard(anomaliasUltimaListaBase, anomaliasUltimoPeriodo.inicioIso, anomaliasUltimoPeriodo.fimIso);
-  if (tab === 'consolidado') renderConsolidado();
+  if (tab === 'consolidado') {
+    sincronizarFiltroConsolidadoComAnomalias();
+    renderConsolidado();
+  }
 }
 
 // ════════════════════════════════════════
@@ -3196,11 +3235,11 @@ function renderConsolidado() {
   const countEl = document.getElementById('cons-count');
   if (!tbody) return;
 
-  const inicio = document.getElementById('cons-filtro-data-inicio')?.value || '';
-  const fim = document.getElementById('cons-filtro-data-fim')?.value || '';
+  const { inicioIso: inicio, fimIso: fim } = sincronizarFiltroConsolidadoComAnomalias();
   const busca = lower(document.getElementById('cons-busca')?.value || '');
 
-  // Filtra anomalias do período (mesma lógica usada na aba Indicador)
+  // Filtra anomalias pelo mesmo período definido no topo da aba Anomalias.
+  // Assim, o Consolidado não calcula elegibilidade usando a base inteira quando o usuário filtra por data.
   let anomaliasFiltradas = anomalias.filter(a => dataMarcacaoMatchesPeriodo(a.data_marcacao, inicio, fim));
 
   // Agrega por colaborador, cruzando pelo EXT normalizado com a base de colaboradores
