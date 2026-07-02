@@ -559,7 +559,7 @@
           <option value="5x2_fds">5x2 — Folga sábado e domingo</option>
           <option value="5x2_qqi">5x2 especial — Qua/Qui + Domingo rotativo por grupo</option>
           <option value="1000_efgh">10:00 — Sex/Sáb + Domingo rotativo (grupos E/F/G/H)</option>
-          <option value="consolidacao">Consolidação (Mista - Grupos A/B)</option>
+          <option value="consolidacao">Consolidação (Mista - Grupos A/B/C)</option>
         </select>
         <div id="escala-descricao" class="escala-info" style="display:none"></div>
       </div>
@@ -1899,9 +1899,10 @@ const ESCALAS = {
   },
   consolidacao: {
     label: 'Consolid.',
-    grupos: ['A','B'],
-    descricao: 'Revezamento de 2 semanas. A e B alternam entre domingo fixo e sábado + domingo.',
-    refDate: new Date(2025, 5, 15), // domingo 15/jun/2025 — início do ciclo
+    grupos: ['A','B','C'],
+    descricao: 'Revezamento misto. A/B alternam entre domingo fixo e sábado + domingo. C folga sábado nas semanas 1, 3 e 4; sábado + domingo na semana 2. Referência do C: semana de 29/06/2026 a 05/07/2026 como semana 1.',
+    refDate: new Date(2025, 5, 15), // domingo 15/jun/2025 — início do ciclo A/B
+    refDateGrupoC: new Date(2026, 5, 29), // segunda 29/jun/2026 — semana 1 do Grupo C
     ciclo: null
   }
 };
@@ -2053,6 +2054,14 @@ function calcFolgaSemana(head, turno, dataRef) {
 
   if (escala === 'consolidacao') {
     if (!grupo || !ESCALAS.consolidacao.grupos.includes(grupo)) return null;
+
+    if (grupo === 'C') {
+      const refC = inicioSemanaSegunda(ESCALAS.consolidacao.refDateGrupoC || new Date(2026, 5, 29));
+      const semanaC = inicioSemanaSegunda(data);
+      const semNormC = ((diffSemanas(refC, semanaC) % 4) + 4) % 4;
+      return semNormC === 1 ? 'Sábado + Domingo' : 'Sábado';
+    }
+
     const semNorm = ((diffSemanas(ESCALAS.consolidacao.refDate, inicioSemanaDomingo(data)) % 2) + 2) % 2;
 
     if (grupo === 'A') return semNorm === 0 ? 'Domingo' : 'Sábado + Domingo';
@@ -2275,7 +2284,7 @@ const ESCALA_DESCRICOES = {
   '5x2_fds': '📋 Sem grupo · folga fixa Sábado e Domingo',
   '5x2_qqi': '📋 Grupos A/B/C/D · folga padrão Quarta + Quinta · semana 4: Quarta + Domingo para o grupo da vez',
   '1000_efgh': '📋 10:00 · Grupos E/F/G/H · 1ª, 2ª e 3ª semana: Sexta + Sábado · 4ª semana: Sexta + Domingo',
-  consolidacao: '📋 Grupos A/B · revezamento semanal entre Domingo e Sábado + Domingo'
+  consolidacao: '📋 Grupos A/B/C · A/B revezam semanalmente · C: semana 1 Sábado, semana 2 Sábado + Domingo, semanas 3 e 4 Sábado'
 };
 
 function onEscalaChange() {
@@ -3793,7 +3802,7 @@ function onHcTurnoChange() {
     '0430':    'A/B: folga Sáb · C/D: folga Seg · E: folga Dom sem rodízio',
     '5x2_qqi': 'A/B/C/D em ciclo semanal. Na semana de 22/06/2026 a 28/06/2026, o Grupo C folga Quarta e Domingo.',
     '1000_efgh': 'E/F/G/H em ciclo semanal. Na semana de 29/06/2026 a 05/07/2026, o Grupo H folga Sexta e Domingo.',
-    consolidacao: 'A e B revezam entre 6x1 e 5x2 a cada semana.'
+    consolidacao: 'A/B revezam entre Domingo e Sábado + Domingo. C: semana atual é semana 1; folga Sábado, depois Sábado + Domingo na semana 2.'
   };
   hint.textContent = hints[turno.escala] || '';
   wrap.style.display = 'flex';
@@ -5951,7 +5960,7 @@ function onSchedTurnoChange() {
     '0430':    'A/B: folga Sáb · C/D: folga Seg · E: folga Dom sem rodízio',
     '5x2_qqi': 'A/B/C/D em ciclo semanal. Na semana de 22/06/2026 a 28/06/2026, o Grupo C folga Quarta e Domingo.',
     '1000_efgh': 'E/F/G/H em ciclo semanal. Na semana de 29/06/2026 a 05/07/2026, o Grupo H folga Sexta e Domingo.',
-    consolidacao: 'A e B revezam entre 6x1 e 5x2 a cada semana.'
+    consolidacao: 'A/B revezam entre Domingo e Sábado + Domingo. C: semana atual é semana 1; folga Sábado, depois Sábado + Domingo na semana 2.'
   };
   hint.textContent = hints[turno.escala] || '';
   wrap.style.display = 'flex';
