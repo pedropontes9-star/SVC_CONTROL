@@ -2120,6 +2120,103 @@ let chartAnomGestor = null;
 let chartAnomHora = null;
 let chartAnomDonut = null;
 
+// Paleta fixa dos gráficos de Anomalias
+const ANOM_CHART_COLORS = {
+  cia: '#00356C',
+  coa: '#6BAADD',
+  pareto: '#00356C',
+  meta: '#F23D4F',
+  label: '#333333',
+  labelLight: '#FFFFFF'
+};
+
+function formatarPctGrafico(valor, casas = 1) {
+  const n = Number(valor);
+  if (!Number.isFinite(n)) return '—';
+  const fixo = n.toFixed(casas);
+  return fixo.replace(/\.0$/, '').replace('.', ',') + '%';
+}
+
+function formatarNumeroGrafico(valor) {
+  const n = Number(valor);
+  if (!Number.isFinite(n)) return '—';
+  return n.toLocaleString('pt-BR');
+}
+
+function obterListaEvolucaoAnomaliasDashboard() {
+  const filtTipo = document.getElementById('filtro-tipo-anomalia')?.value || 'AMBOS';
+  let lista = Array.isArray(anomalias) ? anomalias : [];
+  if (filtTipo !== 'AMBOS') {
+    lista = lista.filter(a => asText(a.tipo).toUpperCase() === filtTipo);
+  }
+  return lista;
+}
+
+// Plugin local para rótulos de dados em todos os gráficos do Dashboard de Anomalias.
+// Evita depender de bibliotecas externas como chartjs-plugin-datalabels.
+const anomaliasDataLabelsPlugin = {
+  id: 'anomaliasDataLabels',
+  afterDatasetsDraw(chart, args, pluginOptions) {
+    const ctx = chart.ctx;
+    const area = chart.chartArea || {};
+    const options = pluginOptions || {};
+    ctx.save();
+    ctx.font = options.font || '600 10px Inter, sans-serif';
+    ctx.textBaseline = 'middle';
+
+    chart.data.datasets.forEach((dataset, datasetIndex) => {
+      if (dataset.showDataLabels === false) return;
+      const meta = chart.getDatasetMeta(datasetIndex);
+      if (!meta || meta.hidden) return;
+      const datasetType = dataset.type || chart.config.type;
+
+      meta.data.forEach((element, index) => {
+        const raw = Array.isArray(dataset.data) ? dataset.data[index] : null;
+        if (raw === null || raw === undefined || raw === '') return;
+        const numeric = Number(raw);
+        if (!Number.isFinite(numeric)) return;
+        if (numeric === 0 && dataset.hideZeroDataLabels !== false) return;
+
+        const label = typeof dataset.dataLabelFormatter === 'function'
+          ? dataset.dataLabelFormatter(raw, { chart, dataset, datasetIndex, dataIndex: index })
+          : (dataset.dataLabelSuffix === '%' ? formatarPctGrafico(raw) : formatarNumeroGrafico(raw));
+        if (!label) return;
+
+        let pos = element.tooltipPosition ? element.tooltipPosition() : { x: element.x, y: element.y };
+        let x = pos.x;
+        let y = pos.y;
+        let align = 'center';
+        let fill = ANOM_CHART_COLORS.label;
+
+        if (datasetType === 'line') {
+          y -= 12;
+        } else if (datasetType === 'bar') {
+          if (chart.options.indexAxis === 'y') {
+            x = element.x + 8;
+            align = 'left';
+          } else {
+            y = pos.y - 10;
+          }
+        } else if (datasetType === 'doughnut' || datasetType === 'pie') {
+          fill = ANOM_CHART_COLORS.labelLight;
+        }
+
+        if (area.left !== undefined && area.right !== undefined) {
+          x = Math.max(area.left + 4, Math.min(area.right - 4, x));
+        }
+        if (area.top !== undefined && area.bottom !== undefined) {
+          y = Math.max(area.top + 8, Math.min(area.bottom - 8, y));
+        }
+
+        ctx.textAlign = align;
+        ctx.fillStyle = fill;
+        ctx.fillText(label, x, y);
+      });
+    });
+    ctx.restore();
+  }
+};
+
 function toast(msg, tipo='') {
   const el = document.getElementById('toast');
   if (!el) return;
@@ -3476,8 +3573,10 @@ function anomIsoData(raw) {
   return '';
 }
 
-function buildEvolucaoDiariaAnom(lista, inicioIso, fimIso) {
-  // Ofensores únicos por dia/tipo (mesma regra do KPI do topo: 1 EXT = 1 ofensa por dia)
+
+function buildEvolucaoDiariaAnom(lista) {
+  // Janela fixa: hoje + 7 dias anteriores, independentemente do período filtrado.
+  // Ofensores únicos por dia/tipo (mesma regra do KPI do topo: 1 EXT = 1 ofensa por dia).
   const porDia = {};
   lista.forEach(a => {
     const iso = anomIsoData(a.data_marcacao);
@@ -3489,18 +3588,11 @@ function buildEvolucaoDiariaAnom(lista, inicioIso, fimIso) {
     else if (t === 'COA') porDia[iso].coaSet.add(extKey);
   });
 
-  // Dias considerados: o período selecionado no filtro (mesmo sem ofensas, aparece como 0%);
-  // se o período não estiver definido, cai para os dias com ofensas encontradas.
-  let dias;
-  const dIni = isoParaDataLocal(inicioIso);
-  const dFim = isoParaDataLocal(fimIso);
-  if (dIni && dFim && dFim >= dIni) {
-    dias = [];
-    for (let d = clonarDataLocal(dIni); d <= dFim; d = adicionarDiasLocal(d, 1)) {
-      dias.push(dataLocalParaIso(d));
-    }
-  } else {
-    dias = Object.keys(porDia).sort();
+  const fim = isoParaDataLocal(hojeIsoLocal());
+  const inicio = adicionarDiasLocal(fim, -7);
+  const dias = [];
+  for (let d = clonarDataLocal(inicio); d <= fim; d = adicionarDiasLocal(d, 1)) {
+    dias.push(dataLocalParaIso(d));
   }
 
   const labels = [];
@@ -3510,7 +3602,7 @@ function buildEvolucaoDiariaAnom(lista, inicioIso, fimIso) {
   dias.forEach(iso => {
     const headsDia = calcularHeadsProgramadosNoPeriodo(iso, iso).total;
     const dadosDia = porDia[iso] || { ciaSet: new Set(), coaSet: new Set() };
-    labels.push(iso.split('-').reverse().join('/'));
+    labels.push(iso.split('-').reverse().slice(0, 2).join('/'));
     if (!headsDia) {
       pctCia.push(null);
       pctCoa.push(null);
@@ -3535,7 +3627,14 @@ function buildRankingTurnoAnom(lista) {
     else if (t === 'COA') map[nome].coa++;
   });
   const nomes = Object.keys(map).sort((a, b) => (map[b].cia + map[b].coa) - (map[a].cia + map[a].coa));
-  return { labels: nomes, cia: nomes.map(n => map[n].cia), coa: nomes.map(n => map[n].coa) };
+  const total = nomes.reduce((acc, n) => acc + map[n].cia + map[n].coa, 0) || 1;
+  return {
+    labels: nomes,
+    cia: nomes.map(n => +(map[n].cia / total * 100).toFixed(1)),
+    coa: nomes.map(n => +(map[n].coa / total * 100).toFixed(1)),
+    ciaCount: nomes.map(n => map[n].cia),
+    coaCount: nomes.map(n => map[n].coa)
+  };
 }
 
 function buildRankingGestorAnom(lista) {
@@ -3551,7 +3650,14 @@ function buildRankingGestorAnom(lista) {
   const nomes = Object.keys(map)
     .sort((a, b) => (map[b].cia + map[b].coa) - (map[a].cia + map[a].coa))
     .slice(0, 10);
-  return { labels: nomes, cia: nomes.map(n => map[n].cia), coa: nomes.map(n => map[n].coa) };
+  const total = nomes.reduce((acc, n) => acc + map[n].cia + map[n].coa, 0) || 1;
+  return {
+    labels: nomes,
+    cia: nomes.map(n => +(map[n].cia / total * 100).toFixed(1)),
+    coa: nomes.map(n => +(map[n].coa / total * 100).toFixed(1)),
+    ciaCount: nomes.map(n => map[n].cia),
+    coaCount: nomes.map(n => map[n].coa)
+  };
 }
 
 function buildParetoCausasAnom(lista) {
@@ -3580,18 +3686,27 @@ function buildDistribuicaoHoraAnom(lista) {
     if (t === 'CIA') map[idx].cia++;
     else if (t === 'COA') map[idx].coa++;
   });
-  return { labels: buckets, cia: map.map(m => m.cia), coa: map.map(m => m.coa) };
+  const total = map.reduce((acc, m) => acc + m.cia + m.coa, 0) || 1;
+  return {
+    labels: buckets,
+    cia: map.map(m => +(m.cia / total * 100).toFixed(1)),
+    coa: map.map(m => +(m.coa / total * 100).toFixed(1)),
+    ciaCount: map.map(m => m.cia),
+    coaCount: map.map(m => m.coa)
+  };
 }
 
 // ════════════════════════════════════════
 //  DASHBOARD DE ANOMALIAS — renderização (Chart.js)
 // ════════════════════════════════════════
+
 function renderAnomaliasDashboard(listaBase, inicioIso, fimIso) {
   const lista = listaBase || [];
+  const listaEvolucao = obterListaEvolucaoAnomaliasDashboard();
   const grid = document.getElementById('anom-dash-grid');
   const empty = document.getElementById('anom-dash-empty');
 
-  if (!lista.length) {
+  if (!lista.length && !listaEvolucao.length) {
     if (grid) grid.style.display = 'none';
     if (empty) empty.style.display = '';
     return;
@@ -3599,7 +3714,7 @@ function renderAnomaliasDashboard(listaBase, inicioIso, fimIso) {
   if (grid) grid.style.display = '';
   if (empty) empty.style.display = 'none';
 
-  renderChartEvolucaoAnom(lista, inicioIso, fimIso);
+  renderChartEvolucaoAnom(listaEvolucao);
   renderChartTurnoAnom(lista);
   renderChartCausasAnom(lista);
   renderChartGestorAnom(lista);
@@ -3607,10 +3722,10 @@ function renderAnomaliasDashboard(listaBase, inicioIso, fimIso) {
   renderChartDonutAnom(lista);
 }
 
-function renderChartEvolucaoAnom(lista, inicioIso, fimIso) {
+function renderChartEvolucaoAnom(lista) {
   const canvas = document.getElementById('anom-chart-evolucao');
   if (!canvas) return;
-  const d = buildEvolucaoDiariaAnom(lista, inicioIso, fimIso);
+  const d = buildEvolucaoDiariaAnom(lista);
   const meta = d.labels.map(() => 5);
   if (chartAnomEvolucao) chartAnomEvolucao.destroy();
   chartAnomEvolucao = new Chart(canvas, {
@@ -3618,22 +3733,23 @@ function renderChartEvolucaoAnom(lista, inicioIso, fimIso) {
     data: {
       labels: d.labels,
       datasets: [
-        { label: 'CIA', data: d.pctCia, borderColor: '#00356C', backgroundColor: 'rgba(0,53,108,.12)', tension: .3, fill: true, pointRadius: 3, spanGaps: true },
-        { label: 'COA', data: d.pctCoa, borderColor: '#6BAADD', backgroundColor: 'rgba(107,170,221,.15)', tension: .3, fill: true, pointRadius: 3, spanGaps: true },
-        { label: 'Meta (5%)', data: meta, borderColor: '#F23D4F', borderDash: [6, 4], borderWidth: 2, pointRadius: 0, fill: false, tension: 0 }
+        { label: 'CIA', data: d.pctCia, borderColor: ANOM_CHART_COLORS.cia, backgroundColor: 'rgba(0,53,108,.12)', tension: .3, fill: true, pointRadius: 3, spanGaps: true, dataLabelSuffix: '%', hideZeroDataLabels: false },
+        { label: 'COA', data: d.pctCoa, borderColor: ANOM_CHART_COLORS.coa, backgroundColor: 'rgba(107,170,221,.15)', tension: .3, fill: true, pointRadius: 3, spanGaps: true, dataLabelSuffix: '%', hideZeroDataLabels: false },
+        { label: 'Meta (5%)', data: meta, borderColor: ANOM_CHART_COLORS.meta, borderDash: [6, 4], borderWidth: 2, pointRadius: 0, fill: false, tension: 0, showDataLabels: false }
       ]
     },
     options: {
       responsive: true,
       plugins: {
         legend: { position: 'top', labels: { font: { size: 12 }, boxWidth: 12 } },
-        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw === null ? '—' : ctx.raw + '%'}` } }
+        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw === null ? '—' : formatarPctGrafico(ctx.raw, 2)}` } }
       },
       scales: {
         y: { beginAtZero: true, ticks: { precision: 0, callback: v => v + '%' }, grid: { color: 'rgba(0,0,0,0.05)' } },
         x: { grid: { display: false } }
       }
-    }
+    },
+    plugins: [anomaliasDataLabelsPlugin]
   });
 }
 
@@ -3647,19 +3763,26 @@ function renderChartTurnoAnom(lista) {
     data: {
       labels: d.labels,
       datasets: [
-        { label: 'CIA', data: d.cia, backgroundColor: '#00356C', borderRadius: 3 },
-        { label: 'COA', data: d.coa, backgroundColor: '#6BAADD', borderRadius: 3 }
+        { label: 'CIA', data: d.cia, backgroundColor: ANOM_CHART_COLORS.cia, borderRadius: 3, dataLabelSuffix: '%' },
+        { label: 'COA', data: d.coa, backgroundColor: ANOM_CHART_COLORS.coa, borderRadius: 3, dataLabelSuffix: '%' }
       ]
     },
     options: {
       indexAxis: 'y',
       responsive: true,
-      plugins: { legend: { position: 'top', labels: { font: { size: 12 }, boxWidth: 12 } } },
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 12 }, boxWidth: 12 } },
+        tooltip: { callbacks: { label: ctx => {
+          const counts = ctx.dataset.label === 'CIA' ? d.ciaCount : d.coaCount;
+          return ` ${ctx.dataset.label}: ${formatarPctGrafico(ctx.raw)} (${counts[ctx.dataIndex] || 0} ofensas)`;
+        } } }
+      },
       scales: {
-        x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,0.05)' } },
+        x: { beginAtZero: true, ticks: { callback: v => v + '%' }, grid: { color: 'rgba(0,0,0,0.05)' } },
         y: { grid: { display: false } }
       }
-    }
+    },
+    plugins: [anomaliasDataLabelsPlugin]
   });
 }
 
@@ -3673,19 +3796,26 @@ function renderChartGestorAnom(lista) {
     data: {
       labels: d.labels,
       datasets: [
-        { label: 'CIA', data: d.cia, backgroundColor: '#00356C', borderRadius: 3 },
-        { label: 'COA', data: d.coa, backgroundColor: '#6BAADD', borderRadius: 3 }
+        { label: 'CIA', data: d.cia, backgroundColor: ANOM_CHART_COLORS.cia, borderRadius: 3, dataLabelSuffix: '%' },
+        { label: 'COA', data: d.coa, backgroundColor: ANOM_CHART_COLORS.coa, borderRadius: 3, dataLabelSuffix: '%' }
       ]
     },
     options: {
       indexAxis: 'y',
       responsive: true,
-      plugins: { legend: { position: 'top', labels: { font: { size: 12 }, boxWidth: 12 } } },
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 12 }, boxWidth: 12 } },
+        tooltip: { callbacks: { label: ctx => {
+          const counts = ctx.dataset.label === 'CIA' ? d.ciaCount : d.coaCount;
+          return ` ${ctx.dataset.label}: ${formatarPctGrafico(ctx.raw)} (${counts[ctx.dataIndex] || 0} ofensas)`;
+        } } }
+      },
       scales: {
-        x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,0.05)' } },
+        x: { beginAtZero: true, ticks: { callback: v => v + '%' }, grid: { color: 'rgba(0,0,0,0.05)' } },
         y: { grid: { display: false } }
       }
-    }
+    },
+    plugins: [anomaliasDataLabelsPlugin]
   });
 }
 
@@ -3698,19 +3828,23 @@ function renderChartCausasAnom(lista) {
     data: {
       labels: d.labels,
       datasets: [
-        { type: 'bar', label: 'Ocorrências', data: d.valores, backgroundColor: '#3483FA', borderRadius: 3, yAxisID: 'y' },
-        { type: 'line', label: '% Acumulado', data: d.pct, borderColor: '#F23D4F', backgroundColor: '#F23D4F', yAxisID: 'y1', tension: .25, pointRadius: 3 }
+        { type: 'bar', label: 'Ocorrências', data: d.valores, backgroundColor: ANOM_CHART_COLORS.pareto, borderRadius: 3, yAxisID: 'y' },
+        { type: 'line', label: '% Acumulado', data: d.pct, borderColor: ANOM_CHART_COLORS.meta, backgroundColor: ANOM_CHART_COLORS.meta, yAxisID: 'y1', tension: .25, pointRadius: 3, dataLabelSuffix: '%' }
       ]
     },
     options: {
       responsive: true,
-      plugins: { legend: { position: 'top', labels: { font: { size: 12 }, boxWidth: 12 } } },
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 12 }, boxWidth: 12 } },
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label.includes('%') ? ` ${ctx.dataset.label}: ${formatarPctGrafico(ctx.raw)}` : ` ${ctx.dataset.label}: ${formatarNumeroGrafico(ctx.raw)}` } }
+      },
       scales: {
         x: { ticks: { font: { size: 10 }, maxRotation: 35, minRotation: 0 }, grid: { display: false } },
         y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,0.05)' } },
         y1: { position: 'right', min: 0, max: 100, grid: { display: false }, ticks: { callback: v => v + '%' } }
       }
-    }
+    },
+    plugins: [anomaliasDataLabelsPlugin]
   });
 }
 
@@ -3724,18 +3858,25 @@ function renderChartHoraAnom(lista) {
     data: {
       labels: d.labels,
       datasets: [
-        { label: 'CIA', data: d.cia, backgroundColor: '#00356C', borderRadius: 3 },
-        { label: 'COA', data: d.coa, backgroundColor: '#6BAADD', borderRadius: 3 }
+        { label: 'CIA', data: d.cia, backgroundColor: ANOM_CHART_COLORS.cia, borderRadius: 3, dataLabelSuffix: '%' },
+        { label: 'COA', data: d.coa, backgroundColor: ANOM_CHART_COLORS.coa, borderRadius: 3, dataLabelSuffix: '%' }
       ]
     },
     options: {
       responsive: true,
-      plugins: { legend: { position: 'top', labels: { font: { size: 12 }, boxWidth: 12 } } },
+      plugins: {
+        legend: { position: 'top', labels: { font: { size: 12 }, boxWidth: 12 } },
+        tooltip: { callbacks: { label: ctx => {
+          const counts = ctx.dataset.label === 'CIA' ? d.ciaCount : d.coaCount;
+          return ` ${ctx.dataset.label}: ${formatarPctGrafico(ctx.raw)} (${counts[ctx.dataIndex] || 0} ofensas)`;
+        } } }
+      },
       scales: {
         x: { stacked: true, grid: { display: false } },
-        y: { stacked: true, beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,0.05)' } }
+        y: { stacked: true, beginAtZero: true, max: 100, ticks: { callback: v => v + '%' }, grid: { color: 'rgba(0,0,0,0.05)' } }
       }
-    }
+    },
+    plugins: [anomaliasDataLabelsPlugin]
   });
 }
 
@@ -3749,7 +3890,16 @@ function renderChartDonutAnom(lista) {
     type: 'doughnut',
     data: {
       labels: ['CIA (Entrada)', 'COA (Saída)'],
-      datasets: [{ data: [cia, coa], backgroundColor: ['#00356C', '#6BAADD'], borderWidth: 0 }]
+      datasets: [{
+        data: [cia, coa],
+        backgroundColor: [ANOM_CHART_COLORS.cia, ANOM_CHART_COLORS.coa],
+        borderWidth: 0,
+        hideZeroDataLabels: true,
+        dataLabelFormatter: (value) => {
+          const total = (cia + coa) || 1;
+          return formatarPctGrafico(value / total * 100);
+        }
+      }]
     },
     options: {
       responsive: true,
@@ -3758,11 +3908,12 @@ function renderChartDonutAnom(lista) {
         legend: { position: 'bottom', labels: { font: { size: 12 }, boxWidth: 12 } },
         tooltip: { callbacks: { label: ctx => {
           const total = (cia + coa) || 1;
-          const pct = (ctx.raw / total * 100).toFixed(1);
+          const pct = (ctx.raw / total * 100).toFixed(1).replace('.', ',');
           return ` ${ctx.label}: ${ctx.raw} (${pct}%)`;
         } } }
       }
-    }
+    },
+    plugins: [anomaliasDataLabelsPlugin]
   });
 }
 
