@@ -1362,7 +1362,7 @@
       </div>
       <div class="form-group">
         <label>Perfil de acesso</label>
-        <select id="usr-perfil"></select>
+        <select id="usr-perfil" onchange="atualizarVisibilidadePermissoesCriacao()"></select>
       </div>
       <div class="form-group">
         <label>Senha temporária</label>
@@ -1373,6 +1373,18 @@
         <input type="password" id="usr-senha-confirma" placeholder="Repita a senha" autocomplete="new-password">
       </div>
     </div>
+
+    <div id="usr-permissoes-wrap" style="display:none;margin-top:18px;padding-top:16px;border-top:1px solid var(--border)">
+      <p style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Permissões de acesso por aba</p>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Você só pode conceder até o nível que você mesmo possui em cada aba.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Aba</th><th style="width:220px">Nível de acesso</th></tr></thead>
+          <tbody id="tbody-permissoes-criar"></tbody>
+        </table>
+      </div>
+    </div>
+
     <div class="form-actions">
       <button class="btn btn-primary" id="btn-criar-usuario" onclick="criarUsuarioSistema()">Criar Usuário</button>
       <button class="btn btn-secondary" onclick="limparFormUsuario()">Limpar</button>
@@ -1380,7 +1392,7 @@
   </div>
 
   <p class="section-label">Usuários cadastrados</p>
-  <div class="card" style="margin-bottom:24px">
+  <div class="card">
     <div class="search-bar">
       <div class="search-input-wrap">
         <span class="search-icon">🔍</span>
@@ -1399,29 +1411,11 @@
       </table>
     </div>
   </div>
-
-  <div class="card" id="card-matriz-permissoes">
-    <p class="section-label" style="margin-bottom:2px">Permissões de acesso — Operador e Auditor</p>
-    <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Defina, por aba, se cada perfil tem acesso de visualização ou de edição. Você só pode conceder até o nível que você mesmo possui em cada aba.</p>
-    <div class="table-wrap">
-      <table>
-        <thead><tr>
-          <th>Aba</th><th style="width:220px">Operador</th><th style="width:220px">Auditor</th>
-        </tr></thead>
-        <tbody id="tbody-matriz-permissoes">
-          <tr><td colspan="3"><div class="empty-state"><div class="empty-icon">🧩</div><p>Carregando matriz de permissões...</p></div></td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="form-actions">
-      <button class="btn btn-primary" id="btn-salvar-matriz-permissoes" onclick="salvarMatrizPermissoes()">Salvar Permissões</button>
-    </div>
-  </div>
 </div>
 
 <!-- Modal Editar Usuário -->
 <div class="modal-overlay" id="modal-editar-usuario">
-  <div class="modal" onclick="event.stopPropagation()">
+  <div class="modal modal-lg" onclick="event.stopPropagation()">
     <h3>Editar Usuário</h3>
     <div class="form-group" style="margin-bottom:14px">
       <label>Nome completo</label>
@@ -1433,11 +1427,22 @@
     </div>
     <div class="form-group" style="margin-bottom:14px">
       <label>Perfil de acesso</label>
-      <select id="usr-edit-perfil"></select>
+      <select id="usr-edit-perfil" onchange="atualizarVisibilidadePermissoesEdicao()"></select>
     </div>
     <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-top:4px">
       <input type="checkbox" id="usr-edit-ativo"> Usuário ativo (desmarcar bloqueia o acesso)
     </label>
+
+    <div id="usr-edit-permissoes-wrap" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <p style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Permissões de acesso por aba</p>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Você só pode conceder até o nível que você mesmo possui em cada aba.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Aba</th><th style="width:220px">Nível de acesso</th></tr></thead>
+          <tbody id="tbody-permissoes-editar"></tbody>
+        </table>
+      </div>
+    </div>
 
     <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
       <p style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">Redefinir senha (opcional)</p>
@@ -1862,13 +1867,13 @@ async function carregarPermissoesDinamicasSeNecessario() {
   const perfil = usuarioAtual?.perfil;
   if (perfil !== 'auditor' && perfil !== 'operador') return;
   try {
-    const { data, error } = await db.from('svc_permissoes_abas').select('*').eq('perfil', perfil);
+    const { data, error } = await db.from('svc_permissoes_usuario').select('aba,nivel').eq('auth_uid', usuarioAtual.id);
     if (error) throw error;
-    PERFIS_ACESSO[perfil] = construirPerfilDinamico(perfil, data || []);
+    usuarioAtual.permissoes = construirPerfilDinamico(perfil, data || []);
   } catch (error) {
     console.error(error);
-    console.warn('Não foi possível carregar a matriz de permissões; aplicando perfil restritivo padrão.', error);
-    PERFIS_ACESSO[perfil] = construirPerfilDinamico(perfil, []);
+    console.warn('Não foi possível carregar as permissões do usuário; aplicando perfil restritivo padrão.', error);
+    usuarioAtual.permissoes = construirPerfilDinamico(perfil, []);
   }
 }
 
@@ -1922,7 +1927,11 @@ function usuarioParaEmailAuth(usuario) {
 
 function obterPerfilAtual() {
   const perfil = usuarioAtual?.perfil || 'auditor';
-  return PERFIS_ACESSO[perfil] || PERFIS_ACESSO.auditor;
+  if (perfil === 'admin' || perfil === 'coordenador') {
+    return PERFIS_ACESSO[perfil] || PERFIS_ACESSO.auditor;
+  }
+  // Auditor/Operador: permissões calculadas por usuário individual (svc_permissoes_usuario).
+  return usuarioAtual?.permissoes || perfilVazioDinamico(PERFIS_ACESSO[perfil]?.label || perfil);
 }
 
 function pode(permissao) {
@@ -2109,7 +2118,6 @@ function aplicarControleAcesso() {
   setVisibleById('btn-registrar-abs', pode('registrar_abs'), 'inline-flex');
   setVisibleById('btn-registrar-insucesso', pode('registrar_insucesso'), 'inline-flex');
   setVisibleById('card-form-usuario', pode('criar_usuarios'));
-  setVisibleById('card-matriz-permissoes', pode('gerenciar_permissoes'));
   setVisibleById('monitor-btn-nova-base', pode('editar_monitor'), 'inline-flex');
   setVisibleById('monitor-btn-nova-base-dash', pode('editar_monitor'), 'inline-flex');
 
@@ -5146,7 +5154,8 @@ const LABEL_ABA_PERMISSAO = {
   crachas: 'Crachás LMS'
 };
 
-let matrizPermissoesAtual = {};
+// Permissões (por aba) da pessoa que está sendo editada no momento — carregadas ao abrir o modal.
+let permissoesUsuarioEmEdicao = {};
 
 function popularSelectsPerfilUsuario() {
   const opcoes = Object.entries(PERFIS_ACESSO)
@@ -5171,8 +5180,75 @@ function meuNivelParaAba(aba) {
   return temEdicao ? 'editar' : 'ver';
 }
 
+// Renderiza a tabela de permissões (Aba | Nível) para UM usuário específico, dentro de um <tbody>.
+function renderPermissoesUsuario(tbodyId, permissoesAtuais) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+
+  tbody.innerHTML = ABAS_CONFIGURAVEIS.map(aba => {
+    const meuNivel = meuNivelParaAba(aba);
+    const valorAtual = permissoesAtuais[aba] || 'nenhum';
+
+    let opcoes = [['nenhum', 'Sem acesso']];
+    if (meuNivel === 'ver' || meuNivel === 'editar') opcoes.push(['ver', 'Visualizar']);
+    if (meuNivel === 'editar') opcoes.push(['editar', 'Editar']);
+
+    const dentroDoAlcance = opcoes.some(([v]) => v === valorAtual);
+    const travado = opcoes.length <= 1 || !dentroDoAlcance;
+    if (!dentroDoAlcance) {
+      const labelExtra = valorAtual === 'editar' ? 'Editar' : (valorAtual === 'ver' ? 'Visualizar' : 'Sem acesso');
+      opcoes = [...opcoes, [valorAtual, `${labelExtra} (fora do seu alcance)`]];
+    }
+
+    return `<tr>
+      <td>${escapeHtml(LABEL_ABA_PERMISSAO[aba] || aba)}</td>
+      <td>
+        <select id="${tbodyId}-${aba}" data-aba="${aba}" data-travado="${travado ? '1' : '0'}" ${travado ? 'disabled' : ''}>
+          ${opcoes.map(([v, l]) => `<option value="${v}" ${v === valorAtual ? 'selected' : ''}>${l}</option>`).join('')}
+        </select>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// Lê os valores selecionados na tabela de permissões (ignora selects travados/fora do alcance).
+function coletarPermissoesForm(tbodyId) {
+  const linhas = [];
+  ABAS_CONFIGURAVEIS.forEach(aba => {
+    const sel = document.getElementById(`${tbodyId}-${aba}`);
+    if (!sel || sel.dataset.travado === '1') return;
+    linhas.push({ aba, nivel: sel.value });
+  });
+  return linhas;
+}
+
+function atualizarVisibilidadePermissoesCriacao() {
+  const perfil = document.getElementById('usr-perfil').value;
+  const wrap = document.getElementById('usr-permissoes-wrap');
+  if (!wrap) return;
+  if (perfil === 'auditor' || perfil === 'operador') {
+    wrap.style.display = '';
+    renderPermissoesUsuario('tbody-permissoes-criar', {});
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+
+function atualizarVisibilidadePermissoesEdicao() {
+  const perfil = document.getElementById('usr-edit-perfil').value;
+  const wrap = document.getElementById('usr-edit-permissoes-wrap');
+  if (!wrap) return;
+  if (perfil === 'auditor' || perfil === 'operador') {
+    wrap.style.display = '';
+    renderPermissoesUsuario('tbody-permissoes-editar', permissoesUsuarioEmEdicao);
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+
 async function carregarUsuariosSistema() {
   popularSelectsPerfilUsuario();
+  atualizarVisibilidadePermissoesCriacao();
   const tbody = document.getElementById('tbody-usuarios');
   try {
     const { data, error } = await db
@@ -5186,9 +5262,6 @@ async function carregarUsuariosSistema() {
     console.error(error);
     toast('Erro ao buscar usuários: ' + (error.message || error), 'error');
     if (tbody) tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⚠️</div><p>Não foi possível carregar os usuários</p><span>Verifique as policies de RLS da tabela svc_usuarios</span></div></td></tr>`;
-  }
-  if (pode('gerenciar_permissoes')) {
-    await carregarMatrizPermissoes();
   }
 }
 
@@ -5236,6 +5309,7 @@ function limparFormUsuario() {
   document.getElementById('usr-senha-confirma').value = '';
   const sel = document.getElementById('usr-perfil');
   if (sel) sel.selectedIndex = 0;
+  atualizarVisibilidadePermissoesCriacao();
 }
 
 async function criarUsuarioSistema() {
@@ -5275,6 +5349,22 @@ async function criarUsuarioSistema() {
     }]);
     if (errInsert) throw errInsert;
 
+    if (perfil === 'auditor' || perfil === 'operador') {
+      const linhasPermissoes = coletarPermissoesForm('tbody-permissoes-criar').map(l => ({
+        auth_uid: data.user.id,
+        aba: l.aba,
+        nivel: l.nivel,
+        atualizado_por: usuarioAtual?.nome || usuarioAtual?.usuario || null
+      }));
+      if (linhasPermissoes.length) {
+        const { error: errPerm } = await db.from('svc_permissoes_usuario').insert(linhasPermissoes);
+        if (errPerm) {
+          console.error(errPerm);
+          toast('Usuário criado, mas houve erro ao salvar as permissões: ' + (errPerm.message || errPerm), 'error');
+        }
+      }
+    }
+
     try { await dbAdminAux.auth.signOut(); } catch (e) { /* client auxiliar, sem impacto na sessão principal */ }
 
     toast(`Usuário "${nome}" criado com sucesso.`, 'success');
@@ -5310,7 +5400,7 @@ function popularSelectEdicaoPerfil(targetAuthUid, targetPerfil) {
   sel.disabled = opcoesPermitidas.length <= 1;
 }
 
-function abrirModalEditarUsuario(authUid) {
+async function abrirModalEditarUsuario(authUid) {
   const u = usuariosSistema.find(x => String(x.auth_uid) === String(authUid));
   if (!u) return;
 
@@ -5333,6 +5423,16 @@ function abrirModalEditarUsuario(authUid) {
   const chkAtivo = document.getElementById('usr-edit-ativo');
   chkAtivo.checked = u.ativo !== false;
   chkAtivo.disabled = isSelf;
+
+  permissoesUsuarioEmEdicao = {};
+  try {
+    const { data, error } = await db.from('svc_permissoes_usuario').select('aba,nivel').eq('auth_uid', u.auth_uid);
+    if (error) throw error;
+    (data || []).forEach(l => { permissoesUsuarioEmEdicao[l.aba] = l.nivel; });
+  } catch (error) {
+    console.error(error);
+  }
+  atualizarVisibilidadePermissoesEdicao();
 
   document.getElementById('modal-editar-usuario').classList.add('open');
 }
@@ -5395,6 +5495,23 @@ async function salvarEdicaoUsuario() {
       .eq('auth_uid', editingUsuarioAuthUid);
     if (error) throw error;
 
+    if (perfil === 'auditor' || perfil === 'operador') {
+      const linhasPermissoes = coletarPermissoesForm('tbody-permissoes-editar').map(l => ({
+        auth_uid: editingUsuarioAuthUid,
+        aba: l.aba,
+        nivel: l.nivel,
+        atualizado_por: usuarioAtual?.nome || usuarioAtual?.usuario || null
+      }));
+      if (linhasPermissoes.length) {
+        const { error: errPerm } = await db.from('svc_permissoes_usuario')
+          .upsert(linhasPermissoes, { onConflict: 'auth_uid,aba' });
+        if (errPerm) {
+          console.error(errPerm);
+          toast('Dados salvos, mas houve erro ao salvar as permissões: ' + (errPerm.message || errPerm), 'error');
+        }
+      }
+    }
+
     if (novaSenha) {
       try {
         await alterarSenhaUsuario(editingUsuarioAuthUid, novaSenha);
@@ -5412,90 +5529,6 @@ async function salvarEdicaoUsuario() {
   } catch (error) {
     console.error(error);
     toast('Erro ao atualizar usuário: ' + (error.message || error), 'error');
-  } finally {
-    setButtonLoading(btn, false);
-  }
-}
-
-// ════════════════════════════════════════
-//  MATRIZ DE PERMISSÕES — Operador / Auditor por aba
-// ════════════════════════════════════════
-async function carregarMatrizPermissoes() {
-  try {
-    const { data, error } = await db.from('svc_permissoes_abas').select('*');
-    if (error) throw error;
-    matrizPermissoesAtual = {};
-    (data || []).forEach(l => { matrizPermissoesAtual[`${l.perfil}:${l.aba}`] = l.nivel; });
-    renderMatrizPermissoes();
-  } catch (error) {
-    console.error(error);
-    toast('Erro ao carregar matriz de permissões: ' + (error.message || error), 'error');
-    const tbody = document.getElementById('tbody-matriz-permissoes');
-    if (tbody) tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><div class="empty-icon">⚠️</div><p>Não foi possível carregar a matriz</p><span>Verifique se a tabela svc_permissoes_abas existe</span></div></td></tr>`;
-  }
-}
-
-function renderMatrizPermissoes() {
-  const tbody = document.getElementById('tbody-matriz-permissoes');
-  if (!tbody) return;
-
-  const selectHtml = (perfil, aba, meuNivel) => {
-    const valorAtual = matrizPermissoesAtual[`${perfil}:${aba}`] || 'nenhum';
-    let opcoes = [['nenhum', 'Sem acesso']];
-    if (meuNivel === 'ver' || meuNivel === 'editar') opcoes.push(['ver', 'Visualizar']);
-    if (meuNivel === 'editar') opcoes.push(['editar', 'Editar']);
-
-    const dentroDoAlcance = opcoes.some(([v]) => v === valorAtual);
-    const travado = opcoes.length <= 1 || !dentroDoAlcance;
-    if (!dentroDoAlcance) {
-      const labelExtra = valorAtual === 'editar' ? 'Editar' : (valorAtual === 'ver' ? 'Visualizar' : 'Sem acesso');
-      opcoes = [...opcoes, [valorAtual, `${labelExtra} (fora do seu alcance)`]];
-    }
-
-    return `<select id="matriz-${perfil}-${aba}" data-perfil="${perfil}" data-aba="${aba}" data-travado="${travado ? '1' : '0'}" ${travado ? 'disabled' : ''}>
-      ${opcoes.map(([v, l]) => `<option value="${v}" ${v === valorAtual ? 'selected' : ''}>${l}</option>`).join('')}
-    </select>`;
-  };
-
-  tbody.innerHTML = ABAS_CONFIGURAVEIS.map(aba => {
-    const meuNivel = meuNivelParaAba(aba);
-    return `<tr>
-      <td>${escapeHtml(LABEL_ABA_PERMISSAO[aba] || aba)}</td>
-      <td>${selectHtml('operador', aba, meuNivel)}</td>
-      <td>${selectHtml('auditor', aba, meuNivel)}</td>
-    </tr>`;
-  }).join('');
-}
-
-async function salvarMatrizPermissoes() {
-  if (!pode('gerenciar_permissoes')) { toast('Seu perfil não permite gerenciar permissões.', 'error'); return; }
-
-  const linhas = [];
-  ABAS_CONFIGURAVEIS.forEach(aba => {
-    ['operador', 'auditor'].forEach(perfil => {
-      const sel = document.getElementById(`matriz-${perfil}-${aba}`);
-      if (!sel || sel.dataset.travado === '1') return; // fora do alcance de quem está salvando: não sobrescreve
-      linhas.push({
-        perfil,
-        aba,
-        nivel: sel.value,
-        atualizado_por: usuarioAtual?.nome || usuarioAtual?.usuario || null
-      });
-    });
-  });
-
-  if (!linhas.length) { toast('Nenhuma alteração dentro do seu alcance para salvar.', 'error'); return; }
-
-  const btn = document.getElementById('btn-salvar-matriz-permissoes');
-  setButtonLoading(btn, true, 'Salvando...');
-  try {
-    const { error } = await db.from('svc_permissoes_abas').upsert(linhas, { onConflict: 'perfil,aba' });
-    if (error) throw error;
-    toast('Permissões atualizadas com sucesso.', 'success');
-    await carregarMatrizPermissoes();
-  } catch (error) {
-    console.error(error);
-    toast('Erro ao salvar permissões: ' + (error.message || error), 'error');
   } finally {
     setButtonLoading(btn, false);
   }
