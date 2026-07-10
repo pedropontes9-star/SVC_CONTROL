@@ -1198,7 +1198,7 @@
     <div class="monitor-dash-top">
       <h2 style="font-weight:600;font-size:16px;color:var(--meli-blue)">Histórico de snapshots</h2>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-secondary btn-sm" onclick="monitorFecharHistorico()">← Nova base</button>
+        <button class="btn btn-secondary btn-sm" id="monitor-btn-nova-base" onclick="monitorFecharHistorico()">← Nova base</button>
         <button class="btn btn-secondary btn-sm" onclick="monitorCarregarHistorico()">↻ Atualizar</button>
       </div>
     </div>
@@ -1214,7 +1214,7 @@
       <div style="display:flex;gap:8px;align-items:center">
         <span class="sync-status" id="monitor-save-status"></span>
         <button class="btn btn-secondary btn-sm" onclick="monitorAbrirHistorico()">📜 Histórico</button>
-        <button class="btn btn-secondary btn-sm" onclick="monitorResetDash()">↩ Carregar nova base</button>
+        <button class="btn btn-secondary btn-sm" id="monitor-btn-nova-base-dash" onclick="monitorResetDash()">↩ Carregar nova base</button>
       </div>
     </div>
 
@@ -1380,7 +1380,7 @@
   </div>
 
   <p class="section-label">Usuários cadastrados</p>
-  <div class="card">
+  <div class="card" style="margin-bottom:24px">
     <div class="search-bar">
       <div class="search-input-wrap">
         <span class="search-icon">🔍</span>
@@ -1397,6 +1397,24 @@
           <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🔐</div><p>Carregando usuários...</p></div></td></tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <div class="card" id="card-matriz-permissoes">
+    <p class="section-label" style="margin-bottom:2px">Permissões de acesso — Operador e Auditor</p>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Defina, por aba, se cada perfil tem acesso de visualização ou de edição. Você só pode conceder até o nível que você mesmo possui em cada aba.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Aba</th><th style="width:220px">Operador</th><th style="width:220px">Auditor</th>
+        </tr></thead>
+        <tbody id="tbody-matriz-permissoes">
+          <tr><td colspan="3"><div class="empty-state"><div class="empty-icon">🧩</div><p>Carregando matriz de permissões...</p></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" id="btn-salvar-matriz-permissoes" onclick="salvarMatrizPermissoes()">Salvar Permissões</button>
     </div>
   </div>
 </div>
@@ -1420,7 +1438,20 @@
     <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-top:4px">
       <input type="checkbox" id="usr-edit-ativo"> Usuário ativo (desmarcar bloqueia o acesso)
     </label>
-    <span class="field-hint" style="display:block;margin-top:10px">Login e senha não podem ser alterados por aqui. Para redefinir a senha, use o painel do Supabase (Authentication → Users).</span>
+
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <p style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">Redefinir senha (opcional)</p>
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Nova senha</label>
+        <input type="password" id="usr-edit-senha" placeholder="Deixe em branco para não alterar" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label>Confirmar nova senha</label>
+        <input type="password" id="usr-edit-senha-confirma" placeholder="Repita a nova senha" autocomplete="new-password">
+      </div>
+    </div>
+
+    <span class="field-hint" style="display:block;margin-top:10px">Login não pode ser alterado por aqui.</span>
     <div class="modal-actions">
       <button class="btn btn-secondary btn-sm" onclick="fecharModalEditarUsuario()">Cancelar</button>
       <button class="btn btn-primary btn-sm" id="btn-salvar-edicao-usuario" onclick="salvarEdicaoUsuario()">Salvar</button>
@@ -1773,6 +1804,74 @@ function setButtonLoading(btn, loading, textoLoading = 'Salvando...') {
 const AUTH_EMAIL_DOMAIN = 'svc.local';
 const EXIGIR_CADASTRO_PERFIL = true; // Com a tabela svc_usuarios configurada, todo acesso precisa ter perfil cadastrado.
 
+// Abas com permissão configurável (visualizar/editar) para os perfis Auditor e Operador.
+// Cada aba mapeia para os "flags" granulares já usados no restante do sistema.
+const ABAS_CONFIGURAVEIS = ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'monitor', 'crachas'];
+
+const MAPA_PERMISSOES_ABA = {
+  turnos:     { base: [], editar: ['criar_turnos', 'editar_turnos', 'excluir_turnos'] },
+  headcount:  { base: ['exportar_hc'], editar: ['criar_hc', 'editar_hc', 'excluir_hc'] },
+  scheduling: { base: [], editar: ['criar_sched', 'editar_sched', 'excluir_sched'] },
+  abs:        { base: [], editar: ['registrar_abs', 'excluir_abs'] },
+  anomalias:  { base: ['ver_anomalias'], editar: ['atualizar_anomalias', 'tratar_anomalias'] },
+  insucesso:  { base: [], editar: ['registrar_insucesso', 'editar_insucesso', 'excluir_insucesso'] },
+  monitor:    { base: [], editar: ['editar_monitor'] },
+  crachas:    { base: [], editar: ['gerar_crachas'] }
+};
+
+// Perfil "vazio" usado como base seguro (fail-closed) para Auditor/Operador até a matriz ser carregada do banco.
+function perfilVazioDinamico(label) {
+  return {
+    label,
+    tabs: [],
+    gerar_crachas: false,
+    criar_turnos: false, editar_turnos: false, excluir_turnos: false,
+    criar_hc: false, editar_hc: false, excluir_hc: false, exportar_hc: false,
+    ver_anomalias: false, atualizar_anomalias: false, tratar_anomalias: false,
+    criar_sched: false, editar_sched: false, excluir_sched: false,
+    registrar_abs: false, ver_todos_abs: false, excluir_abs: false,
+    registrar_insucesso: false, editar_insucesso: false, excluir_insucesso: false,
+    editar_monitor: false,
+    criar_usuarios: false, gerenciar_permissoes: false
+  };
+}
+
+// Constrói o perfil de Auditor/Operador a partir das linhas carregadas de svc_permissoes_abas.
+function construirPerfilDinamico(perfil, linhas) {
+  const label = perfil === 'operador' ? 'Operador' : 'Auditor';
+  const base = perfilVazioDinamico(label);
+  const porAba = {};
+  (linhas || []).forEach(l => { porAba[l.aba] = l.nivel; });
+
+  ABAS_CONFIGURAVEIS.forEach(aba => {
+    const nivel = porAba[aba] || 'nenhum';
+    const mapa = MAPA_PERMISSOES_ABA[aba] || { base: [], editar: [] };
+    if (nivel === 'ver' || nivel === 'editar') {
+      base.tabs.push(aba);
+      mapa.base.forEach(f => { base[f] = true; });
+    }
+    if (nivel === 'editar') {
+      mapa.editar.forEach(f => { base[f] = true; });
+    }
+  });
+
+  return base;
+}
+
+async function carregarPermissoesDinamicasSeNecessario() {
+  const perfil = usuarioAtual?.perfil;
+  if (perfil !== 'auditor' && perfil !== 'operador') return;
+  try {
+    const { data, error } = await db.from('svc_permissoes_abas').select('*').eq('perfil', perfil);
+    if (error) throw error;
+    PERFIS_ACESSO[perfil] = construirPerfilDinamico(perfil, data || []);
+  } catch (error) {
+    console.error(error);
+    console.warn('Não foi possível carregar a matriz de permissões; aplicando perfil restritivo padrão.', error);
+    PERFIS_ACESSO[perfil] = construirPerfilDinamico(perfil, []);
+  }
+}
+
 const PERFIS_ACESSO = {
   admin: {
     label: 'Administrador',
@@ -1784,11 +1883,12 @@ const PERFIS_ACESSO = {
     criar_sched: true, editar_sched: true, excluir_sched: true,
     registrar_abs: true, ver_todos_abs: true, excluir_abs: true,
     registrar_insucesso: true, editar_insucesso: true, excluir_insucesso: true,
-    gerenciar_usuarios: true
+    editar_monitor: true,
+    criar_usuarios: true, gerenciar_permissoes: true
   },
   coordenador: {
     label: 'Coordenador',
-    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'monitor', 'crachas'],
+    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'monitor', 'crachas', 'usuarios'],
     gerar_crachas: true,
     criar_turnos: false, editar_turnos: false, excluir_turnos: false,
     criar_hc: true, editar_hc: true, excluir_hc: false, exportar_hc: true,
@@ -1796,20 +1896,11 @@ const PERFIS_ACESSO = {
     criar_sched: true, editar_sched: true, excluir_sched: false,
     registrar_abs: true, ver_todos_abs: false, excluir_abs: false,
     registrar_insucesso: true, editar_insucesso: true, excluir_insucesso: false,
-    gerenciar_usuarios: false
+    editar_monitor: true,
+    criar_usuarios: false, gerenciar_permissoes: true
   },
-  auditor: {
-    label: 'Auditor',
-    tabs: ['headcount', 'anomalias', 'monitor'],
-    gerar_crachas: false,
-    criar_turnos: false, editar_turnos: false, excluir_turnos: false,
-    criar_hc: false, editar_hc: false, excluir_hc: false, exportar_hc: false,
-    ver_anomalias: true, atualizar_anomalias: true, tratar_anomalias: false,
-    criar_sched: false, editar_sched: false, excluir_sched: false,
-    registrar_abs: false, ver_todos_abs: false, excluir_abs: false,
-    registrar_insucesso: false, editar_insucesso: false, excluir_insucesso: false,
-    gerenciar_usuarios: false
-  }
+  auditor: perfilVazioDinamico('Auditor'),
+  operador: perfilVazioDinamico('Operador')
 };
 
 let usuarioAtual = null;
@@ -1972,6 +2063,7 @@ async function carregarPerfilUsuario(session) {
 async function aplicarSessao(session) {
   try {
     usuarioAtual = await carregarPerfilUsuario(session);
+    await carregarPermissoesDinamicasSeNecessario();
     mostrarApp();
     atualizarIdentidadeHeader();
     aplicarControleAcesso();
@@ -2016,7 +2108,10 @@ function aplicarControleAcesso() {
   setVisibleById('card-form-scheduling', pode('criar_sched') || pode('editar_sched'));
   setVisibleById('btn-registrar-abs', pode('registrar_abs'), 'inline-flex');
   setVisibleById('btn-registrar-insucesso', pode('registrar_insucesso'), 'inline-flex');
-  setVisibleById('card-form-usuario', pode('gerenciar_usuarios'));
+  setVisibleById('card-form-usuario', pode('criar_usuarios'));
+  setVisibleById('card-matriz-permissoes', pode('gerenciar_permissoes'));
+  setVisibleById('monitor-btn-nova-base', pode('editar_monitor'), 'inline-flex');
+  setVisibleById('monitor-btn-nova-base-dash', pode('editar_monitor'), 'inline-flex');
 
   if (!podeAcessarTab('turnos')) cancelarEdicaoTurno();
   if (!pode('editar_hc') && !pode('criar_hc')) cancelarEdicaoHC();
@@ -2571,6 +2666,9 @@ function switchTab(tab, btn) {
 
   if (tab === 'monitor') {
     monitorInicializarUploads();
+    if (!pode('editar_monitor')) {
+      monitorAbrirHistorico();
+    }
   }
 
   if (tab === 'usuarios') {
@@ -5037,17 +5135,40 @@ async function excluirInsucessoAtual() {
 // ════════════════════════════════════════
 //  USUÁRIOS — gestão de acessos (svc_usuarios)
 // ════════════════════════════════════════
+const LABEL_ABA_PERMISSAO = {
+  turnos: 'Turnos',
+  headcount: 'Colaboradores (Headcount)',
+  scheduling: 'Scheduling',
+  abs: 'Absenteísmo (ABS)',
+  anomalias: 'Anomalias (CIA/COA)',
+  insucesso: 'Insucesso',
+  monitor: 'Monitor — Ciclos',
+  crachas: 'Crachás LMS'
+};
+
+let matrizPermissoesAtual = {};
+
 function popularSelectsPerfilUsuario() {
   const opcoes = Object.entries(PERFIS_ACESSO)
     .map(([chave, cfg]) => `<option value="${chave}">${escapeHtml(cfg.label || chave)}</option>`)
     .join('');
-  ['usr-perfil', 'usr-edit-perfil'].forEach(id => {
-    const sel = document.getElementById(id);
-    if (sel && !sel.dataset.populado) {
-      sel.innerHTML = opcoes;
-      sel.dataset.populado = '1';
-    }
-  });
+  const sel = document.getElementById('usr-perfil');
+  if (sel && !sel.dataset.populado) {
+    sel.innerHTML = opcoes;
+    sel.dataset.populado = '1';
+  }
+}
+
+// Nível máximo (nenhum/ver/editar) que o usuário logado pode conceder para uma aba configurável.
+// Admin nunca tem limite; Coordenador fica limitado ao próprio nível de acesso naquela aba.
+function meuNivelParaAba(aba) {
+  if (!ABAS_CONFIGURAVEIS.includes(aba)) return 'nenhum';
+  if (usuarioAtual?.perfil === 'admin') return 'editar';
+  const meuPerfil = obterPerfilAtual();
+  if (!meuPerfil.tabs.includes(aba)) return 'nenhum';
+  const mapa = MAPA_PERMISSOES_ABA[aba];
+  const temEdicao = mapa.editar.some(f => meuPerfil[f]);
+  return temEdicao ? 'editar' : 'ver';
 }
 
 async function carregarUsuariosSistema() {
@@ -5065,6 +5186,9 @@ async function carregarUsuariosSistema() {
     console.error(error);
     toast('Erro ao buscar usuários: ' + (error.message || error), 'error');
     if (tbody) tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⚠️</div><p>Não foi possível carregar os usuários</p><span>Verifique as policies de RLS da tabela svc_usuarios</span></div></td></tr>`;
+  }
+  if (pode('gerenciar_permissoes')) {
+    await carregarMatrizPermissoes();
   }
 }
 
@@ -5115,7 +5239,7 @@ function limparFormUsuario() {
 }
 
 async function criarUsuarioSistema() {
-  if (!pode('gerenciar_usuarios')) { toast('Seu perfil não permite gerenciar usuários.', 'error'); return; }
+  if (!pode('criar_usuarios')) { toast('Seu perfil não permite criar usuários.', 'error'); return; }
 
   const nome = document.getElementById('usr-nome').value.trim();
   const loginBruto = document.getElementById('usr-login').value.trim();
@@ -5167,36 +5291,100 @@ async function criarUsuarioSistema() {
   }
 }
 
+// Monta as opções do select de Perfil no modal de edição, de acordo com quem está editando.
+function popularSelectEdicaoPerfil(targetAuthUid, targetPerfil) {
+  const sel = document.getElementById('usr-edit-perfil');
+  const isSelf = String(targetAuthUid) === String(usuarioAtual?.id);
+  let opcoesPermitidas;
+  if (usuarioAtual?.perfil === 'admin') {
+    opcoesPermitidas = Object.keys(PERFIS_ACESSO);
+  } else if (isSelf) {
+    opcoesPermitidas = [usuarioAtual.perfil];
+  } else {
+    opcoesPermitidas = ['auditor', 'operador'];
+  }
+  sel.innerHTML = opcoesPermitidas
+    .map(p => `<option value="${p}">${escapeHtml(PERFIS_ACESSO[p]?.label || p)}</option>`)
+    .join('');
+  sel.value = opcoesPermitidas.includes(targetPerfil) ? targetPerfil : opcoesPermitidas[0];
+  sel.disabled = opcoesPermitidas.length <= 1;
+}
+
 function abrirModalEditarUsuario(authUid) {
   const u = usuariosSistema.find(x => String(x.auth_uid) === String(authUid));
   if (!u) return;
+
+  const isSelf = String(u.auth_uid) === String(usuarioAtual?.id);
+  const souAdmin = usuarioAtual?.perfil === 'admin';
+  const souCoordenadorSubordinado = usuarioAtual?.perfil === 'coordenador' && ['auditor', 'operador'].includes(u.perfil);
+  if (!isSelf && !souAdmin && !souCoordenadorSubordinado) {
+    toast('Seu perfil não permite editar este usuário.', 'error');
+    return;
+  }
+
   editingUsuarioAuthUid = u.auth_uid;
   document.getElementById('usr-edit-nome').value = u.nome || '';
   document.getElementById('usr-edit-login').value = u.login || '';
-  document.getElementById('usr-edit-perfil').value = u.perfil || '';
-  document.getElementById('usr-edit-ativo').checked = u.ativo !== false;
+  document.getElementById('usr-edit-senha').value = '';
+  document.getElementById('usr-edit-senha-confirma').value = '';
+
+  popularSelectEdicaoPerfil(u.auth_uid, u.perfil);
+
+  const chkAtivo = document.getElementById('usr-edit-ativo');
+  chkAtivo.checked = u.ativo !== false;
+  chkAtivo.disabled = isSelf;
+
   document.getElementById('modal-editar-usuario').classList.add('open');
 }
 
 function fecharModalEditarUsuario() {
   document.getElementById('modal-editar-usuario').classList.remove('open');
+  document.getElementById('usr-edit-senha').value = '';
+  document.getElementById('usr-edit-senha-confirma').value = '';
   editingUsuarioAuthUid = null;
 }
 
+// Altera a senha do usuário-alvo. A própria senha é trocada direto (sessão atual);
+// a senha de outra pessoa exige a Edge Function "admin-set-password" (usa a service role no servidor).
+async function alterarSenhaUsuario(targetAuthUid, novaSenha) {
+  if (String(targetAuthUid) === String(usuarioAtual?.id)) {
+    const { error } = await db.auth.updateUser({ password: novaSenha });
+    if (error) throw error;
+    return;
+  }
+  const { data, error } = await db.functions.invoke('admin-set-password', {
+    body: { targetAuthUid, novaSenha }
+  });
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+}
+
 async function salvarEdicaoUsuario() {
-  if (!pode('gerenciar_usuarios')) { toast('Seu perfil não permite gerenciar usuários.', 'error'); return; }
   if (!editingUsuarioAuthUid) return;
+
+  const targetOriginal = usuariosSistema.find(u => String(u.auth_uid) === String(editingUsuarioAuthUid));
+  if (!targetOriginal) { toast('Usuário não encontrado.', 'error'); return; }
+
+  const isSelf = String(editingUsuarioAuthUid) === String(usuarioAtual?.id);
+  const souAdmin = usuarioAtual?.perfil === 'admin';
+  const souCoordenadorSubordinado = usuarioAtual?.perfil === 'coordenador' && ['auditor', 'operador'].includes(targetOriginal.perfil);
+  if (!isSelf && !souAdmin && !souCoordenadorSubordinado) {
+    toast('Seu perfil não permite editar este usuário.', 'error');
+    return;
+  }
 
   const nome = document.getElementById('usr-edit-nome').value.trim();
   const perfil = document.getElementById('usr-edit-perfil').value;
   const ativo = document.getElementById('usr-edit-ativo').checked;
+  const novaSenha = document.getElementById('usr-edit-senha').value;
+  const novaSenhaConfirma = document.getElementById('usr-edit-senha-confirma').value;
 
   if (!nome) { toast('Informe o nome completo.', 'error'); return; }
   if (!perfil) { toast('Selecione o perfil de acesso.', 'error'); return; }
-
-  if (String(editingUsuarioAuthUid) === String(usuarioAtual?.id) && !ativo) {
-    toast('Você não pode desativar o próprio usuário.', 'error');
-    return;
+  if (isSelf && !ativo) { toast('Você não pode desativar o próprio usuário.', 'error'); return; }
+  if (novaSenha || novaSenhaConfirma) {
+    if (novaSenha.length < 6) { toast('A nova senha deve ter ao menos 6 caracteres.', 'error'); return; }
+    if (novaSenha !== novaSenhaConfirma) { toast('As senhas não coincidem.', 'error'); return; }
   }
 
   const btn = document.getElementById('btn-salvar-edicao-usuario');
@@ -5206,12 +5394,108 @@ async function salvarEdicaoUsuario() {
       .update({ nome, perfil, ativo })
       .eq('auth_uid', editingUsuarioAuthUid);
     if (error) throw error;
-    toast('Usuário atualizado.', 'success');
+
+    if (novaSenha) {
+      try {
+        await alterarSenhaUsuario(editingUsuarioAuthUid, novaSenha);
+        toast('Usuário e senha atualizados com sucesso.', 'success');
+      } catch (errSenha) {
+        console.error(errSenha);
+        toast('Os dados foram salvos, mas a senha não pôde ser alterada: ' + (errSenha.message || errSenha), 'error');
+      }
+    } else {
+      toast('Usuário atualizado.', 'success');
+    }
+
     fecharModalEditarUsuario();
     await carregarUsuariosSistema();
   } catch (error) {
     console.error(error);
     toast('Erro ao atualizar usuário: ' + (error.message || error), 'error');
+  } finally {
+    setButtonLoading(btn, false);
+  }
+}
+
+// ════════════════════════════════════════
+//  MATRIZ DE PERMISSÕES — Operador / Auditor por aba
+// ════════════════════════════════════════
+async function carregarMatrizPermissoes() {
+  try {
+    const { data, error } = await db.from('svc_permissoes_abas').select('*');
+    if (error) throw error;
+    matrizPermissoesAtual = {};
+    (data || []).forEach(l => { matrizPermissoesAtual[`${l.perfil}:${l.aba}`] = l.nivel; });
+    renderMatrizPermissoes();
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao carregar matriz de permissões: ' + (error.message || error), 'error');
+    const tbody = document.getElementById('tbody-matriz-permissoes');
+    if (tbody) tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state"><div class="empty-icon">⚠️</div><p>Não foi possível carregar a matriz</p><span>Verifique se a tabela svc_permissoes_abas existe</span></div></td></tr>`;
+  }
+}
+
+function renderMatrizPermissoes() {
+  const tbody = document.getElementById('tbody-matriz-permissoes');
+  if (!tbody) return;
+
+  const selectHtml = (perfil, aba, meuNivel) => {
+    const valorAtual = matrizPermissoesAtual[`${perfil}:${aba}`] || 'nenhum';
+    let opcoes = [['nenhum', 'Sem acesso']];
+    if (meuNivel === 'ver' || meuNivel === 'editar') opcoes.push(['ver', 'Visualizar']);
+    if (meuNivel === 'editar') opcoes.push(['editar', 'Editar']);
+
+    const dentroDoAlcance = opcoes.some(([v]) => v === valorAtual);
+    const travado = opcoes.length <= 1 || !dentroDoAlcance;
+    if (!dentroDoAlcance) {
+      const labelExtra = valorAtual === 'editar' ? 'Editar' : (valorAtual === 'ver' ? 'Visualizar' : 'Sem acesso');
+      opcoes = [...opcoes, [valorAtual, `${labelExtra} (fora do seu alcance)`]];
+    }
+
+    return `<select id="matriz-${perfil}-${aba}" data-perfil="${perfil}" data-aba="${aba}" data-travado="${travado ? '1' : '0'}" ${travado ? 'disabled' : ''}>
+      ${opcoes.map(([v, l]) => `<option value="${v}" ${v === valorAtual ? 'selected' : ''}>${l}</option>`).join('')}
+    </select>`;
+  };
+
+  tbody.innerHTML = ABAS_CONFIGURAVEIS.map(aba => {
+    const meuNivel = meuNivelParaAba(aba);
+    return `<tr>
+      <td>${escapeHtml(LABEL_ABA_PERMISSAO[aba] || aba)}</td>
+      <td>${selectHtml('operador', aba, meuNivel)}</td>
+      <td>${selectHtml('auditor', aba, meuNivel)}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function salvarMatrizPermissoes() {
+  if (!pode('gerenciar_permissoes')) { toast('Seu perfil não permite gerenciar permissões.', 'error'); return; }
+
+  const linhas = [];
+  ABAS_CONFIGURAVEIS.forEach(aba => {
+    ['operador', 'auditor'].forEach(perfil => {
+      const sel = document.getElementById(`matriz-${perfil}-${aba}`);
+      if (!sel || sel.dataset.travado === '1') return; // fora do alcance de quem está salvando: não sobrescreve
+      linhas.push({
+        perfil,
+        aba,
+        nivel: sel.value,
+        atualizado_por: usuarioAtual?.nome || usuarioAtual?.usuario || null
+      });
+    });
+  });
+
+  if (!linhas.length) { toast('Nenhuma alteração dentro do seu alcance para salvar.', 'error'); return; }
+
+  const btn = document.getElementById('btn-salvar-matriz-permissoes');
+  setButtonLoading(btn, true, 'Salvando...');
+  try {
+    const { error } = await db.from('svc_permissoes_abas').upsert(linhas, { onConflict: 'perfil,aba' });
+    if (error) throw error;
+    toast('Permissões atualizadas com sucesso.', 'success');
+    await carregarMatrizPermissoes();
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao salvar permissões: ' + (error.message || error), 'error');
   } finally {
     setButtonLoading(btn, false);
   }
