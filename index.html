@@ -512,6 +512,15 @@
         <button class="tab-btn nav-item" id="tab-crachas" data-tab="crachas" onclick="switchTab('crachas',this)"><span class="nav-icon">🏷️</span><span>Crachás LMS</span></button>
       </div>
     </section>
+    <section class="nav-group" data-nav-group="administracao">
+      <button class="nav-group-toggle" type="button" onclick="toggleNavGroup('administracao')">
+        <span class="nav-group-title"><strong>Administração</strong><span>Gestão de acessos</span></span>
+        <span class="nav-group-chevron">⌄</span>
+      </button>
+      <div class="nav-group-items">
+        <button class="tab-btn nav-item" id="tab-usuarios" data-tab="usuarios" onclick="switchTab('usuarios',this)"><span class="nav-icon">🔐</span><span>Usuários</span></button>
+      </div>
+    </section>
   </div>
   <div class="sidebar-foot">
     <div class="sidebar-user">
@@ -1334,6 +1343,91 @@
   </div>
 </div>
 
+<!-- ════════════════════════════════════════
+     USUÁRIOS — GESTÃO DE ACESSOS
+════════════════════════════════════════ -->
+<div id="page-usuarios" class="page">
+
+  <div class="form-card card" id="card-form-usuario" style="margin-bottom:24px">
+    <p class="section-label">Criar novo usuário</p>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Nome completo</label>
+        <input type="text" id="usr-nome" placeholder="Ex: João da Silva" maxlength="120">
+      </div>
+      <div class="form-group">
+        <label>Login (usuário)</label>
+        <input type="text" id="usr-login" placeholder="Ex: joao.silva" maxlength="60">
+        <span class="form-hint">Sem espaços. É o que a pessoa digita para entrar no sistema.</span>
+      </div>
+      <div class="form-group">
+        <label>Perfil de acesso</label>
+        <select id="usr-perfil"></select>
+      </div>
+      <div class="form-group">
+        <label>Senha temporária</label>
+        <input type="password" id="usr-senha" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label>Confirmar senha</label>
+        <input type="password" id="usr-senha-confirma" placeholder="Repita a senha" autocomplete="new-password">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" id="btn-criar-usuario" onclick="criarUsuarioSistema()">Criar Usuário</button>
+      <button class="btn btn-secondary" onclick="limparFormUsuario()">Limpar</button>
+    </div>
+  </div>
+
+  <p class="section-label">Usuários cadastrados</p>
+  <div class="card">
+    <div class="search-bar">
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Buscar por nome ou login..." id="busca-usuarios" oninput="renderUsuariosSistema()">
+      </div>
+      <span class="count-badge" id="usuarios-count">0 usuários</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Nome</th><th>Login</th><th>Perfil</th><th>Status</th><th style="text-align:right">Ações</th>
+        </tr></thead>
+        <tbody id="tbody-usuarios">
+          <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🔐</div><p>Carregando usuários...</p></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Editar Usuário -->
+<div class="modal-overlay" id="modal-editar-usuario">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3>Editar Usuário</h3>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Nome completo</label>
+      <input type="text" id="usr-edit-nome" maxlength="120">
+    </div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Login</label>
+      <input type="text" id="usr-edit-login" disabled style="background:#f5f5f5;color:var(--text-muted)">
+    </div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Perfil de acesso</label>
+      <select id="usr-edit-perfil"></select>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-top:4px">
+      <input type="checkbox" id="usr-edit-ativo"> Usuário ativo (desmarcar bloqueia o acesso)
+    </label>
+    <span class="field-hint" style="display:block;margin-top:10px">Login e senha não podem ser alterados por aqui. Para redefinir a senha, use o painel do Supabase (Authentication → Users).</span>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="fecharModalEditarUsuario()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" id="btn-salvar-edicao-usuario" onclick="salvarEdicaoUsuario()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 
 <div class="modal-overlay" id="modal-importar-hc" onclick="fecharImportacaoHC()">
   <div class="modal modal-lg" onclick="event.stopPropagation()">
@@ -1551,6 +1645,17 @@ const db = createClient(supabaseUrl, supabaseKey, {
   }
 });
 
+// Client auxiliar, usado somente para criar novos usuários (auth.signUp).
+// Mantido isolado (sem persistir sessão) para não substituir a sessão do admin logado no client "db".
+const dbAdminAux = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
+    storageKey: 'sb-aux-criacao-usuarios'
+  }
+});
+
 // Remove somente query string vazia criada por submit padrão do navegador, ex: /?
 function limparQueryVaziaDaUrl() {
   try {
@@ -1671,14 +1776,15 @@ const EXIGIR_CADASTRO_PERFIL = true; // Com a tabela svc_usuarios configurada, t
 const PERFIS_ACESSO = {
   admin: {
     label: 'Administrador',
-    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'monitor', 'crachas'],
+    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'monitor', 'crachas', 'usuarios'],
     gerar_crachas: true,
     criar_turnos: true, editar_turnos: true, excluir_turnos: true,
     criar_hc: true, editar_hc: true, excluir_hc: true, exportar_hc: true,
     ver_anomalias: true, atualizar_anomalias: true, tratar_anomalias: true,
     criar_sched: true, editar_sched: true, excluir_sched: true,
     registrar_abs: true, ver_todos_abs: true, excluir_abs: true,
-    registrar_insucesso: true, editar_insucesso: true, excluir_insucesso: true
+    registrar_insucesso: true, editar_insucesso: true, excluir_insucesso: true,
+    gerenciar_usuarios: true
   },
   coordenador: {
     label: 'Coordenador',
@@ -1689,7 +1795,8 @@ const PERFIS_ACESSO = {
     ver_anomalias: true, atualizar_anomalias: true, tratar_anomalias: true,
     criar_sched: true, editar_sched: true, excluir_sched: false,
     registrar_abs: true, ver_todos_abs: false, excluir_abs: false,
-    registrar_insucesso: true, editar_insucesso: true, excluir_insucesso: false
+    registrar_insucesso: true, editar_insucesso: true, excluir_insucesso: false,
+    gerenciar_usuarios: false
   },
   auditor: {
     label: 'Auditor',
@@ -1700,7 +1807,8 @@ const PERFIS_ACESSO = {
     ver_anomalias: true, atualizar_anomalias: true, tratar_anomalias: false,
     criar_sched: false, editar_sched: false, excluir_sched: false,
     registrar_abs: false, ver_todos_abs: false, excluir_abs: false,
-    registrar_insucesso: false, editar_insucesso: false, excluir_insucesso: false
+    registrar_insucesso: false, editar_insucesso: false, excluir_insucesso: false,
+    gerenciar_usuarios: false
   }
 };
 
@@ -1908,6 +2016,7 @@ function aplicarControleAcesso() {
   setVisibleById('card-form-scheduling', pode('criar_sched') || pode('editar_sched'));
   setVisibleById('btn-registrar-abs', pode('registrar_abs'), 'inline-flex');
   setVisibleById('btn-registrar-insucesso', pode('registrar_insucesso'), 'inline-flex');
+  setVisibleById('card-form-usuario', pode('gerenciar_usuarios'));
 
   if (!podeAcessarTab('turnos')) cancelarEdicaoTurno();
   if (!pode('editar_hc') && !pode('criar_hc')) cancelarEdicaoHC();
@@ -2168,6 +2277,10 @@ let pendingDelete = null;
 let insucessos = [];
 let editingInsucessoId = null;
 let insucessoResumoAtualId = null;
+
+// Estado do módulo Usuários (gestão de acessos)
+let usuariosSistema = [];
+let editingUsuarioAuthUid = null;
 
 // Estado do módulo ABS (Absenteísmo)
 let absRegistros = [];
@@ -2458,6 +2571,10 @@ function switchTab(tab, btn) {
 
   if (tab === 'monitor') {
     monitorInicializarUploads();
+  }
+
+  if (tab === 'usuarios') {
+    carregarUsuariosSistema();
   }
 
   fecharMenuLateral();
@@ -4914,6 +5031,189 @@ async function excluirInsucessoAtual() {
   } catch (error) {
     console.error(error);
     toast('Erro ao excluir insucesso: ' + (error.message || error), 'error');
+  }
+}
+
+// ════════════════════════════════════════
+//  USUÁRIOS — gestão de acessos (svc_usuarios)
+// ════════════════════════════════════════
+function popularSelectsPerfilUsuario() {
+  const opcoes = Object.entries(PERFIS_ACESSO)
+    .map(([chave, cfg]) => `<option value="${chave}">${escapeHtml(cfg.label || chave)}</option>`)
+    .join('');
+  ['usr-perfil', 'usr-edit-perfil'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (sel && !sel.dataset.populado) {
+      sel.innerHTML = opcoes;
+      sel.dataset.populado = '1';
+    }
+  });
+}
+
+async function carregarUsuariosSistema() {
+  popularSelectsPerfilUsuario();
+  const tbody = document.getElementById('tbody-usuarios');
+  try {
+    const { data, error } = await db
+      .from('svc_usuarios')
+      .select('auth_uid,email,login,nome,perfil,ativo')
+      .order('nome');
+    if (error) throw error;
+    usuariosSistema = data || [];
+    renderUsuariosSistema();
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao buscar usuários: ' + (error.message || error), 'error');
+    if (tbody) tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⚠️</div><p>Não foi possível carregar os usuários</p><span>Verifique as policies de RLS da tabela svc_usuarios</span></div></td></tr>`;
+  }
+}
+
+function renderUsuariosSistema() {
+  const busca = lower(document.getElementById('busca-usuarios')?.value || '');
+  const lista = usuariosSistema.filter(u => {
+    if (!busca) return true;
+    return lower(u.nome).includes(busca) || lower(u.login).includes(busca);
+  });
+
+  const countEl = document.getElementById('usuarios-count');
+  if (countEl) countEl.textContent = `${lista.length} usuário${lista.length !== 1 ? 's' : ''}`;
+
+  const tbody = document.getElementById('tbody-usuarios');
+  if (!tbody) return;
+
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🔐</div><p>${usuariosSistema.length ? 'Nenhum resultado para a busca' : 'Nenhum usuário cadastrado'}</p><span>${usuariosSistema.length ? 'Tente outro termo' : 'Preencha o formulário acima para começar'}</span></div></td></tr>`;
+    return;
+  }
+
+  const ordenada = [...lista].sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+  tbody.innerHTML = ordenada.map(u => {
+    const uid = safeId(u.auth_uid);
+    const perfilLabel = PERFIS_ACESSO[u.perfil]?.label || u.perfil || '—';
+    const statusBadgeHtml = u.ativo === false
+      ? '<span class="badge badge-red">Inativo</span>'
+      : '<span class="badge badge-green">Ativo</span>';
+    return `<tr>
+      <td><strong>${escapeHtml(u.nome || '—')}</strong></td>
+      <td style="font-family:monospace;font-size:12px">${escapeHtml(u.login || '—')}</td>
+      <td><span class="badge badge-blue">${escapeHtml(perfilLabel)}</span></td>
+      <td>${statusBadgeHtml}</td>
+      <td style="text-align:right">
+        <button class="btn btn-secondary btn-sm" onclick="abrirModalEditarUsuario('${uid}')">Editar</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function limparFormUsuario() {
+  document.getElementById('usr-nome').value = '';
+  document.getElementById('usr-login').value = '';
+  document.getElementById('usr-senha').value = '';
+  document.getElementById('usr-senha-confirma').value = '';
+  const sel = document.getElementById('usr-perfil');
+  if (sel) sel.selectedIndex = 0;
+}
+
+async function criarUsuarioSistema() {
+  if (!pode('gerenciar_usuarios')) { toast('Seu perfil não permite gerenciar usuários.', 'error'); return; }
+
+  const nome = document.getElementById('usr-nome').value.trim();
+  const loginBruto = document.getElementById('usr-login').value.trim();
+  const login = normalizarUsuarioLogin(loginBruto);
+  const perfil = document.getElementById('usr-perfil').value;
+  const senha = document.getElementById('usr-senha').value;
+  const senhaConfirma = document.getElementById('usr-senha-confirma').value;
+
+  if (!nome) { toast('Informe o nome completo.', 'error'); return; }
+  if (!login) { toast('Informe o login do usuário.', 'error'); return; }
+  if (!perfil) { toast('Selecione o perfil de acesso.', 'error'); return; }
+  if (!senha || senha.length < 6) { toast('A senha deve ter ao menos 6 caracteres.', 'error'); return; }
+  if (senha !== senhaConfirma) { toast('As senhas não coincidem.', 'error'); return; }
+  if (usuariosSistema.some(u => lower(u.login) === login)) { toast('Já existe um usuário com esse login.', 'error'); return; }
+
+  const email = usuarioParaEmailAuth(login);
+  const btn = document.getElementById('btn-criar-usuario');
+  setButtonLoading(btn, true, 'Criando...');
+  try {
+    const { data, error } = await dbAdminAux.auth.signUp({ email, password: senha });
+    if (error) throw error;
+    if (!data?.user?.id) throw new Error('Não foi possível obter o ID do usuário criado.');
+
+    const avisoConfirmacao = !data.session;
+
+    const { error: errInsert } = await db.from('svc_usuarios').insert([{
+      auth_uid: data.user.id,
+      email,
+      login,
+      nome,
+      perfil,
+      ativo: true
+    }]);
+    if (errInsert) throw errInsert;
+
+    try { await dbAdminAux.auth.signOut(); } catch (e) { /* client auxiliar, sem impacto na sessão principal */ }
+
+    toast(`Usuário "${nome}" criado com sucesso.`, 'success');
+    if (avisoConfirmacao) {
+      toast('Atenção: o Supabase pode exigir confirmação de e-mail. Se o login falhar, desative "Confirm email" em Authentication → Providers → Email.', 'error');
+    }
+    limparFormUsuario();
+    await carregarUsuariosSistema();
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao criar usuário: ' + (error.message || error), 'error');
+  } finally {
+    setButtonLoading(btn, false);
+  }
+}
+
+function abrirModalEditarUsuario(authUid) {
+  const u = usuariosSistema.find(x => String(x.auth_uid) === String(authUid));
+  if (!u) return;
+  editingUsuarioAuthUid = u.auth_uid;
+  document.getElementById('usr-edit-nome').value = u.nome || '';
+  document.getElementById('usr-edit-login').value = u.login || '';
+  document.getElementById('usr-edit-perfil').value = u.perfil || '';
+  document.getElementById('usr-edit-ativo').checked = u.ativo !== false;
+  document.getElementById('modal-editar-usuario').classList.add('open');
+}
+
+function fecharModalEditarUsuario() {
+  document.getElementById('modal-editar-usuario').classList.remove('open');
+  editingUsuarioAuthUid = null;
+}
+
+async function salvarEdicaoUsuario() {
+  if (!pode('gerenciar_usuarios')) { toast('Seu perfil não permite gerenciar usuários.', 'error'); return; }
+  if (!editingUsuarioAuthUid) return;
+
+  const nome = document.getElementById('usr-edit-nome').value.trim();
+  const perfil = document.getElementById('usr-edit-perfil').value;
+  const ativo = document.getElementById('usr-edit-ativo').checked;
+
+  if (!nome) { toast('Informe o nome completo.', 'error'); return; }
+  if (!perfil) { toast('Selecione o perfil de acesso.', 'error'); return; }
+
+  if (String(editingUsuarioAuthUid) === String(usuarioAtual?.id) && !ativo) {
+    toast('Você não pode desativar o próprio usuário.', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btn-salvar-edicao-usuario');
+  setButtonLoading(btn, true, 'Salvando...');
+  try {
+    const { error } = await db.from('svc_usuarios')
+      .update({ nome, perfil, ativo })
+      .eq('auth_uid', editingUsuarioAuthUid);
+    if (error) throw error;
+    toast('Usuário atualizado.', 'success');
+    fecharModalEditarUsuario();
+    await carregarUsuariosSistema();
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao atualizar usuário: ' + (error.message || error), 'error');
+  } finally {
+    setButtonLoading(btn, false);
   }
 }
 
