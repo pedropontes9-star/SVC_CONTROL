@@ -499,6 +499,7 @@
       </button>
       <div class="nav-group-items">
         <button class="tab-btn nav-item" id="tab-anomalias" data-tab="anomalias" onclick="switchTab('anomalias',this)"><span class="nav-icon">⚠️</span><span>Anomalias (CIA/COA)</span></button>
+        <button class="tab-btn nav-item" id="tab-insucesso" data-tab="insucesso" onclick="switchTab('insucesso',this)"><span class="nav-icon">🚫</span><span>Insucesso</span></button>
       </div>
     </section>
     <section class="nav-group" data-nav-group="ferramentas">
@@ -942,6 +943,41 @@
 </div>
 
 
+
+<!-- ════════════════════════════════════════
+     INSUCESSO
+════════════════════════════════════════ -->
+<div id="page-insucesso" class="page">
+  <p class="section-label">Insucesso de Entrega</p>
+  <div class="card">
+    <div class="search-bar">
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Buscar por transportadora ou motorista..." id="busca-insucesso" oninput="renderInsucessos()">
+      </div>
+      <button class="btn btn-primary btn-sm" id="btn-registrar-insucesso" onclick="abrirModalInsucesso()" style="height:34px;display:inline-flex;align-items:center;gap:6px;">
+        <span>➕ Registrar Insucesso</span>
+      </button>
+      <span class="count-badge" id="insucesso-count">0 registros</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Transportadora</th>
+            <th>Motorista</th>
+            <th>Pacotes</th>
+            <th>Registrado por</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-insucesso">
+          <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📦</div><p>Carregando registros...</p></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
 <!-- ════════════════════════════════════════
      SCHEDULING
@@ -1451,6 +1487,47 @@
   </div>
 </div>
 
+<!-- Modal Registrar/Editar Insucesso -->
+<div class="modal-overlay" id="modal-insucesso-registro">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3 id="insucesso-modal-titulo">Registrar Insucesso</h3>
+
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Transportadora</label>
+      <input type="text" id="insucesso-transportadora" placeholder="Ex: DHL, Mendes, TSI, SRM..." maxlength="80">
+    </div>
+
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Motorista</label>
+      <input type="text" id="insucesso-motorista" placeholder="Nome do motorista" maxlength="80">
+    </div>
+
+    <div class="form-group">
+      <label>Pacotes</label>
+      <textarea id="insucesso-pacotes" rows="4" placeholder="Um código de pacote por linha" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px; resize:vertical; font-family:inherit; font-size:13px; color:var(--text); outline:none;"></textarea>
+      <span class="field-hint">Informe um código de pacote por linha quando houver mais de um.</span>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="fecharModalInsucesso()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" id="btn-salvar-insucesso" onclick="salvarInsucesso()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Resumo do Insucesso (Editar / Excluir) -->
+<div class="modal-overlay" id="modal-insucesso-resumo">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3>Resumo do Insucesso</h3>
+    <div id="insucesso-resumo-corpo" style="font-size:13px; color:var(--text); line-height:1.6"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="fecharModalResumoInsucesso()">Fechar</button>
+      <button class="btn btn-danger btn-sm" id="btn-excluir-insucesso" onclick="excluirInsucessoAtual()">Excluir</button>
+      <button class="btn btn-primary btn-sm" id="btn-editar-insucesso" onclick="editarInsucessoAtual()">Editar</button>
+    </div>
+  </div>
+</div>
+
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1594,23 +1671,25 @@ const EXIGIR_CADASTRO_PERFIL = true; // Com a tabela svc_usuarios configurada, t
 const PERFIS_ACESSO = {
   admin: {
     label: 'Administrador',
-    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'monitor', 'crachas'],
+    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'monitor', 'crachas'],
     gerar_crachas: true,
     criar_turnos: true, editar_turnos: true, excluir_turnos: true,
     criar_hc: true, editar_hc: true, excluir_hc: true, exportar_hc: true,
     ver_anomalias: true, atualizar_anomalias: true, tratar_anomalias: true,
     criar_sched: true, editar_sched: true, excluir_sched: true,
-    registrar_abs: true, ver_todos_abs: true, excluir_abs: true
+    registrar_abs: true, ver_todos_abs: true, excluir_abs: true,
+    registrar_insucesso: true, editar_insucesso: true, excluir_insucesso: true
   },
   coordenador: {
     label: 'Coordenador',
-    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'monitor', 'crachas'],
+    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'monitor', 'crachas'],
     gerar_crachas: true,
     criar_turnos: false, editar_turnos: false, excluir_turnos: false,
     criar_hc: true, editar_hc: true, excluir_hc: false, exportar_hc: true,
     ver_anomalias: true, atualizar_anomalias: true, tratar_anomalias: true,
     criar_sched: true, editar_sched: true, excluir_sched: false,
-    registrar_abs: true, ver_todos_abs: false, excluir_abs: false
+    registrar_abs: true, ver_todos_abs: false, excluir_abs: false,
+    registrar_insucesso: true, editar_insucesso: true, excluir_insucesso: false
   },
   auditor: {
     label: 'Auditor',
@@ -1620,7 +1699,8 @@ const PERFIS_ACESSO = {
     criar_hc: false, editar_hc: false, excluir_hc: false, exportar_hc: false,
     ver_anomalias: true, atualizar_anomalias: true, tratar_anomalias: false,
     criar_sched: false, editar_sched: false, excluir_sched: false,
-    registrar_abs: false, ver_todos_abs: false, excluir_abs: false
+    registrar_abs: false, ver_todos_abs: false, excluir_abs: false,
+    registrar_insucesso: false, editar_insucesso: false, excluir_insucesso: false
   }
 };
 
@@ -1827,6 +1907,7 @@ function aplicarControleAcesso() {
   setVisibleById('card-form-crachas', pode('gerar_crachas'));
   setVisibleById('card-form-scheduling', pode('criar_sched') || pode('editar_sched'));
   setVisibleById('btn-registrar-abs', pode('registrar_abs'), 'inline-flex');
+  setVisibleById('btn-registrar-insucesso', pode('registrar_insucesso'), 'inline-flex');
 
   if (!podeAcessarTab('turnos')) cancelarEdicaoTurno();
   if (!pode('editar_hc') && !pode('criar_hc')) cancelarEdicaoHC();
@@ -2083,6 +2164,11 @@ let editingHcId = null;
 let editingSchedId = null;
 let pendingDelete = null;
 
+// Estado do módulo Insucesso (pacotes não entregues)
+let insucessos = [];
+let editingInsucessoId = null;
+let insucessoResumoAtualId = null;
+
 // Estado do módulo ABS (Absenteísmo)
 let absRegistros = [];
 let absColaboradoresFiltrados = [];
@@ -2290,6 +2376,8 @@ async function carregarDadosDoBanco() {
     atualizarStats();
     await carregarAnomalias({ silencioso: true, renderizar: true });
     await carregarAbsenteismo();
+    await carregarInsucessos();
+    renderInsucessos();
     await carregarHistoricoMedidas();
     aplicarControleAcesso();
   } catch (error) {
@@ -2362,6 +2450,10 @@ function switchTab(tab, btn) {
 
   if (tab === 'abs') {
     renderAbsenteismo();
+  }
+
+  if (tab === 'insucesso') {
+    renderInsucessos();
   }
 
   if (tab === 'monitor') {
@@ -4641,6 +4733,188 @@ function renderAbsenteismo() {
     listaTabela = listaTabela.filter(a => lower(a.nome).includes(buscaText) || lower(a.ext).includes(buscaText));
   }
   renderTabelaAbsenteismo(listaTabela);
+}
+
+// ════════════════════════════════════════
+//  INSUCESSO — pacotes não entregues (carregamento e CRUD)
+// ════════════════════════════════════════
+async function carregarInsucessos() {
+  try {
+    const { data, error } = await db.from('insucessos').select('*').order('data_registro', { ascending: false });
+    if (error) {
+      if (error.code === '42P01' || /does not exist/i.test(error.message || '')) {
+        insucessos = [];
+        console.warn('Tabela "insucessos" ainda não existe no Supabase.');
+        return;
+      }
+      throw error;
+    }
+    insucessos = (data || []).map(i => ({
+      id: i.id,
+      transportadora: i.transportadora,
+      motorista: i.motorista,
+      pacotes: i.pacotes || '',
+      dataRegistro: i.data_registro,
+      registradoPor: i.registrado_por
+    }));
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao buscar registros de insucesso: ' + (error.message || error), 'error');
+  }
+}
+
+function parsePacotesInsucesso(texto) {
+  return (texto || '')
+    .split(/\r?\n/)
+    .map(p => p.trim())
+    .filter(Boolean);
+}
+
+function abrirModalInsucesso() {
+  if (!pode('registrar_insucesso')) { toast('Seu perfil não permite registrar insucessos.', 'error'); return; }
+  editingInsucessoId = null;
+  document.getElementById('insucesso-modal-titulo').textContent = 'Registrar Insucesso';
+  document.getElementById('btn-salvar-insucesso').textContent = 'Salvar';
+  document.getElementById('insucesso-transportadora').value = '';
+  document.getElementById('insucesso-motorista').value = '';
+  document.getElementById('insucesso-pacotes').value = '';
+  document.getElementById('modal-insucesso-registro').classList.add('open');
+}
+
+function fecharModalInsucesso() {
+  document.getElementById('modal-insucesso-registro').classList.remove('open');
+  editingInsucessoId = null;
+}
+
+async function salvarInsucesso() {
+  if (editingInsucessoId && !pode('editar_insucesso')) { toast('Seu perfil não permite editar insucessos.', 'error'); return; }
+  if (!editingInsucessoId && !pode('registrar_insucesso')) { toast('Seu perfil não permite registrar insucessos.', 'error'); return; }
+
+  const transportadora = document.getElementById('insucesso-transportadora').value.trim();
+  const motorista = document.getElementById('insucesso-motorista').value.trim();
+  const pacotesLista = parsePacotesInsucesso(document.getElementById('insucesso-pacotes').value);
+
+  if (!transportadora) { toast('Informe a transportadora.', 'error'); return; }
+  if (!motorista) { toast('Informe o motorista.', 'error'); return; }
+  if (!pacotesLista.length) { toast('Informe ao menos um pacote.', 'error'); return; }
+
+  const btn = document.getElementById('btn-salvar-insucesso');
+  setButtonLoading(btn, true, editingInsucessoId ? 'Atualizando...' : 'Salvando...');
+  try {
+    const dbData = {
+      transportadora,
+      motorista,
+      pacotes: pacotesLista.join('\n')
+    };
+    let error;
+    if (editingInsucessoId) {
+      ({ error } = await db.from('insucessos').update(dbData).eq('id', editingInsucessoId));
+    } else {
+      dbData.data_registro = hojeIsoLocal();
+      dbData.registrado_por = usuarioAtual?.nome || usuarioAtual?.usuario || null;
+      ({ error } = await db.from('insucessos').insert([dbData]));
+    }
+    if (error) throw error;
+    toast(editingInsucessoId ? 'Insucesso atualizado.' : 'Insucesso registrado.', 'success');
+    fecharModalInsucesso();
+    await carregarInsucessos();
+    renderInsucessos();
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao salvar insucesso: ' + (error.message || error), 'error');
+  } finally {
+    setButtonLoading(btn, false);
+  }
+}
+
+function renderInsucessos() {
+  const busca = lower(document.getElementById('busca-insucesso')?.value || '');
+  const lista = insucessos.filter(i => {
+    if (!busca) return true;
+    return lower(i.transportadora).includes(busca) || lower(i.motorista).includes(busca);
+  });
+
+  const countEl = document.getElementById('insucesso-count');
+  if (countEl) countEl.textContent = `${lista.length} registro${lista.length !== 1 ? 's' : ''}`;
+
+  const tbody = document.getElementById('tbody-insucesso');
+  if (!tbody) return;
+
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📦</div><p>${insucessos.length ? 'Nenhum registro encontrado' : 'Nenhum insucesso cadastrado'}</p><span>${insucessos.length ? 'Tente outros termos' : 'Clique em Registrar Insucesso para começar'}</span></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = lista.map(i => {
+    const id = safeId(i.id);
+    const qtdPacotes = parsePacotesInsucesso(i.pacotes).length;
+    const dataFmt = i.dataRegistro ? i.dataRegistro.split('-').reverse().join('/') : '—';
+    return `<tr onclick="abrirResumoInsucesso('${id}')" style="cursor:pointer">
+      <td>${dataFmt}</td>
+      <td><strong>${escapeHtml(i.transportadora)}</strong></td>
+      <td>${escapeHtml(i.motorista)}</td>
+      <td><span class="badge badge-red">${qtdPacotes} pacote${qtdPacotes !== 1 ? 's' : ''}</span></td>
+      <td style="color:var(--text-muted);font-size:12px">${escapeHtml(i.registradoPor || '—')}</td>
+    </tr>`;
+  }).join('');
+}
+
+function abrirResumoInsucesso(id) {
+  const i = insucessos.find(r => String(r.id) === String(id));
+  if (!i) return;
+  insucessoResumoAtualId = i.id;
+  const pacotesLista = parsePacotesInsucesso(i.pacotes);
+  const dataFmt = i.dataRegistro ? i.dataRegistro.split('-').reverse().join('/') : '—';
+  document.getElementById('insucesso-resumo-corpo').innerHTML = `
+    <div style="margin-bottom:10px"><strong>Transportadora:</strong> ${escapeHtml(i.transportadora)}</div>
+    <div style="margin-bottom:10px"><strong>Motorista:</strong> ${escapeHtml(i.motorista)}</div>
+    <div style="margin-bottom:10px"><strong>Data:</strong> ${dataFmt}</div>
+    <div style="margin-bottom:6px"><strong>Pacotes (${pacotesLista.length}):</strong></div>
+    <ul style="margin:0 0 4px 18px;padding:0">
+      ${pacotesLista.map(p => `<li>${escapeHtml(p)}</li>`).join('') || '<li style="color:var(--text-hint)">—</li>'}
+    </ul>
+    <div style="margin-top:10px;font-size:12px;color:var(--text-muted)">Registrado por ${escapeHtml(i.registradoPor || '—')}</div>
+  `;
+  setVisibleById('btn-editar-insucesso', pode('editar_insucesso'), 'inline-flex');
+  setVisibleById('btn-excluir-insucesso', pode('excluir_insucesso'), 'inline-flex');
+  document.getElementById('modal-insucesso-resumo').classList.add('open');
+}
+
+function fecharModalResumoInsucesso() {
+  document.getElementById('modal-insucesso-resumo').classList.remove('open');
+  insucessoResumoAtualId = null;
+}
+
+function editarInsucessoAtual() {
+  if (!pode('editar_insucesso')) { toast('Seu perfil não permite editar insucessos.', 'error'); return; }
+  const i = insucessos.find(r => String(r.id) === String(insucessoResumoAtualId));
+  if (!i) return;
+  fecharModalResumoInsucesso();
+  editingInsucessoId = i.id;
+  document.getElementById('insucesso-modal-titulo').textContent = 'Editar Insucesso';
+  document.getElementById('btn-salvar-insucesso').textContent = 'Atualizar';
+  document.getElementById('insucesso-transportadora').value = i.transportadora || '';
+  document.getElementById('insucesso-motorista').value = i.motorista || '';
+  document.getElementById('insucesso-pacotes').value = i.pacotes || '';
+  document.getElementById('modal-insucesso-registro').classList.add('open');
+}
+
+async function excluirInsucessoAtual() {
+  if (!pode('excluir_insucesso')) { toast('Seu perfil não permite excluir insucessos.', 'error'); return; }
+  const i = insucessos.find(r => String(r.id) === String(insucessoResumoAtualId));
+  if (!i) return;
+  if (!confirm(`Excluir o registro de insucesso de "${i.transportadora}"? Esta ação não pode ser desfeita.`)) return;
+  try {
+    const { error } = await db.from('insucessos').delete().eq('id', i.id);
+    if (error) throw error;
+    toast('Insucesso excluído.', 'success');
+    fecharModalResumoInsucesso();
+    await carregarInsucessos();
+    renderInsucessos();
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao excluir insucesso: ' + (error.message || error), 'error');
+  }
 }
 
 function tplBadge(tpl) {
