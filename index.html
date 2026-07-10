@@ -410,6 +410,18 @@
   .sched-empty { padding:48px 24px; text-align:center; color:var(--text-muted); }
   .sched-periodo { font-size:11px; color:var(--text-hint); }
 
+  /* ── Home ── */
+  .home-hero { background: linear-gradient(135deg, var(--meli-yellow) 0%, #fff5cc 100%); border-radius: var(--radius); padding: 24px 28px; margin-bottom: 20px; box-shadow: var(--shadow); }
+  .home-hero h2 { font-size: 22px; margin: 0 0 4px; color: #3a3a3a; }
+  .home-sub { font-size: 13px; color: #6b5f00; margin: 0; text-transform: capitalize; }
+  .home-shortcuts { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin-bottom: 8px; }
+  .home-shortcut-card { background: var(--surface); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); cursor: pointer; border: 1px solid transparent; transition: transform .12s ease, border-color .12s ease; display:flex; flex-direction:column; gap:6px; }
+  .home-shortcut-card:hover { transform: translateY(-2px); border-color: var(--meli-blue); }
+  .home-shortcut-icon { font-size: 24px; }
+  .home-shortcut-title { font-size: 14px; font-weight: 700; color: var(--text); }
+  .home-shortcut-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+  .home-empty { padding: 32px; text-align: center; color: var(--text-muted); }
+
   @media print {
     #auth-screen, .header, .sidebar, .sidebar-overlay, .toast, .modal-overlay,
     .page:not(#page-crachas), #page-crachas .form-card,
@@ -480,6 +492,7 @@
     <button class="sidebar-close" type="button" onclick="fecharMenuLateral()" aria-label="Fechar menu">×</button>
   </div>
   <div class="sidebar-body">
+    <button class="tab-btn nav-item" id="tab-home" data-tab="home" onclick="switchTab('home',this)" style="margin-bottom:10px;font-weight:700"><span class="nav-icon">🏠</span><span>Home</span></button>
     <section class="nav-group" data-nav-group="hcm">
       <button class="nav-group-toggle" type="button" onclick="toggleNavGroup('hcm')">
         <span class="nav-group-title"><strong>HCM</strong><span>Head Count Management</span></span>
@@ -532,6 +545,21 @@
     <button class="btn-logout" onclick="sairSistema()">Sair do sistema</button>
   </div>
 </aside>
+
+<!-- ════════════════════════════════════════
+     HOME
+════════════════════════════════════════ -->
+<div id="page-home" class="page active">
+  <div class="home-hero">
+    <h2 id="home-saudacao">Olá!</h2>
+    <p class="home-sub" id="home-data-hoje"></p>
+  </div>
+
+  <div class="stats-row" id="home-stats-row"></div>
+
+  <p class="section-label">Acesso rápido</p>
+  <div class="home-shortcuts" id="home-shortcuts"></div>
+</div>
 
 <div id="page-turnos" class="page">
 
@@ -603,7 +631,7 @@
   </div>
 </div>
 
-<div id="page-headcount" class="page active">
+<div id="page-headcount" class="page">
 
   <div class="access-note" id="hc-readonly-note" style="display:none">Seu perfil permite consultar o headcount, mas não cadastrar, editar ou excluir colaboradores.</div>
 
@@ -958,12 +986,35 @@
 ════════════════════════════════════════ -->
 <div id="page-insucesso" class="page">
   <p class="section-label">Insucesso de Entrega</p>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Pacotes recebidos hoje</div>
+      <div class="stat-value" id="insucesso-stat-hoje">0</div>
+      <div class="stat-sub">registros de insucesso</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Principal transportadora</div>
+      <div class="stat-value" style="font-size:16px;line-height:1.3" id="insucesso-stat-transportadora">—</div>
+      <div class="stat-sub" id="insucesso-stat-transportadora-sub"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <p class="section-label" style="margin-bottom:2px">Pacotes recebidos por hora</p>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Últimos 7 dias (hoje + 6 dias anteriores), somados por hora do dia</p>
+    <canvas id="insucesso-chart-hora" height="90"></canvas>
+  </div>
+
   <div class="card">
     <div class="search-bar">
       <div class="search-input-wrap">
         <span class="search-icon">🔍</span>
         <input type="text" placeholder="Buscar por transportadora ou motorista..." id="busca-insucesso" oninput="renderInsucessos()">
       </div>
+      <button class="btn btn-secondary btn-sm" onclick="abrirModalExportarInsucesso()" style="height:34px;display:inline-flex;align-items:center;gap:6px;">
+        <span>⬇️ Exportar CSV</span>
+      </button>
       <button class="btn btn-primary btn-sm" id="btn-registrar-insucesso" onclick="abrirModalInsucesso()" style="height:34px;display:inline-flex;align-items:center;gap:6px;">
         <span>➕ Registrar Insucesso</span>
       </button>
@@ -1658,6 +1709,26 @@
   </div>
 </div>
 
+<!-- Modal Exportar Insucesso (CSV) -->
+<div class="modal-overlay" id="modal-exportar-insucesso">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3>Exportar Insucessos (CSV)</h3>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Data inicial</label>
+      <input type="date" id="insucesso-export-data-ini">
+    </div>
+    <div class="form-group">
+      <label>Data final</label>
+      <input type="date" id="insucesso-export-data-fim">
+    </div>
+    <span class="field-hint" style="display:block;margin-top:10px">Uma linha por pacote no arquivo gerado.</span>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="fecharModalExportarInsucesso()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" id="btn-gerar-exportacao-insucesso" onclick="gerarExportacaoInsucessoCSV()">Gerar relatório</button>
+    </div>
+  </div>
+</div>
+
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1826,7 +1897,7 @@ function perfilVazioDinamico(label) {
     registrar_abs: false, ver_todos_abs: false, excluir_abs: false,
     registrar_insucesso: false, editar_insucesso: false, excluir_insucesso: false,
     editar_monitor: false,
-    criar_usuarios: false, gerenciar_permissoes: false
+    criar_usuarios: false, gerenciar_permissoes: false, excluir_usuarios: false
   };
 }
 
@@ -1878,7 +1949,7 @@ const PERFIS_ACESSO = {
     registrar_abs: true, ver_todos_abs: true, excluir_abs: true,
     registrar_insucesso: true, editar_insucesso: true, excluir_insucesso: true,
     editar_monitor: true,
-    criar_usuarios: true, gerenciar_permissoes: true
+    criar_usuarios: true, gerenciar_permissoes: true, excluir_usuarios: true
   },
   coordenador: {
     label: 'Coordenador',
@@ -1891,7 +1962,7 @@ const PERFIS_ACESSO = {
     registrar_abs: true, ver_todos_abs: false, excluir_abs: false,
     registrar_insucesso: true, editar_insucesso: true, excluir_insucesso: false,
     editar_monitor: true,
-    criar_usuarios: false, gerenciar_permissoes: true
+    criar_usuarios: false, gerenciar_permissoes: true, excluir_usuarios: false
   },
   auditor: perfilVazioDinamico('Auditor'),
   operador: perfilVazioDinamico('Operador')
@@ -1928,11 +1999,12 @@ function pode(permissao) {
 }
 
 function podeAcessarTab(tab) {
+  if (tab === 'home') return true;
   return obterPerfilAtual().tabs.includes(tab);
 }
 
 function primeiraAbaPermitida() {
-  return obterPerfilAtual().tabs[0] || 'anomalias';
+  return 'home';
 }
 
 function setVisibleById(id, visivel, display = '') {
@@ -1954,6 +2026,92 @@ function atualizarIdentidadeHeader() {
   const sidebarProfile = document.getElementById('sidebar-user-profile');
   if (sidebarUser) sidebarUser.textContent = nome;
   if (sidebarProfile) sidebarProfile.textContent = perfil;
+}
+
+// ════════════════════════════════════════
+//  HOME — página inicial
+// ════════════════════════════════════════
+const HOME_SHORTCUTS = [
+  { tab: 'turnos', icon: '🕐', titulo: 'Turnos', desc: 'Gerencie os turnos operacionais' },
+  { tab: 'headcount', icon: '👥', titulo: 'Headcount', desc: 'Colaboradores e informações da equipe' },
+  { tab: 'scheduling', icon: '📅', titulo: 'Scheduling', desc: 'Agendamentos e escalas' },
+  { tab: 'abs', icon: '🩺', titulo: 'ABS', desc: 'Registros de absenteísmo' },
+  { tab: 'anomalias', icon: '⚠️', titulo: 'Anomalias (CIA/COA)', desc: 'Monitoramento de ponto' },
+  { tab: 'insucesso', icon: '🚫', titulo: 'Insucesso', desc: 'Pacotes não entregues' },
+  { tab: 'monitor', icon: '📦', titulo: 'Monitor — Ciclos', desc: 'Upload e histórico de ciclos' },
+  { tab: 'crachas', icon: '🏷️', titulo: 'Crachás LMS', desc: 'Gerador de crachás' },
+  { tab: 'usuarios', icon: '🔐', titulo: 'Usuários', desc: 'Gestão de acessos do sistema' }
+];
+
+function saudacaoPorHorario() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Bom dia';
+  if (h < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
+
+function irParaAba(tab) {
+  const btn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
+  switchTab(tab, btn);
+}
+
+function renderHome() {
+  const primeiroNome = (usuarioAtual?.nome || usuarioAtual?.usuario || '').split(' ')[0] || '';
+  const saudacaoEl = document.getElementById('home-saudacao');
+  if (saudacaoEl) saudacaoEl.textContent = `${saudacaoPorHorario()}${primeiroNome ? ', ' + primeiroNome : ''}!`;
+
+  const dataEl = document.getElementById('home-data-hoje');
+  if (dataEl) {
+    const texto = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+    dataEl.textContent = texto;
+  }
+
+  const hoje = hojeIsoLocal();
+  const stats = [];
+
+  if (podeAcessarTab('headcount')) {
+    const ativos = heads.filter(h => h.status === 'ativo').length;
+    stats.push({ label: 'Colaboradores ativos', valor: ativos, sub: 'headcount' });
+  }
+  if (podeAcessarTab('turnos')) {
+    stats.push({ label: 'Turnos cadastrados', valor: turnos.length, sub: 'turnos ativos no sistema' });
+  }
+  if (podeAcessarTab('scheduling')) {
+    stats.push({ label: 'Schedulings', valor: schedulings.length, sub: 'agendamentos cadastrados' });
+  }
+  if (podeAcessarTab('abs')) {
+    const hojeCount = absRegistros.filter(a => a.dataAbs === hoje).length;
+    stats.push({ label: 'ABS hoje', valor: hojeCount, sub: 'ausências registradas hoje' });
+  }
+  if (podeAcessarTab('insucesso')) {
+    const hojeCount = insucessos.filter(i => i.dataRegistro === hoje).length;
+    stats.push({ label: 'Pacotes em insucesso hoje', valor: hojeCount, sub: 'entregas não concluídas' });
+  }
+
+  const statsRow = document.getElementById('home-stats-row');
+  if (statsRow) {
+    statsRow.innerHTML = stats.map(s => `
+      <div class="stat-card">
+        <div class="stat-label">${escapeHtml(s.label)}</div>
+        <div class="stat-value">${s.valor}</div>
+        <div class="stat-sub">${escapeHtml(s.sub)}</div>
+      </div>
+    `).join('');
+  }
+
+  const shortcutsEl = document.getElementById('home-shortcuts');
+  if (shortcutsEl) {
+    const visiveis = HOME_SHORTCUTS.filter(s => podeAcessarTab(s.tab));
+    shortcutsEl.innerHTML = visiveis.length
+      ? visiveis.map(s => `
+        <div class="home-shortcut-card" onclick="irParaAba('${s.tab}')">
+          <div class="home-shortcut-icon">${s.icon}</div>
+          <div class="home-shortcut-title">${escapeHtml(s.titulo)}</div>
+          <div class="home-shortcut-desc">${escapeHtml(s.desc)}</div>
+        </div>
+      `).join('')
+      : '<div class="home-empty">Nenhuma aba liberada para o seu perfil ainda. Fale com um administrador ou coordenador.</div>';
+  }
 }
 
 function mostrarLogin(mensagem = '') {
@@ -2366,9 +2524,13 @@ let editingSchedId = null;
 let pendingDelete = null;
 
 // Estado do módulo Insucesso (pacotes não entregues)
-let insucessos = [];
-let editingInsucessoId = null;
-let insucessoResumoAtualId = null;
+let insucessos = []; // uma linha por PACOTE (agrupadas por grupoId na renderização)
+let editingInsucessoGrupoId = null;
+let editingInsucessoDataOriginal = null;
+let editingInsucessoCriadoEmOriginal = null;
+let editingInsucessoRegistradoPorOriginal = null;
+let insucessoResumoAtualGrupoId = null;
+let chartInsucessoHora = null;
 
 // Estado do módulo Usuários (gestão de acessos)
 let usuariosSistema = [];
@@ -2644,6 +2806,10 @@ function switchTab(tab, btn) {
   if (btn) btn.classList.add('active');
   const page = document.getElementById('page-' + tab);
   if (page) page.classList.add('active');
+
+  if (tab === 'home') {
+    renderHome();
+  }
 
   if (tab === 'anomalias') {
     carregarAnomalias({ silencioso: true, renderizar: true });
@@ -4948,26 +5114,28 @@ function renderAbsenteismo() {
 }
 
 // ════════════════════════════════════════
-//  INSUCESSO — pacotes não entregues (carregamento e CRUD)
+//  INSUCESSO — pacotes não entregues (uma linha por pacote no banco)
 // ════════════════════════════════════════
 async function carregarInsucessos() {
   try {
-    const { data, error } = await db.from('insucessos').select('*').order('data_registro', { ascending: false });
+    const { data, error } = await db.from('insucessos').select('*').order('criado_em', { ascending: false });
     if (error) {
       if (error.code === '42P01' || /does not exist/i.test(error.message || '')) {
         insucessos = [];
-        console.warn('Tabela "insucessos" ainda não existe no Supabase.');
+        console.warn('Tabela "insucessos" ainda não existe no Supabase (ou está no formato antigo).');
         return;
       }
       throw error;
     }
     insucessos = (data || []).map(i => ({
       id: i.id,
+      grupoId: i.grupo_id,
       transportadora: i.transportadora,
       motorista: i.motorista,
-      pacotes: i.pacotes || '',
+      pacote: i.pacote,
       dataRegistro: i.data_registro,
-      registradoPor: i.registrado_por
+      registradoPor: i.registrado_por,
+      criadoEm: i.criado_em
     }));
   } catch (error) {
     console.error(error);
@@ -4982,9 +5150,32 @@ function parsePacotesInsucesso(texto) {
     .filter(Boolean);
 }
 
+// Agrupa as linhas (1 por pacote) em "eventos" de registro, usando o grupoId.
+function agruparInsucessos(lista) {
+  const mapa = new Map();
+  lista.forEach(row => {
+    if (!mapa.has(row.grupoId)) {
+      mapa.set(row.grupoId, {
+        grupoId: row.grupoId,
+        transportadora: row.transportadora,
+        motorista: row.motorista,
+        dataRegistro: row.dataRegistro,
+        registradoPor: row.registradoPor,
+        criadoEm: row.criadoEm,
+        pacotes: []
+      });
+    }
+    mapa.get(row.grupoId).pacotes.push(row.pacote);
+  });
+  return Array.from(mapa.values()).sort((a, b) => new Date(b.criadoEm) - new Date(a.criadoEm));
+}
+
 function abrirModalInsucesso() {
   if (!pode('registrar_insucesso')) { toast('Seu perfil não permite registrar insucessos.', 'error'); return; }
-  editingInsucessoId = null;
+  editingInsucessoGrupoId = null;
+  editingInsucessoDataOriginal = null;
+  editingInsucessoRegistradoPorOriginal = null;
+  editingInsucessoCriadoEmOriginal = null;
   document.getElementById('insucesso-modal-titulo').textContent = 'Registrar Insucesso';
   document.getElementById('btn-salvar-insucesso').textContent = 'Salvar';
   document.getElementById('insucesso-transportadora').value = '';
@@ -4995,12 +5186,15 @@ function abrirModalInsucesso() {
 
 function fecharModalInsucesso() {
   document.getElementById('modal-insucesso-registro').classList.remove('open');
-  editingInsucessoId = null;
+  editingInsucessoGrupoId = null;
+  editingInsucessoDataOriginal = null;
+  editingInsucessoRegistradoPorOriginal = null;
+  editingInsucessoCriadoEmOriginal = null;
 }
 
 async function salvarInsucesso() {
-  if (editingInsucessoId && !pode('editar_insucesso')) { toast('Seu perfil não permite editar insucessos.', 'error'); return; }
-  if (!editingInsucessoId && !pode('registrar_insucesso')) { toast('Seu perfil não permite registrar insucessos.', 'error'); return; }
+  if (editingInsucessoGrupoId && !pode('editar_insucesso')) { toast('Seu perfil não permite editar insucessos.', 'error'); return; }
+  if (!editingInsucessoGrupoId && !pode('registrar_insucesso')) { toast('Seu perfil não permite registrar insucessos.', 'error'); return; }
 
   const transportadora = document.getElementById('insucesso-transportadora').value.trim();
   const motorista = document.getElementById('insucesso-motorista').value.trim();
@@ -5011,23 +5205,38 @@ async function salvarInsucesso() {
   if (!pacotesLista.length) { toast('Informe ao menos um pacote.', 'error'); return; }
 
   const btn = document.getElementById('btn-salvar-insucesso');
-  setButtonLoading(btn, true, editingInsucessoId ? 'Atualizando...' : 'Salvando...');
+  setButtonLoading(btn, true, editingInsucessoGrupoId ? 'Atualizando...' : 'Salvando...');
   try {
-    const dbData = {
-      transportadora,
-      motorista,
-      pacotes: pacotesLista.join('\n')
-    };
-    let error;
-    if (editingInsucessoId) {
-      ({ error } = await db.from('insucessos').update(dbData).eq('id', editingInsucessoId));
+    if (editingInsucessoGrupoId) {
+      const { error: errDel } = await db.from('insucessos').delete().eq('grupo_id', editingInsucessoGrupoId);
+      if (errDel) throw errDel;
+
+      const linhas = pacotesLista.map(p => ({
+        grupo_id: editingInsucessoGrupoId,
+        transportadora,
+        motorista,
+        pacote: p,
+        data_registro: editingInsucessoDataOriginal || hojeIsoLocal(),
+        registrado_por: editingInsucessoRegistradoPorOriginal || (usuarioAtual?.nome || usuarioAtual?.usuario || null),
+        ...(editingInsucessoCriadoEmOriginal ? { criado_em: editingInsucessoCriadoEmOriginal } : {})
+      }));
+      const { error } = await db.from('insucessos').insert(linhas);
+      if (error) throw error;
     } else {
-      dbData.data_registro = hojeIsoLocal();
-      dbData.registrado_por = usuarioAtual?.nome || usuarioAtual?.usuario || null;
-      ({ error } = await db.from('insucessos').insert([dbData]));
+      const grupoId = crypto.randomUUID();
+      const linhas = pacotesLista.map(p => ({
+        grupo_id: grupoId,
+        transportadora,
+        motorista,
+        pacote: p,
+        data_registro: hojeIsoLocal(),
+        registrado_por: usuarioAtual?.nome || usuarioAtual?.usuario || null
+      }));
+      const { error } = await db.from('insucessos').insert(linhas);
+      if (error) throw error;
     }
-    if (error) throw error;
-    toast(editingInsucessoId ? 'Insucesso atualizado.' : 'Insucesso registrado.', 'success');
+
+    toast(editingInsucessoGrupoId ? 'Insucesso atualizado.' : 'Insucesso registrado.', 'success');
     fecharModalInsucesso();
     await carregarInsucessos();
     renderInsucessos();
@@ -5041,51 +5250,54 @@ async function salvarInsucesso() {
 
 function renderInsucessos() {
   const busca = lower(document.getElementById('busca-insucesso')?.value || '');
-  const lista = insucessos.filter(i => {
+  const grupos = agruparInsucessos(insucessos);
+  const lista = grupos.filter(g => {
     if (!busca) return true;
-    return lower(i.transportadora).includes(busca) || lower(i.motorista).includes(busca);
+    return lower(g.transportadora).includes(busca) || lower(g.motorista).includes(busca);
   });
 
   const countEl = document.getElementById('insucesso-count');
   if (countEl) countEl.textContent = `${lista.length} registro${lista.length !== 1 ? 's' : ''}`;
 
   const tbody = document.getElementById('tbody-insucesso');
-  if (!tbody) return;
-
-  if (!lista.length) {
-    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📦</div><p>${insucessos.length ? 'Nenhum registro encontrado' : 'Nenhum insucesso cadastrado'}</p><span>${insucessos.length ? 'Tente outros termos' : 'Clique em Registrar Insucesso para começar'}</span></div></td></tr>`;
-    return;
+  if (tbody) {
+    if (!lista.length) {
+      tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📦</div><p>${grupos.length ? 'Nenhum registro encontrado' : 'Nenhum insucesso cadastrado'}</p><span>${grupos.length ? 'Tente outros termos' : 'Clique em Registrar Insucesso para começar'}</span></div></td></tr>`;
+    } else {
+      tbody.innerHTML = lista.map(g => {
+        const gid = safeId(g.grupoId);
+        const qtdPacotes = g.pacotes.length;
+        const dataFmt = g.dataRegistro ? g.dataRegistro.split('-').reverse().join('/') : '—';
+        return `<tr onclick="abrirResumoInsucesso('${gid}')" style="cursor:pointer">
+          <td>${dataFmt}</td>
+          <td><strong>${escapeHtml(g.transportadora)}</strong></td>
+          <td>${escapeHtml(g.motorista)}</td>
+          <td><span class="badge badge-red">${qtdPacotes} pacote${qtdPacotes !== 1 ? 's' : ''}</span></td>
+          <td style="color:var(--text-muted);font-size:12px">${escapeHtml(g.registradoPor || '—')}</td>
+        </tr>`;
+      }).join('');
+    }
   }
 
-  tbody.innerHTML = lista.map(i => {
-    const id = safeId(i.id);
-    const qtdPacotes = parsePacotesInsucesso(i.pacotes).length;
-    const dataFmt = i.dataRegistro ? i.dataRegistro.split('-').reverse().join('/') : '—';
-    return `<tr onclick="abrirResumoInsucesso('${id}')" style="cursor:pointer">
-      <td>${dataFmt}</td>
-      <td><strong>${escapeHtml(i.transportadora)}</strong></td>
-      <td>${escapeHtml(i.motorista)}</td>
-      <td><span class="badge badge-red">${qtdPacotes} pacote${qtdPacotes !== 1 ? 's' : ''}</span></td>
-      <td style="color:var(--text-muted);font-size:12px">${escapeHtml(i.registradoPor || '—')}</td>
-    </tr>`;
-  }).join('');
+  renderScorecardsInsucesso();
+  renderChartHoraInsucesso();
 }
 
-function abrirResumoInsucesso(id) {
-  const i = insucessos.find(r => String(r.id) === String(id));
-  if (!i) return;
-  insucessoResumoAtualId = i.id;
-  const pacotesLista = parsePacotesInsucesso(i.pacotes);
-  const dataFmt = i.dataRegistro ? i.dataRegistro.split('-').reverse().join('/') : '—';
+function abrirResumoInsucesso(grupoId) {
+  const grupos = agruparInsucessos(insucessos);
+  const g = grupos.find(r => String(r.grupoId) === String(grupoId));
+  if (!g) return;
+  insucessoResumoAtualGrupoId = g.grupoId;
+  const dataFmt = g.dataRegistro ? g.dataRegistro.split('-').reverse().join('/') : '—';
   document.getElementById('insucesso-resumo-corpo').innerHTML = `
-    <div style="margin-bottom:10px"><strong>Transportadora:</strong> ${escapeHtml(i.transportadora)}</div>
-    <div style="margin-bottom:10px"><strong>Motorista:</strong> ${escapeHtml(i.motorista)}</div>
+    <div style="margin-bottom:10px"><strong>Transportadora:</strong> ${escapeHtml(g.transportadora)}</div>
+    <div style="margin-bottom:10px"><strong>Motorista:</strong> ${escapeHtml(g.motorista)}</div>
     <div style="margin-bottom:10px"><strong>Data:</strong> ${dataFmt}</div>
-    <div style="margin-bottom:6px"><strong>Pacotes (${pacotesLista.length}):</strong></div>
+    <div style="margin-bottom:6px"><strong>Pacotes (${g.pacotes.length}):</strong></div>
     <ul style="margin:0 0 4px 18px;padding:0">
-      ${pacotesLista.map(p => `<li>${escapeHtml(p)}</li>`).join('') || '<li style="color:var(--text-hint)">—</li>'}
+      ${g.pacotes.map(p => `<li>${escapeHtml(p)}</li>`).join('') || '<li style="color:var(--text-hint)">—</li>'}
     </ul>
-    <div style="margin-top:10px;font-size:12px;color:var(--text-muted)">Registrado por ${escapeHtml(i.registradoPor || '—')}</div>
+    <div style="margin-top:10px;font-size:12px;color:var(--text-muted)">Registrado por ${escapeHtml(g.registradoPor || '—')}</div>
   `;
   setVisibleById('btn-editar-insucesso', pode('editar_insucesso'), 'inline-flex');
   setVisibleById('btn-excluir-insucesso', pode('excluir_insucesso'), 'inline-flex');
@@ -5094,30 +5306,35 @@ function abrirResumoInsucesso(id) {
 
 function fecharModalResumoInsucesso() {
   document.getElementById('modal-insucesso-resumo').classList.remove('open');
-  insucessoResumoAtualId = null;
+  insucessoResumoAtualGrupoId = null;
 }
 
 function editarInsucessoAtual() {
   if (!pode('editar_insucesso')) { toast('Seu perfil não permite editar insucessos.', 'error'); return; }
-  const i = insucessos.find(r => String(r.id) === String(insucessoResumoAtualId));
-  if (!i) return;
+  const grupos = agruparInsucessos(insucessos);
+  const g = grupos.find(r => String(r.grupoId) === String(insucessoResumoAtualGrupoId));
+  if (!g) return;
   fecharModalResumoInsucesso();
-  editingInsucessoId = i.id;
+  editingInsucessoGrupoId = g.grupoId;
+  editingInsucessoDataOriginal = g.dataRegistro;
+  editingInsucessoRegistradoPorOriginal = g.registradoPor;
+  editingInsucessoCriadoEmOriginal = g.criadoEm;
   document.getElementById('insucesso-modal-titulo').textContent = 'Editar Insucesso';
   document.getElementById('btn-salvar-insucesso').textContent = 'Atualizar';
-  document.getElementById('insucesso-transportadora').value = i.transportadora || '';
-  document.getElementById('insucesso-motorista').value = i.motorista || '';
-  document.getElementById('insucesso-pacotes').value = i.pacotes || '';
+  document.getElementById('insucesso-transportadora').value = g.transportadora || '';
+  document.getElementById('insucesso-motorista').value = g.motorista || '';
+  document.getElementById('insucesso-pacotes').value = g.pacotes.join('\n');
   document.getElementById('modal-insucesso-registro').classList.add('open');
 }
 
 async function excluirInsucessoAtual() {
   if (!pode('excluir_insucesso')) { toast('Seu perfil não permite excluir insucessos.', 'error'); return; }
-  const i = insucessos.find(r => String(r.id) === String(insucessoResumoAtualId));
-  if (!i) return;
-  if (!confirm(`Excluir o registro de insucesso de "${i.transportadora}"? Esta ação não pode ser desfeita.`)) return;
+  const grupos = agruparInsucessos(insucessos);
+  const g = grupos.find(r => String(r.grupoId) === String(insucessoResumoAtualGrupoId));
+  if (!g) return;
+  if (!confirm(`Excluir o registro de insucesso de "${g.transportadora}" (${g.pacotes.length} pacote${g.pacotes.length !== 1 ? 's' : ''})? Esta ação não pode ser desfeita.`)) return;
   try {
-    const { error } = await db.from('insucessos').delete().eq('id', i.id);
+    const { error } = await db.from('insucessos').delete().eq('grupo_id', g.grupoId);
     if (error) throw error;
     toast('Insucesso excluído.', 'success');
     fecharModalResumoInsucesso();
@@ -5127,6 +5344,132 @@ async function excluirInsucessoAtual() {
     console.error(error);
     toast('Erro ao excluir insucesso: ' + (error.message || error), 'error');
   }
+}
+
+// ── Scorecards (pacotes hoje / principal transportadora) ──
+function renderScorecardsInsucesso() {
+  const hoje = hojeIsoLocal();
+  const doDia = insucessos.filter(i => i.dataRegistro === hoje);
+
+  const elHoje = document.getElementById('insucesso-stat-hoje');
+  if (elHoje) elHoje.textContent = doDia.length;
+
+  const contagemTransportadora = {};
+  doDia.forEach(i => {
+    const chave = i.transportadora || '—';
+    contagemTransportadora[chave] = (contagemTransportadora[chave] || 0) + 1;
+  });
+  let principal = null;
+  Object.entries(contagemTransportadora).forEach(([nome, qtd]) => {
+    if (!principal || qtd > principal.qtd) principal = { nome, qtd };
+  });
+
+  const elTransp = document.getElementById('insucesso-stat-transportadora');
+  const elTranspSub = document.getElementById('insucesso-stat-transportadora-sub');
+  if (elTransp) elTransp.textContent = principal ? principal.nome : '—';
+  if (elTranspSub) elTranspSub.textContent = principal ? `${principal.qtd} pacote${principal.qtd !== 1 ? 's' : ''} hoje` : 'Sem registros hoje';
+}
+
+// ── Gráfico: pacotes recebidos por hora (hoje + 6 dias anteriores, somados) ──
+function renderChartHoraInsucesso() {
+  const canvas = document.getElementById('insucesso-chart-hora');
+  if (!canvas) return;
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const inicioJanela = new Date(hoje);
+  inicioJanela.setDate(inicioJanela.getDate() - 6);
+
+  const porHora = new Array(24).fill(0);
+  insucessos.forEach(i => {
+    if (!i.criadoEm) return;
+    const d = new Date(i.criadoEm);
+    if (d < inicioJanela) return;
+    const diaComparar = new Date(d); diaComparar.setHours(0, 0, 0, 0);
+    if (diaComparar > hoje) return;
+    porHora[d.getHours()]++;
+  });
+
+  const labels = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, '0')}h`);
+
+  if (chartInsucessoHora) chartInsucessoHora.destroy();
+  chartInsucessoHora = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label: 'Pacotes recebidos', data: porHora, backgroundColor: '#2D3277', borderRadius: 3 }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,0.05)' } }
+      }
+    }
+  });
+}
+
+// ── Exportação em CSV ──
+function abrirModalExportarInsucesso() {
+  const hoje = hojeIsoLocal();
+  const seteDiasAtras = new Date();
+  seteDiasAtras.setDate(seteDiasAtras.getDate() - 6);
+  const iniPadrao = seteDiasAtras.toISOString().slice(0, 10);
+
+  const inputIni = document.getElementById('insucesso-export-data-ini');
+  const inputFim = document.getElementById('insucesso-export-data-fim');
+  if (inputIni) inputIni.value = iniPadrao;
+  if (inputFim) inputFim.value = hoje;
+
+  document.getElementById('modal-exportar-insucesso').classList.add('open');
+}
+
+function fecharModalExportarInsucesso() {
+  document.getElementById('modal-exportar-insucesso').classList.remove('open');
+}
+
+function csvEscape(valor) {
+  const texto = String(valor ?? '');
+  if (/[",\n;]/.test(texto)) {
+    return `"${texto.replace(/"/g, '""')}"`;
+  }
+  return texto;
+}
+
+function gerarExportacaoInsucessoCSV() {
+  const dataIni = document.getElementById('insucesso-export-data-ini').value;
+  const dataFim = document.getElementById('insucesso-export-data-fim').value;
+
+  if (!dataIni || !dataFim) { toast('Informe o período (data inicial e final).', 'error'); return; }
+  if (dataIni > dataFim) { toast('A data inicial não pode ser depois da data final.', 'error'); return; }
+
+  const linhas = insucessos
+    .filter(i => i.dataRegistro >= dataIni && i.dataRegistro <= dataFim)
+    .sort((a, b) => new Date(a.criadoEm) - new Date(b.criadoEm));
+
+  if (!linhas.length) { toast('Nenhum registro encontrado nesse período.', 'error'); return; }
+
+  const cabecalho = ['Data', 'Hora', 'Transportadora', 'Motorista', 'Pacote', 'Registrado por'];
+  const corpo = linhas.map(i => {
+    const dataFmt = i.dataRegistro ? i.dataRegistro.split('-').reverse().join('/') : '';
+    const horaFmt = i.criadoEm ? new Date(i.criadoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+    return [dataFmt, horaFmt, i.transportadora, i.motorista, i.pacote, i.registradoPor || ''].map(csvEscape).join(',');
+  });
+
+  const csv = '\uFEFF' + [cabecalho.join(','), ...corpo].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `insucessos_${dataIni}_a_${dataFim}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  toast(`Relatório gerado com ${linhas.length} pacote${linhas.length !== 1 ? 's' : ''}.`, 'success');
+  fecharModalExportarInsucesso();
 }
 
 // ════════════════════════════════════════
@@ -5279,6 +5622,10 @@ function renderUsuariosSistema() {
     const statusBadgeHtml = u.ativo === false
       ? '<span class="badge badge-red">Inativo</span>'
       : '<span class="badge badge-green">Ativo</span>';
+    const isSelf = String(u.auth_uid) === String(usuarioAtual?.id);
+    const btnExcluirHtml = (pode('excluir_usuarios') && !isSelf)
+      ? `<button class="btn btn-danger btn-sm" onclick="excluirUsuarioSistema('${uid}')">Excluir</button>`
+      : '';
     return `<tr>
       <td><strong>${escapeHtml(u.nome || '—')}</strong></td>
       <td style="font-family:monospace;font-size:12px">${escapeHtml(u.login || '—')}</td>
@@ -5286,6 +5633,7 @@ function renderUsuariosSistema() {
       <td>${statusBadgeHtml}</td>
       <td style="text-align:right">
         <button class="btn btn-secondary btn-sm" onclick="abrirModalEditarUsuario('${uid}')">Editar</button>
+        ${btnExcluirHtml}
       </td>
     </tr>`;
   }).join('');
@@ -5520,6 +5868,32 @@ async function salvarEdicaoUsuario() {
     toast('Erro ao atualizar usuário: ' + (error.message || error), 'error');
   } finally {
     setButtonLoading(btn, false);
+  }
+}
+
+// Exclui o usuário por completo (login no Auth + registro em svc_usuarios + permissões).
+// Só o Admin tem essa permissão; a operação roda toda no servidor via Edge Function (service role).
+async function excluirUsuarioSistema(authUid) {
+  if (!pode('excluir_usuarios')) { toast('Seu perfil não permite excluir usuários.', 'error'); return; }
+  if (String(authUid) === String(usuarioAtual?.id)) { toast('Você não pode excluir o próprio usuário.', 'error'); return; }
+
+  const u = usuariosSistema.find(x => String(x.auth_uid) === String(authUid));
+  if (!u) return;
+
+  if (!confirm(`Excluir definitivamente o usuário "${u.nome}" (${u.login})? O login de acesso também será removido. Esta ação não pode ser desfeita.`)) return;
+
+  try {
+    const { data, error } = await db.functions.invoke('admin-delete-user', {
+      body: { targetAuthUid: authUid }
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+
+    toast(`Usuário "${u.nome}" excluído.`, 'success');
+    await carregarUsuariosSistema();
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao excluir usuário: ' + (error.message || error), 'error');
   }
 }
 
