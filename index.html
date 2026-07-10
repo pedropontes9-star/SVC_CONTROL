@@ -1681,17 +1681,6 @@ const db = createClient(supabaseUrl, supabaseKey, {
   }
 });
 
-// Client auxiliar, usado somente para criar novos usuários (auth.signUp).
-// Mantido isolado (sem persistir sessão) para não substituir a sessão do admin logado no client "db".
-const dbAdminAux = createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-    detectSessionInUrl: false,
-    storageKey: 'sb-aux-criacao-usuarios'
-  }
-});
-
 // Remove somente query string vazia criada por submit padrão do navegador, ex: /?
 function limparQueryVaziaDaUrl() {
   try {
@@ -5333,14 +5322,19 @@ async function criarUsuarioSistema() {
   const btn = document.getElementById('btn-criar-usuario');
   setButtonLoading(btn, true, 'Criando...');
   try {
-    const { data, error } = await dbAdminAux.auth.signUp({ email, password: senha });
-    if (error) throw error;
-    if (!data?.user?.id) throw new Error('Não foi possível obter o ID do usuário criado.');
-
-    const avisoConfirmacao = !data.session;
+    // Cria o login via Edge Function (usa a service role no servidor).
+    // Isso evita o fluxo público de signUp, que tenta mandar e-mail de confirmação
+    // e esbarra no limite de envio / validação de domínio do Supabase.
+    const { data: criado, error: errCriar } = await db.functions.invoke('admin-create-user', {
+      body: { email, senha }
+    });
+    if (errCriar) throw errCriar;
+    if (criado?.error) throw new Error(criado.error);
+    const novoAuthUid = criado?.userId;
+    if (!novoAuthUid) throw new Error('Não foi possível obter o ID do usuário criado.');
 
     const { error: errInsert } = await db.from('svc_usuarios').insert([{
-      auth_uid: data.user.id,
+      auth_uid: novoAuthUid,
       email,
       login,
       nome,
@@ -5351,7 +5345,7 @@ async function criarUsuarioSistema() {
 
     if (perfil === 'auditor' || perfil === 'operador') {
       const linhasPermissoes = coletarPermissoesForm('tbody-permissoes-criar').map(l => ({
-        auth_uid: data.user.id,
+        auth_uid: novoAuthUid,
         aba: l.aba,
         nivel: l.nivel,
         atualizado_por: usuarioAtual?.nome || usuarioAtual?.usuario || null
@@ -5365,12 +5359,7 @@ async function criarUsuarioSistema() {
       }
     }
 
-    try { await dbAdminAux.auth.signOut(); } catch (e) { /* client auxiliar, sem impacto na sessão principal */ }
-
     toast(`Usuário "${nome}" criado com sucesso.`, 'success');
-    if (avisoConfirmacao) {
-      toast('Atenção: o Supabase pode exigir confirmação de e-mail. Se o login falhar, desative "Confirm email" em Authentication → Providers → Email.', 'error');
-    }
     limparFormUsuario();
     await carregarUsuariosSistema();
   } catch (error) {
