@@ -427,6 +427,22 @@
   .insucesso-checklist label { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f2f2f2; }
   .insucesso-checklist label:last-child { border-bottom: none; }
 
+  /* ── Scheduling — visão calendário ── */
+  .sched-cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+  .sched-cal-titulo { font-size: 16px; font-weight: 700; color: var(--text); text-transform: capitalize; min-width: 160px; }
+  .sched-cal-nav { display: flex; gap: 6px; }
+  .sched-cal-semana { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 6px; }
+  .sched-cal-semana span { text-align: center; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .03em; padding: 4px 0; }
+  .sched-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .sched-cal-dia { min-height: 74px; border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; display: flex; flex-direction: column; gap: 4px; cursor: pointer; transition: border-color .12s, background .12s; background: var(--surface); }
+  .sched-cal-dia:hover { border-color: var(--meli-blue); }
+  .sched-cal-dia-vazia { visibility: hidden; cursor: default; border: none; }
+  .sched-cal-dia-numero { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+  .sched-cal-dia-hoje { border-color: var(--meli-blue); box-shadow: inset 0 0 0 1px var(--meli-blue); }
+  .sched-cal-dia-hoje .sched-cal-dia-numero { color: var(--meli-blue); }
+  .sched-cal-dia-heads { font-size: 15px; font-weight: 700; color: #1a7d3c; }
+  .sched-cal-dia-com-heads { background: #f2fbf5; }
+
   @media print {
     #auth-screen, .header, .sidebar, .sidebar-overlay, .toast, .modal-overlay,
     .page:not(#page-crachas), #page-crachas .form-card,
@@ -1054,6 +1070,15 @@
 ════════════════════════════════════════ -->
 <div id="page-scheduling" class="page">
 
+  <div class="monitor-section-header">
+    <span class="monitor-section-title">Visualização</span>
+    <div class="monitor-section-toggle">
+      <button class="monitor-toggle-btn sched-subtab-btn active" onclick="setSchedulingSubTab('base', this)">Base</button>
+      <button class="monitor-toggle-btn sched-subtab-btn" onclick="setSchedulingSubTab('calendario', this)">Calendário</button>
+    </div>
+  </div>
+
+  <div id="sched-tab-base">
   <div class="form-card card" id="card-form-scheduling" style="margin-bottom:24px">
     <p class="section-label" id="sched-form-label">Cadastrar Scheduling</p>
     <div class="form-grid">
@@ -1126,6 +1151,35 @@
           <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📅</div><p>Nenhum scheduling cadastrado</p><span>Preencha o formulário acima para começar</span></div></td></tr>
         </tbody>
       </table>
+    </div>
+  </div>
+  </div>
+
+  <div id="sched-tab-calendario" style="display:none">
+    <div class="card">
+      <div class="sched-cal-header">
+        <div class="sched-cal-titulo" id="sched-cal-titulo">—</div>
+        <div class="sched-cal-nav">
+          <button class="btn btn-secondary btn-sm" onclick="calendarioSchedMesAnterior()">‹ Anterior</button>
+          <button class="btn btn-secondary btn-sm" onclick="calendarioSchedHoje()">Hoje</button>
+          <button class="btn btn-secondary btn-sm" onclick="calendarioSchedProximoMes()">Próximo ›</button>
+        </div>
+      </div>
+      <div class="sched-cal-semana">
+        <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+      </div>
+      <div class="sched-cal-grid" id="sched-cal-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Detalhe do dia — Calendário de Scheduling -->
+<div class="modal-overlay" id="modal-sched-dia-detalhe">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3 id="sched-dia-detalhe-titulo">Heads programados</h3>
+    <div id="sched-dia-detalhe-corpo" style="font-size:13px;color:var(--text)"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="fecharModalSchedDiaDetalhe()">Fechar</button>
     </div>
   </div>
 </div>
@@ -2853,6 +2907,7 @@ function switchTab(tab, btn) {
 
   if (tab === 'scheduling') {
     renderSchedulings();
+    if (schedulingSubTab === 'calendario') renderCalendarioScheduling();
   }
 
   if (tab === 'abs') {
@@ -7635,6 +7690,142 @@ function renderSchedulings() {
       </td>
     </tr>`;
   }).join('');
+}
+
+// ════════════════════════════════════════
+//  SCHEDULING — visão Calendário
+// ════════════════════════════════════════
+let schedulingSubTab = 'base';
+let calendarioSchedRef = (() => { const d = new Date(); d.setDate(1); return d; })();
+
+function setSchedulingSubTab(tab, btnEl) {
+  schedulingSubTab = tab;
+
+  document.querySelectorAll('.sched-subtab-btn').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+
+  const base = document.getElementById('sched-tab-base');
+  const calendario = document.getElementById('sched-tab-calendario');
+  if (base) base.style.display = tab === 'base' ? '' : 'none';
+  if (calendario) calendario.style.display = tab === 'calendario' ? '' : 'none';
+
+  if (tab === 'calendario') renderCalendarioScheduling();
+}
+
+// Soma os heads programados para UM dia específico, já respeitando turno/grupo/folga da escala
+// (mesma regra usada em calcularHeadsProgramadosNoPeriodo, só que dia a dia).
+function calcularHeadsPorDia(dataIso) {
+  const dia = isoParaDataLocal(dataIso);
+  if (!dia) return { total: 0, detalhes: [] };
+
+  let total = 0;
+  const detalhes = [];
+
+  schedulings.forEach(s => {
+    if (!s.dataInicio || !s.dataFim) return;
+    const sIni = isoParaDataLocal(s.dataInicio);
+    const sFim = isoParaDataLocal(s.dataFim);
+    if (!sIni || !sFim) return;
+    if (dia < sIni || dia > sFim) return;
+    if (!schedulingTrabalhaNoDia(s, dia)) return;
+
+    const headsDia = Number(s.heads || 0);
+    if (!headsDia) return;
+
+    total += headsDia;
+    const turno = turnos.find(t => t.id === s.turnoId);
+    detalhes.push({
+      numero: s.numero,
+      turno: turno ? turno.nome : '—',
+      grupo: s.grupo || null,
+      heads: headsDia
+    });
+  });
+
+  return { total, detalhes };
+}
+
+function calendarioSchedMesAnterior() {
+  calendarioSchedRef.setMonth(calendarioSchedRef.getMonth() - 1);
+  renderCalendarioScheduling();
+}
+
+function calendarioSchedProximoMes() {
+  calendarioSchedRef.setMonth(calendarioSchedRef.getMonth() + 1);
+  renderCalendarioScheduling();
+}
+
+function calendarioSchedHoje() {
+  calendarioSchedRef = new Date();
+  calendarioSchedRef.setDate(1);
+  renderCalendarioScheduling();
+}
+
+function renderCalendarioScheduling() {
+  const grid = document.getElementById('sched-cal-grid');
+  const tituloEl = document.getElementById('sched-cal-titulo');
+  if (!grid || !tituloEl) return;
+
+  const ano = calendarioSchedRef.getFullYear();
+  const mes = calendarioSchedRef.getMonth(); // 0-11
+
+  const nomeMes = calendarioSchedRef.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  tituloEl.textContent = nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
+
+  const primeiroDiaSemana = new Date(ano, mes, 1).getDay(); // 0 = domingo
+  const totalDiasMes = new Date(ano, mes + 1, 0).getDate();
+  const hojeIso = hojeIsoLocal();
+
+  const celulas = [];
+  for (let i = 0; i < primeiroDiaSemana; i++) celulas.push(null);
+  for (let d = 1; d <= totalDiasMes; d++) celulas.push(d);
+
+  grid.innerHTML = celulas.map(d => {
+    if (!d) return '<div class="sched-cal-dia sched-cal-dia-vazia"></div>';
+    const dataIso = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const { total } = calcularHeadsPorDia(dataIso);
+    const classes = ['sched-cal-dia'];
+    if (dataIso === hojeIso) classes.push('sched-cal-dia-hoje');
+    if (total) classes.push('sched-cal-dia-com-heads');
+    return `<div class="${classes.join(' ')}" onclick="abrirDetalheDiaScheduling('${dataIso}')">
+      <span class="sched-cal-dia-numero">${d}</span>
+      ${total ? `<span class="sched-cal-dia-heads">${total} heads</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function abrirDetalheDiaScheduling(dataIso) {
+  const { total, detalhes } = calcularHeadsPorDia(dataIso);
+  const dataFmt = dataIso.split('-').reverse().join('/');
+  document.getElementById('sched-dia-detalhe-titulo').textContent = `Heads programados — ${dataFmt}`;
+
+  const corpo = document.getElementById('sched-dia-detalhe-corpo');
+  if (!detalhes.length) {
+    corpo.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><p>Nenhum head programado nesse dia</p></div>';
+  } else {
+    corpo.innerHTML = `
+      <div style="font-size:22px;font-weight:700;margin-bottom:12px">${total} <span style="font-size:13px;font-weight:400;color:var(--text-muted)">heads no total</span></div>
+      <table style="width:100%;font-size:13px;border-collapse:collapse">
+        <thead>
+          <tr style="text-align:left;color:var(--text-muted);border-bottom:1px solid var(--border)">
+            <th style="padding:6px 4px">Turno</th><th style="padding:6px 4px">Grupo</th><th style="padding:6px 4px;text-align:right">Heads</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${detalhes.map(d => `<tr style="border-bottom:1px solid #f2f2f2">
+            <td style="padding:6px 4px">${escapeHtml(d.turno)}${d.numero ? ` <span style="color:var(--text-hint);font-size:11px">(${escapeHtml(d.numero)})</span>` : ''}</td>
+            <td style="padding:6px 4px">${escapeHtml(d.grupo || '—')}</td>
+            <td style="padding:6px 4px;text-align:right;font-weight:600">${d.heads}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+  document.getElementById('modal-sched-dia-detalhe').classList.add('open');
+}
+
+function fecharModalSchedDiaDetalhe() {
+  document.getElementById('modal-sched-dia-detalhe').classList.remove('open');
 }
 
 window.addEventListener('DOMContentLoaded', async function() {
