@@ -524,6 +524,7 @@
         <button class="tab-btn nav-item" id="tab-turnos" data-tab="turnos" onclick="switchTab('turnos',this)"><span class="nav-icon">🕐</span><span>Turnos</span></button>
         <button class="tab-btn nav-item" id="tab-scheduling" data-tab="scheduling" onclick="switchTab('scheduling',this)"><span class="nav-icon">📅</span><span>Scheduling</span></button>
         <button class="tab-btn nav-item" id="tab-abs" data-tab="abs" onclick="switchTab('abs',this)"><span class="nav-icon">🩺</span><span>ABS</span></button>
+        <button class="tab-btn nav-item" id="tab-diaristas" data-tab="diaristas" onclick="switchTab('diaristas',this)"><span class="nav-icon">👷</span><span>Controle de Diaristas</span></button>
       </div>
     </section>
     <section class="nav-group" data-nav-group="controles">
@@ -1267,6 +1268,114 @@
   </div>
 </div>
 
+<!-- ════════════════════════════════════════
+     CONTROLE DE DIARISTAS
+════════════════════════════════════════ -->
+<div id="page-diaristas" class="page">
+
+  <div class="form-card card" id="card-form-diarista" style="margin-bottom:24px">
+    <p class="section-label" id="diarista-form-label">Cadastrar Diarista</p>
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>Nome completo</label>
+        <input type="text" id="diarista-nome" placeholder="Nome do diarista" maxlength="120">
+      </div>
+
+      <div class="form-group">
+        <label>CPF</label>
+        <input type="text" id="diarista-cpf" placeholder="000.000.000-00" maxlength="14" oninput="mascararCpfDiarista(this)">
+      </div>
+
+      <div class="form-group">
+        <label>EXT</label>
+        <input type="text" id="diarista-ext" placeholder="Ex: 123456" maxlength="30">
+      </div>
+
+      <div class="form-group">
+        <label>GrootID</label>
+        <input type="text" id="diarista-groot" placeholder="Ex: G-00123" maxlength="30">
+      </div>
+
+      <div class="form-group">
+        <label>Data</label>
+        <input type="date" id="diarista-data">
+      </div>
+
+      <div class="form-group">
+        <label>Horário Início</label>
+        <input type="time" id="diarista-hora-inicio">
+      </div>
+
+      <div class="form-group">
+        <label>Horário Fim</label>
+        <input type="time" id="diarista-hora-fim">
+      </div>
+
+      <div class="form-group">
+        <label>Custo</label>
+        <select id="diarista-custo" onchange="onCustoDiaristaChange()">
+          <option value="">— Selecionar —</option>
+          <option value="meli_svc">MELI (SVC)</option>
+          <option value="meli_consolidacao">MELI (Consolidação)</option>
+          <option value="3pl_svc">3PL (SVC)</option>
+          <option value="3pl_consolidacao">3PL (Consolidação)</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="diarista-direcionamento-wrap" style="display:none">
+        <label>Direcionamento</label>
+        <select id="diarista-direcionamento" onchange="onDirecionamentoDiaristaChange()">
+          <option value="">— Selecionar —</option>
+          <option value="ferias">Cobertura de Férias</option>
+          <option value="absenteismo">Cobertura de Absenteísmo</option>
+          <option value="quadro">Cobertura de Quadro</option>
+          <option value="treinamento">Cobertura de Treinamento</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="diarista-direcionamento-outro-wrap" style="display:none">
+        <label>Qual "Outro"?</label>
+        <input type="text" id="diarista-direcionamento-outro" placeholder="Descreva o motivo" maxlength="150">
+      </div>
+
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" id="btn-salvar-diarista" onclick="salvarDiarista()">Salvar Diarista</button>
+      <button class="btn btn-secondary" onclick="cancelarEdicaoDiarista()">Limpar</button>
+    </div>
+  </div>
+
+  <p class="section-label">Diaristas lançados</p>
+  <div class="card">
+    <div class="search-bar">
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Buscar por nome, CPF ou EXT..." id="busca-diarista" oninput="renderDiaristas()">
+      </div>
+      <select id="filtro-custo-diarista" onchange="renderDiaristas()" style="min-width:170px">
+        <option value="">Todos os custos</option>
+        <option value="meli_svc">MELI (SVC)</option>
+        <option value="meli_consolidacao">MELI (Consolidação)</option>
+        <option value="3pl_svc">3PL (SVC)</option>
+        <option value="3pl_consolidacao">3PL (Consolidação)</option>
+      </select>
+      <span class="count-badge" id="diarista-count">0 diaristas</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Data</th><th>Nome</th><th>CPF</th><th>EXT</th><th>GrootID</th><th>Horário</th><th>Custo</th><th>Direcionamento</th><th style="text-align:right">Ações</th>
+        </tr></thead>
+        <tbody id="tbody-diaristas">
+          <tr><td colspan="9"><div class="empty-state"><div class="empty-icon">👷</div><p>Carregando registros...</p></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <div id="page-monitor" class="page">
 
   <div class="cracha-intro">
@@ -1952,7 +2061,7 @@ const EXIGIR_CADASTRO_PERFIL = true; // Com a tabela svc_usuarios configurada, t
 
 // Abas com permissão configurável (visualizar/editar) para os perfis Auditor e Operador.
 // Cada aba mapeia para os "flags" granulares já usados no restante do sistema.
-const ABAS_CONFIGURAVEIS = ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'monitor', 'crachas'];
+const ABAS_CONFIGURAVEIS = ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'diaristas', 'monitor', 'crachas'];
 
 const MAPA_PERMISSOES_ABA = {
   turnos:     { base: [], editar: ['criar_turnos', 'editar_turnos', 'excluir_turnos'] },
@@ -1961,6 +2070,7 @@ const MAPA_PERMISSOES_ABA = {
   abs:        { base: [], editar: ['registrar_abs', 'excluir_abs'] },
   anomalias:  { base: ['ver_anomalias'], editar: ['atualizar_anomalias', 'tratar_anomalias'] },
   insucesso:  { base: [], editar: ['registrar_insucesso', 'editar_insucesso', 'excluir_insucesso'] },
+  diaristas:  { base: [], editar: ['criar_diarista', 'editar_diarista', 'excluir_diarista'] },
   monitor:    { base: [], editar: ['editar_monitor'] },
   crachas:    { base: [], editar: ['gerar_crachas'] }
 };
@@ -1977,6 +2087,7 @@ function perfilVazioDinamico(label) {
     criar_sched: false, editar_sched: false, excluir_sched: false,
     registrar_abs: false, ver_todos_abs: false, excluir_abs: false,
     registrar_insucesso: false, editar_insucesso: false, excluir_insucesso: false,
+    criar_diarista: false, editar_diarista: false, excluir_diarista: false,
     editar_monitor: false,
     criar_usuarios: false, gerenciar_permissoes: false, excluir_usuarios: false
   };
@@ -2021,7 +2132,7 @@ async function carregarPermissoesDinamicasSeNecessario() {
 const PERFIS_ACESSO = {
   admin: {
     label: 'Administrador',
-    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'monitor', 'crachas', 'usuarios'],
+    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'diaristas', 'monitor', 'crachas', 'usuarios'],
     gerar_crachas: true,
     criar_turnos: true, editar_turnos: true, excluir_turnos: true,
     criar_hc: true, editar_hc: true, excluir_hc: true, exportar_hc: true,
@@ -2029,12 +2140,13 @@ const PERFIS_ACESSO = {
     criar_sched: true, editar_sched: true, excluir_sched: true,
     registrar_abs: true, ver_todos_abs: true, excluir_abs: true,
     registrar_insucesso: true, editar_insucesso: true, excluir_insucesso: true,
+    criar_diarista: true, editar_diarista: true, excluir_diarista: true,
     editar_monitor: true,
     criar_usuarios: true, gerenciar_permissoes: true, excluir_usuarios: true
   },
   coordenador: {
     label: 'Coordenador',
-    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'monitor', 'crachas', 'usuarios'],
+    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'diaristas', 'monitor', 'crachas', 'usuarios'],
     gerar_crachas: true,
     criar_turnos: false, editar_turnos: false, excluir_turnos: false,
     criar_hc: true, editar_hc: true, excluir_hc: false, exportar_hc: true,
@@ -2042,6 +2154,7 @@ const PERFIS_ACESSO = {
     criar_sched: true, editar_sched: true, excluir_sched: false,
     registrar_abs: true, ver_todos_abs: false, excluir_abs: false,
     registrar_insucesso: true, editar_insucesso: true, excluir_insucesso: false,
+    criar_diarista: true, editar_diarista: true, excluir_diarista: false,
     editar_monitor: true,
     criar_usuarios: false, gerenciar_permissoes: true, excluir_usuarios: false
   },
@@ -2347,6 +2460,7 @@ function aplicarControleAcesso() {
   setVisibleById('btn-registrar-insucesso', pode('registrar_insucesso'), 'inline-flex');
   setVisibleById('btn-registrar-devolucao', pode('registrar_insucesso'), 'inline-flex');
   setVisibleById('card-form-usuario', pode('criar_usuarios'));
+  setVisibleById('card-form-diarista', pode('criar_diarista') || pode('editar_diarista'));
   setVisibleById('monitor-btn-nova-base', pode('editar_monitor'), 'inline-flex');
   setVisibleById('monitor-btn-nova-base-dash', pode('editar_monitor'), 'inline-flex');
 
@@ -2622,6 +2736,10 @@ let editingInsucessoPacotesOriginais = []; // [{codigo, bulky, avariado}] — us
 let insucessoResumoAtualGrupoId = null;
 let chartInsucessoHora = null;
 
+// Estado do módulo Controle de Diaristas
+let diaristas = [];
+let editingDiaristaId = null;
+
 // Estado do módulo Usuários (gestão de acessos)
 let usuariosSistema = [];
 let editingUsuarioAuthUid = null;
@@ -2835,6 +2953,8 @@ async function carregarDadosDoBanco() {
     await carregarAbsenteismo();
     await carregarInsucessos();
     renderInsucessos();
+    await carregarDiaristas();
+    renderDiaristas();
     await carregarHistoricoMedidas();
     aplicarControleAcesso();
   } catch (error) {
@@ -2916,6 +3036,12 @@ function switchTab(tab, btn) {
 
   if (tab === 'insucesso') {
     renderInsucessos();
+  }
+
+  if (tab === 'diaristas') {
+    renderDiaristas();
+    const inputData = document.getElementById('diarista-data');
+    if (inputData && !inputData.value) inputData.value = hojeIsoLocal();
   }
 
   if (tab === 'monitor') {
@@ -5635,6 +5761,265 @@ function gerarExportacaoInsucessoCSV() {
 
   toast(`Relatório gerado com ${linhas.length} pacote${linhas.length !== 1 ? 's' : ''}.`, 'success');
   fecharModalExportarInsucesso();
+}
+
+// ════════════════════════════════════════
+//  CONTROLE DE DIARISTAS
+// ════════════════════════════════════════
+const LABEL_CUSTO_DIARISTA = {
+  meli_svc: 'MELI (SVC)',
+  meli_consolidacao: 'MELI (Consolidação)',
+  '3pl_svc': '3PL (SVC)',
+  '3pl_consolidacao': '3PL (Consolidação)'
+};
+
+const BADGE_CUSTO_DIARISTA = {
+  meli_svc: 'badge-blue',
+  meli_consolidacao: 'badge-purple',
+  '3pl_svc': 'badge-orange',
+  '3pl_consolidacao': 'badge-green'
+};
+
+const LABEL_DIRECIONAMENTO_DIARISTA = {
+  ferias: 'Cobertura de Férias',
+  absenteismo: 'Cobertura de Absenteísmo',
+  quadro: 'Cobertura de Quadro',
+  treinamento: 'Cobertura de Treinamento',
+  outro: 'Outro'
+};
+
+async function carregarDiaristas() {
+  try {
+    const { data, error } = await db.from('controle_diaristas').select('*').order('data', { ascending: false }).order('criado_em', { ascending: false });
+    if (error) {
+      if (error.code === '42P01' || /does not exist/i.test(error.message || '')) {
+        diaristas = [];
+        console.warn('Tabela "controle_diaristas" ainda não existe no Supabase.');
+        return;
+      }
+      throw error;
+    }
+    diaristas = (data || []).map(d => ({
+      id: d.id,
+      nome: d.nome,
+      cpf: d.cpf,
+      ext: d.ext,
+      grootId: d.groot_id,
+      data: d.data,
+      horaInicio: d.hora_inicio,
+      horaFim: d.hora_fim,
+      custo: d.custo,
+      direcionamento: d.direcionamento,
+      direcionamentoOutro: d.direcionamento_outro,
+      registradoPor: d.registrado_por,
+      criadoEm: d.criado_em
+    }));
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao buscar diaristas: ' + (error.message || error), 'error');
+  }
+}
+
+function mascararCpfDiarista(input) {
+  let v = input.value.replace(/\D/g, '').slice(0, 11);
+  if (v.length > 9) v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
+  else if (v.length > 6) v = v.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
+  else if (v.length > 3) v = v.replace(/(\d{3})(\d{1,3})/, '$1.$2');
+  input.value = v;
+}
+
+function onCustoDiaristaChange() {
+  const custo = document.getElementById('diarista-custo').value;
+  const wrap = document.getElementById('diarista-direcionamento-wrap');
+  const is3pl = custo === '3pl_svc' || custo === '3pl_consolidacao';
+  wrap.style.display = is3pl ? '' : 'none';
+  if (!is3pl) {
+    document.getElementById('diarista-direcionamento').value = '';
+    document.getElementById('diarista-direcionamento-outro-wrap').style.display = 'none';
+    document.getElementById('diarista-direcionamento-outro').value = '';
+  } else {
+    onDirecionamentoDiaristaChange();
+  }
+}
+
+function onDirecionamentoDiaristaChange() {
+  const val = document.getElementById('diarista-direcionamento').value;
+  const wrapOutro = document.getElementById('diarista-direcionamento-outro-wrap');
+  wrapOutro.style.display = val === 'outro' ? '' : 'none';
+  if (val !== 'outro') document.getElementById('diarista-direcionamento-outro').value = '';
+}
+
+function limparFormDiarista() {
+  document.getElementById('diarista-nome').value = '';
+  document.getElementById('diarista-cpf').value = '';
+  document.getElementById('diarista-ext').value = '';
+  document.getElementById('diarista-groot').value = '';
+  document.getElementById('diarista-data').value = hojeIsoLocal();
+  document.getElementById('diarista-hora-inicio').value = '';
+  document.getElementById('diarista-hora-fim').value = '';
+  document.getElementById('diarista-custo').value = '';
+  document.getElementById('diarista-direcionamento').value = '';
+  document.getElementById('diarista-direcionamento-outro').value = '';
+  document.getElementById('diarista-direcionamento-wrap').style.display = 'none';
+  document.getElementById('diarista-direcionamento-outro-wrap').style.display = 'none';
+}
+
+function cancelarEdicaoDiarista() {
+  editingDiaristaId = null;
+  document.getElementById('diarista-form-label').textContent = 'Cadastrar Diarista';
+  document.getElementById('btn-salvar-diarista').textContent = 'Salvar Diarista';
+  limparFormDiarista();
+}
+
+async function salvarDiarista() {
+  if (editingDiaristaId && !pode('editar_diarista')) { toast('Seu perfil não permite editar diaristas.', 'error'); return; }
+  if (!editingDiaristaId && !pode('criar_diarista')) { toast('Seu perfil não permite cadastrar diaristas.', 'error'); return; }
+
+  const nome = document.getElementById('diarista-nome').value.trim();
+  const cpf = document.getElementById('diarista-cpf').value.trim();
+  const ext = document.getElementById('diarista-ext').value.trim();
+  const grootId = document.getElementById('diarista-groot').value.trim();
+  const data = document.getElementById('diarista-data').value;
+  const horaInicio = document.getElementById('diarista-hora-inicio').value;
+  const horaFim = document.getElementById('diarista-hora-fim').value;
+  const custo = document.getElementById('diarista-custo').value;
+  const direcionamento = document.getElementById('diarista-direcionamento').value;
+  const direcionamentoOutro = document.getElementById('diarista-direcionamento-outro').value.trim();
+
+  if (!nome) { toast('Informe o nome do diarista.', 'error'); return; }
+  if (!cpf) { toast('Informe o CPF.', 'error'); return; }
+  if (!ext) { toast('Informe o EXT.', 'error'); return; }
+  if (!data) { toast('Informe a data.', 'error'); return; }
+  if (!horaInicio || !horaFim) { toast('Informe o horário de início e fim.', 'error'); return; }
+  if (!custo) { toast('Selecione o custo.', 'error'); return; }
+
+  const is3pl = custo === '3pl_svc' || custo === '3pl_consolidacao';
+  if (is3pl && !direcionamento) { toast('Selecione o direcionamento.', 'error'); return; }
+  if (is3pl && direcionamento === 'outro' && !direcionamentoOutro) { toast('Descreva o direcionamento "Outro".', 'error'); return; }
+
+  const btn = document.getElementById('btn-salvar-diarista');
+  setButtonLoading(btn, true, editingDiaristaId ? 'Atualizando...' : 'Salvando...');
+  try {
+    const dbData = {
+      nome,
+      cpf,
+      ext,
+      groot_id: grootId || null,
+      data,
+      hora_inicio: horaInicio,
+      hora_fim: horaFim,
+      custo,
+      direcionamento: is3pl ? (direcionamento || null) : null,
+      direcionamento_outro: (is3pl && direcionamento === 'outro') ? direcionamentoOutro : null
+    };
+
+    let error;
+    if (editingDiaristaId) {
+      ({ error } = await db.from('controle_diaristas').update(dbData).eq('id', editingDiaristaId));
+    } else {
+      dbData.registrado_por = usuarioAtual?.nome || usuarioAtual?.usuario || null;
+      ({ error } = await db.from('controle_diaristas').insert([dbData]));
+    }
+    if (error) throw error;
+
+    toast(editingDiaristaId ? 'Diarista atualizado.' : 'Diarista cadastrado.', 'success');
+    cancelarEdicaoDiarista();
+    await carregarDiaristas();
+    renderDiaristas();
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao salvar diarista: ' + (error.message || error), 'error');
+  } finally {
+    setButtonLoading(btn, false);
+  }
+}
+
+function editarDiarista(id) {
+  if (!pode('editar_diarista')) { toast('Seu perfil não permite editar diaristas.', 'error'); return; }
+  const d = diaristas.find(x => String(x.id) === String(id));
+  if (!d) return;
+
+  editingDiaristaId = id;
+  document.getElementById('diarista-nome').value = d.nome || '';
+  document.getElementById('diarista-cpf').value = d.cpf || '';
+  document.getElementById('diarista-ext').value = d.ext || '';
+  document.getElementById('diarista-groot').value = d.grootId || '';
+  document.getElementById('diarista-data').value = d.data || '';
+  document.getElementById('diarista-hora-inicio').value = d.horaInicio || '';
+  document.getElementById('diarista-hora-fim').value = d.horaFim || '';
+  document.getElementById('diarista-custo').value = d.custo || '';
+  onCustoDiaristaChange();
+  if (d.direcionamento) document.getElementById('diarista-direcionamento').value = d.direcionamento;
+  onDirecionamentoDiaristaChange();
+  document.getElementById('diarista-direcionamento-outro').value = d.direcionamentoOutro || '';
+
+  document.getElementById('diarista-form-label').textContent = 'Editar Diarista';
+  document.getElementById('btn-salvar-diarista').textContent = 'Atualizar Diarista';
+  document.getElementById('page-diaristas').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function excluirDiarista(id) {
+  if (!pode('excluir_diarista')) { toast('Seu perfil não permite excluir diaristas.', 'error'); return; }
+  const d = diaristas.find(x => String(x.id) === String(id));
+  if (!d) return;
+  if (!confirm(`Excluir o lançamento de "${d.nome}" (${d.data ? d.data.split('-').reverse().join('/') : ''})? Esta ação não pode ser desfeita.`)) return;
+  try {
+    const { error } = await db.from('controle_diaristas').delete().eq('id', id);
+    if (error) throw error;
+    toast('Diarista excluído.', 'success');
+    await carregarDiaristas();
+    renderDiaristas();
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao excluir diarista: ' + (error.message || error), 'error');
+  }
+}
+
+function renderDiaristas() {
+  const busca = lower(document.getElementById('busca-diarista')?.value || '');
+  const filtroCusto = document.getElementById('filtro-custo-diarista')?.value || '';
+
+  const lista = diaristas.filter(d => {
+    const mb = !busca || lower(d.nome).includes(busca) || lower(d.cpf).includes(busca) || lower(d.ext).includes(busca);
+    const mc = !filtroCusto || d.custo === filtroCusto;
+    return mb && mc;
+  });
+
+  const countEl = document.getElementById('diarista-count');
+  if (countEl) countEl.textContent = `${lista.length} diarista${lista.length !== 1 ? 's' : ''}`;
+
+  const tbody = document.getElementById('tbody-diaristas');
+  if (!tbody) return;
+
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">👷</div><p>${diaristas.length ? 'Nenhum registro encontrado' : 'Nenhum diarista lançado'}</p><span>${diaristas.length ? 'Tente outros termos' : 'Preencha o formulário acima para começar'}</span></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = lista.map(d => {
+    const id = safeId(d.id);
+    const dataFmt = d.data ? d.data.split('-').reverse().join('/') : '—';
+    const horario = (d.horaInicio && d.horaFim) ? `${d.horaInicio.slice(0,5)} às ${d.horaFim.slice(0,5)}` : '—';
+    const custoBadge = `<span class="badge ${BADGE_CUSTO_DIARISTA[d.custo] || 'badge-blue'}">${escapeHtml(LABEL_CUSTO_DIARISTA[d.custo] || d.custo || '—')}</span>`;
+    const direcionamentoTxt = d.direcionamento
+      ? (d.direcionamento === 'outro' ? escapeHtml(d.direcionamentoOutro || 'Outro') : escapeHtml(LABEL_DIRECIONAMENTO_DIARISTA[d.direcionamento] || d.direcionamento))
+      : '<span style="color:var(--text-hint)">—</span>';
+    return `<tr>
+      <td>${dataFmt}</td>
+      <td><strong>${escapeHtml(d.nome)}</strong></td>
+      <td style="font-family:monospace;font-size:12px">${escapeHtml(d.cpf || '—')}</td>
+      <td>${escapeHtml(d.ext || '—')}</td>
+      <td>${escapeHtml(d.grootId || '—')}</td>
+      <td>${horario}</td>
+      <td>${custoBadge}</td>
+      <td style="font-size:12px">${direcionamentoTxt}</td>
+      <td style="text-align:right;white-space:nowrap">
+        ${pode('editar_diarista') ? `<button class="btn btn-secondary btn-sm" onclick="editarDiarista('${id}')" style="margin-right:6px">Editar</button>` : ''}
+        ${pode('excluir_diarista') ? `<button class="btn btn-danger btn-sm" onclick="excluirDiarista('${id}')">Excluir</button>` : ''}
+        ${(!pode('editar_diarista') && !pode('excluir_diarista')) ? '<span style="color:var(--text-hint);font-size:12px">—</span>' : ''}
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 // ════════════════════════════════════════
