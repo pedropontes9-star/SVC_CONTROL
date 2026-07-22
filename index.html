@@ -680,6 +680,11 @@
       </div>
 
       <div class="form-group">
+        <label>CPF</label>
+        <input type="text" id="hc-cpf" placeholder="000.000.000-00" maxlength="14" oninput="mascararCPF(this)">
+      </div>
+
+      <div class="form-group">
         <label>EXT (Usuário)</label>
         <div style="display:flex;align-items:center;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color .15s,box-shadow .15s" id="ext-wrap">
           <span style="padding:8px 8px 8px 10px;background:#f5f5f5;color:var(--text-muted);font-size:13px;border-right:1px solid var(--border);white-space:nowrap;user-select:none">ext_</span>
@@ -1273,81 +1278,7 @@
 ════════════════════════════════════════ -->
 <div id="page-diaristas" class="page">
 
-  <div class="form-card card" id="card-form-diarista" style="margin-bottom:24px">
-    <p class="section-label" id="diarista-form-label">Cadastrar Diarista</p>
-    <div class="form-grid">
-
-      <div class="form-group">
-        <label>Nome completo</label>
-        <input type="text" id="diarista-nome" placeholder="Nome do diarista" maxlength="120">
-      </div>
-
-      <div class="form-group">
-        <label>CPF</label>
-        <input type="text" id="diarista-cpf" placeholder="000.000.000-00" maxlength="14" oninput="mascararCpfDiarista(this)">
-      </div>
-
-      <div class="form-group">
-        <label>EXT</label>
-        <input type="text" id="diarista-ext" placeholder="Ex: 123456" maxlength="30">
-      </div>
-
-      <div class="form-group">
-        <label>GrootID</label>
-        <input type="text" id="diarista-groot" placeholder="Ex: G-00123" maxlength="30">
-      </div>
-
-      <div class="form-group">
-        <label>Data</label>
-        <input type="date" id="diarista-data">
-      </div>
-
-      <div class="form-group">
-        <label>Horário Início</label>
-        <input type="time" id="diarista-hora-inicio">
-      </div>
-
-      <div class="form-group">
-        <label>Horário Fim</label>
-        <input type="time" id="diarista-hora-fim">
-      </div>
-
-      <div class="form-group">
-        <label>Custo</label>
-        <select id="diarista-custo" onchange="onCustoDiaristaChange()">
-          <option value="">— Selecionar —</option>
-          <option value="meli_svc">MELI (SVC)</option>
-          <option value="meli_consolidacao">MELI (Consolidação)</option>
-          <option value="3pl_svc">3PL (SVC)</option>
-          <option value="3pl_consolidacao">3PL (Consolidação)</option>
-        </select>
-      </div>
-
-      <div class="form-group" id="diarista-direcionamento-wrap" style="display:none">
-        <label>Direcionamento</label>
-        <select id="diarista-direcionamento" onchange="onDirecionamentoDiaristaChange()">
-          <option value="">— Selecionar —</option>
-          <option value="ferias">Cobertura de Férias</option>
-          <option value="absenteismo">Cobertura de Absenteísmo</option>
-          <option value="quadro">Cobertura de Quadro</option>
-          <option value="treinamento">Cobertura de Treinamento</option>
-          <option value="outro">Outro</option>
-        </select>
-      </div>
-
-      <div class="form-group" id="diarista-direcionamento-outro-wrap" style="display:none">
-        <label>Qual "Outro"?</label>
-        <input type="text" id="diarista-direcionamento-outro" placeholder="Descreva o motivo" maxlength="150">
-      </div>
-
-    </div>
-    <div class="form-actions">
-      <button class="btn btn-primary" id="btn-salvar-diarista" onclick="salvarDiarista()">Salvar Diarista</button>
-      <button class="btn btn-secondary" onclick="cancelarEdicaoDiarista()">Limpar</button>
-    </div>
-  </div>
-
-  <p class="section-label">Diaristas lançados</p>
+  <p class="section-label">Controle de Diaristas</p>
   <div class="card">
     <div class="search-bar">
       <div class="search-input-wrap">
@@ -1361,6 +1292,9 @@
         <option value="3pl_svc">3PL (SVC)</option>
         <option value="3pl_consolidacao">3PL (Consolidação)</option>
       </select>
+      <button class="btn btn-primary btn-sm" id="btn-lancar-diaristas" onclick="abrirModalLancarDiaristas()" style="height:34px;display:inline-flex;align-items:center;gap:6px;">
+        <span>➕ Lançar Diaristas do Dia</span>
+      </button>
       <span class="count-badge" id="diarista-count">0 diaristas</span>
     </div>
     <div class="table-wrap">
@@ -1372,6 +1306,131 @@
           <tr><td colspan="9"><div class="empty-state"><div class="empty-icon">👷</div><p>Carregando registros...</p></div></td></tr>
         </tbody>
       </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Lançar Diaristas do Dia (assistente em etapas) -->
+<div class="modal-overlay" id="modal-lancar-diaristas">
+  <div class="modal modal-lg" onclick="event.stopPropagation()">
+    <h3 id="diarista-modal-titulo">Lançar Diaristas — Etapa 1 de 3</h3>
+
+    <!-- ETAPA 1: data + seleção de presentes -->
+    <div id="diarista-etapa-1">
+      <div class="form-group" style="margin-bottom:14px;max-width:220px">
+        <label>Data</label>
+        <input type="date" id="diarista-lote-data">
+      </div>
+      <div class="form-group" style="margin-bottom:8px">
+        <input type="text" placeholder="Buscar diarista cadastrado..." id="busca-diarista-disponivel" oninput="renderChecklistDiaristasDisponiveis()" style="padding:8px 10px;border:1px solid var(--border);border-radius:6px;width:100%;font-family:inherit;font-size:13px;">
+      </div>
+      <label style="font-size:12px;color:var(--text-muted)">Selecione quem esteve presente hoje (base: diaristas 3PL TSI/SRM cadastrados no Headcount)</label>
+      <div id="diarista-checklist-disponiveis" class="insucesso-checklist" style="max-height:280px;margin-top:6px"></div>
+    </div>
+
+    <!-- ETAPA 2: custo -->
+    <div id="diarista-etapa-2" style="display:none">
+      <div class="form-group">
+        <label>Custo</label>
+        <select id="diarista-lote-custo">
+          <option value="">— Selecionar —</option>
+          <option value="meli_svc">MELI (SVC)</option>
+          <option value="meli_consolidacao">MELI (Consolidação)</option>
+          <option value="3pl_svc">3PL (SVC)</option>
+          <option value="3pl_consolidacao">3PL (Consolidação)</option>
+        </select>
+      </div>
+      <span class="field-hint" style="display:block;margin-top:8px">Esse custo será aplicado a todos os diaristas selecionados na etapa anterior.</span>
+    </div>
+
+    <!-- ETAPA 3: direcionamento (só quando custo é 3PL) -->
+    <div id="diarista-etapa-3" style="display:none">
+      <div class="form-group">
+        <label>Direcionamento</label>
+        <select id="diarista-lote-direcionamento" onchange="onDirecionamentoLoteDiaristaChange()">
+          <option value="">— Selecionar —</option>
+          <option value="ferias">Cobertura de Férias</option>
+          <option value="absenteismo">Cobertura de Absenteísmo</option>
+          <option value="quadro">Cobertura de Quadro</option>
+          <option value="treinamento">Cobertura de Treinamento</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+      <div class="form-group" id="diarista-lote-direcionamento-outro-wrap" style="display:none;margin-top:12px">
+        <label>Qual "Outro"?</label>
+        <input type="text" id="diarista-lote-direcionamento-outro" placeholder="Descreva o motivo" maxlength="150">
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="fecharModalLancarDiaristas()">Cancelar</button>
+      <button class="btn btn-secondary btn-sm" id="btn-diarista-voltar" style="display:none" onclick="voltarEtapaDiarista()">Voltar</button>
+      <button class="btn btn-primary btn-sm" id="btn-diarista-avancar" onclick="avancarEtapaDiarista()">Avançar</button>
+      <button class="btn btn-primary btn-sm" id="btn-diarista-confirmar" style="display:none" onclick="confirmarLancamentoDiaristas()">Confirmar lançamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Editar lançamento individual -->
+<div class="modal-overlay" id="modal-editar-diarista">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3>Editar lançamento — <span id="diarista-edit-nome-titulo"></span></h3>
+
+    <div class="form-group" style="margin-bottom:14px">
+      <label>CPF</label>
+      <input type="text" id="diarista-edit-cpf" placeholder="000.000.000-00" maxlength="14" oninput="mascararCPF(this)">
+    </div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>EXT</label>
+      <input type="text" id="diarista-edit-ext" maxlength="30">
+    </div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>GrootID</label>
+      <input type="text" id="diarista-edit-groot" maxlength="30">
+    </div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Data</label>
+      <input type="date" id="diarista-edit-data">
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:14px">
+      <div class="form-group" style="flex:1">
+        <label>Horário Início</label>
+        <input type="time" id="diarista-edit-hora-inicio">
+      </div>
+      <div class="form-group" style="flex:1">
+        <label>Horário Fim</label>
+        <input type="time" id="diarista-edit-hora-fim">
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Custo</label>
+      <select id="diarista-edit-custo" onchange="onCustoEdicaoDiaristaChange()">
+        <option value="">— Selecionar —</option>
+        <option value="meli_svc">MELI (SVC)</option>
+        <option value="meli_consolidacao">MELI (Consolidação)</option>
+        <option value="3pl_svc">3PL (SVC)</option>
+        <option value="3pl_consolidacao">3PL (Consolidação)</option>
+      </select>
+    </div>
+    <div class="form-group" id="diarista-edit-direcionamento-wrap" style="display:none;margin-bottom:14px">
+      <label>Direcionamento</label>
+      <select id="diarista-edit-direcionamento" onchange="onDirecionamentoEdicaoDiaristaChange()">
+        <option value="">— Selecionar —</option>
+        <option value="ferias">Cobertura de Férias</option>
+        <option value="absenteismo">Cobertura de Absenteísmo</option>
+        <option value="quadro">Cobertura de Quadro</option>
+        <option value="treinamento">Cobertura de Treinamento</option>
+        <option value="outro">Outro</option>
+      </select>
+    </div>
+    <div class="form-group" id="diarista-edit-direcionamento-outro-wrap" style="display:none">
+      <label>Qual "Outro"?</label>
+      <input type="text" id="diarista-edit-direcionamento-outro" maxlength="150">
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="fecharModalEditarDiarista()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" id="btn-salvar-edicao-diarista" onclick="salvarEdicaoDiarista()">Salvar</button>
     </div>
   </div>
 </div>
@@ -2911,6 +2970,7 @@ async function carregarDadosDoBanco() {
       id: h.id,
       nome: h.nome,
       groot: h.groot_id,
+      cpf: h.cpf,
       ext: h.ext,
       tpl: h.tpl,
       turnoId: h.turno_id,
@@ -3040,8 +3100,6 @@ function switchTab(tab, btn) {
 
   if (tab === 'diaristas') {
     renderDiaristas();
-    const inputData = document.getElementById('diarista-data');
-    if (inputData && !inputData.value) inputData.value = hojeIsoLocal();
   }
 
   if (tab === 'monitor') {
@@ -4651,6 +4709,7 @@ async function salvarHead() {
   if (!pode('criar_hc') && !pode('editar_hc')) { toast('Seu perfil não permite salvar colaboradores.', 'error'); return; }
   const nome    = document.getElementById('hc-nome').value.trim();
   const groot   = document.getElementById('hc-groot').value.trim();
+  const cpf     = document.getElementById('hc-cpf').value.trim();
   const ext     = normalizeExt(document.getElementById('hc-ext').value);
   const tpl     = document.getElementById('hc-3pl').value;
   const gestor  = document.getElementById('hc-gestor').value.trim();
@@ -4685,6 +4744,7 @@ async function salvarHead() {
   const dbData = {
     nome,
     groot_id: groot,
+    cpf: cpf || null,
     ext: ext || null,
     tpl,
     gestor: gestor || null,
@@ -4715,7 +4775,7 @@ async function salvarHead() {
 }
 
 function limparFormHC() {
-  ['hc-nome','hc-groot','hc-ext','hc-gestor'].forEach(id => document.getElementById(id).value = '');
+  ['hc-nome','hc-groot','hc-cpf','hc-ext','hc-gestor'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('hc-turno').value  = '';
   document.getElementById('hc-3pl').value    = 'DHL';
   document.getElementById('hc-status').value = 'ativo';
@@ -4732,6 +4792,7 @@ function editarHead(id) {
   editingHcId = id;
   document.getElementById('hc-nome').value   = h.nome || '';
   document.getElementById('hc-groot').value  = h.groot || '';
+  document.getElementById('hc-cpf').value    = h.cpf || '';
   document.getElementById('hc-ext').value    = normalizeExt(h.ext);
   document.getElementById('hc-3pl').value    = h.tpl || 'DHL';
   document.getElementById('hc-gestor').value = h.gestor || '';
@@ -5801,6 +5862,8 @@ async function carregarDiaristas() {
     }
     diaristas = (data || []).map(d => ({
       id: d.id,
+      grupoId: d.grupo_id,
+      headId: d.head_id,
       nome: d.nome,
       cpf: d.cpf,
       ext: d.ext,
@@ -5820,7 +5883,7 @@ async function carregarDiaristas() {
   }
 }
 
-function mascararCpfDiarista(input) {
+function mascararCPF(input) {
   let v = input.value.replace(/\D/g, '').slice(0, 11);
   if (v.length > 9) v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
   else if (v.length > 6) v = v.replace(/(\d{3})(\d{3})(\d{1,3})/, '$1.$2.$3');
@@ -5828,134 +5891,277 @@ function mascararCpfDiarista(input) {
   input.value = v;
 }
 
-function onCustoDiaristaChange() {
-  const custo = document.getElementById('diarista-custo').value;
-  const wrap = document.getElementById('diarista-direcionamento-wrap');
-  const is3pl = custo === '3pl_svc' || custo === '3pl_consolidacao';
-  wrap.style.display = is3pl ? '' : 'none';
-  if (!is3pl) {
-    document.getElementById('diarista-direcionamento').value = '';
-    document.getElementById('diarista-direcionamento-outro-wrap').style.display = 'none';
-    document.getElementById('diarista-direcionamento-outro').value = '';
+// Pool de diaristas cadastrados: colaboradores do Headcount com Turno "Diarista" e prestador (3PL) TSI ou SRM.
+function diaristasDisponiveisParaLancamento() {
+  return heads.filter(h => {
+    if (h.status !== 'ativo') return false;
+    if (h.tpl !== 'TSI' && h.tpl !== 'SRM') return false;
+    const turno = turnos.find(t => t.id === h.turnoId);
+    return !!(turno && turno.escala === 'diarista');
+  });
+}
+
+// ── Lançamento em lote (assistente de 3 etapas) ──
+let diaristaEtapaAtual = 1;
+let loteDiaristasSelecionados = []; // [{headId, nome, cpf, ext, grootId, horaInicio, horaFim}]
+
+function abrirModalLancarDiaristas() {
+  if (!pode('criar_diarista')) { toast('Seu perfil não permite lançar diaristas.', 'error'); return; }
+  diaristaEtapaAtual = 1;
+  loteDiaristasSelecionados = [];
+  document.getElementById('diarista-lote-data').value = hojeIsoLocal();
+  document.getElementById('busca-diarista-disponivel').value = '';
+  document.getElementById('diarista-lote-custo').value = '';
+  document.getElementById('diarista-lote-direcionamento').value = '';
+  document.getElementById('diarista-lote-direcionamento-outro').value = '';
+  document.getElementById('diarista-lote-direcionamento-outro-wrap').style.display = 'none';
+  renderChecklistDiaristasDisponiveis();
+  irParaEtapaDiarista(1);
+  document.getElementById('modal-lancar-diaristas').classList.add('open');
+}
+
+function fecharModalLancarDiaristas() {
+  document.getElementById('modal-lancar-diaristas').classList.remove('open');
+}
+
+function renderChecklistDiaristasDisponiveis() {
+  const busca = lower(document.getElementById('busca-diarista-disponivel')?.value || '');
+  const disponiveis = diaristasDisponiveisParaLancamento().filter(h => {
+    return !busca || lower(h.nome).includes(busca) || lower(normalizeExt(h.ext)).includes(busca) || lower(h.groot).includes(busca);
+  });
+
+  const container = document.getElementById('diarista-checklist-disponiveis');
+  if (!container) return;
+
+  if (!disponiveis.length) {
+    container.innerHTML = '<p style="font-size:12px;color:var(--text-hint);padding:10px">Nenhum diarista cadastrado no Headcount (Turno "Diarista" + prestador TSI/SRM). Cadastre-os no Headcount primeiro.</p>';
+    return;
+  }
+
+  container.innerHTML = disponiveis.map(h => {
+    const marcadoAntes = loteDiaristasSelecionados.find(s => s.headId === h.id);
+    return `<label style="justify-content:space-between">
+      <span style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" class="chk-diarista-presente" data-head-id="${h.id}" ${marcadoAntes ? 'checked' : ''} onchange="onToggleDiaristaPresente('${h.id}', this.checked)">
+        <span>${escapeHtml(h.nome)} <span style="color:var(--text-hint);font-size:11px">(EXT ${escapeHtml(normalizeExt(h.ext) || '—')} · Groot ${escapeHtml(h.groot || '—')} · ${escapeHtml(h.tpl)})</span></span>
+      </span>
+      <span style="display:flex;gap:6px;flex-shrink:0">
+        <input type="time" class="diarista-hora-inicio-item" data-head-id="${h.id}" value="${marcadoAntes?.horaInicio || ''}" onchange="onHorarioDiaristaChange('${h.id}', 'horaInicio', this.value)" style="width:92px;padding:4px;font-size:12px;border:1px solid var(--border);border-radius:4px">
+        <input type="time" class="diarista-hora-fim-item" data-head-id="${h.id}" value="${marcadoAntes?.horaFim || ''}" onchange="onHorarioDiaristaChange('${h.id}', 'horaFim', this.value)" style="width:92px;padding:4px;font-size:12px;border:1px solid var(--border);border-radius:4px">
+      </span>
+    </label>`;
+  }).join('');
+}
+
+function onToggleDiaristaPresente(headId, marcado) {
+  if (marcado) {
+    if (loteDiaristasSelecionados.find(s => s.headId === headId)) return;
+    const h = heads.find(x => x.id === headId);
+    if (!h) return;
+    loteDiaristasSelecionados.push({
+      headId: h.id,
+      nome: h.nome,
+      cpf: h.cpf || null,
+      ext: normalizeExt(h.ext) || null,
+      grootId: h.groot || null,
+      horaInicio: '',
+      horaFim: ''
+    });
   } else {
-    onDirecionamentoDiaristaChange();
+    loteDiaristasSelecionados = loteDiaristasSelecionados.filter(s => s.headId !== headId);
   }
 }
 
-function onDirecionamentoDiaristaChange() {
-  const val = document.getElementById('diarista-direcionamento').value;
-  const wrapOutro = document.getElementById('diarista-direcionamento-outro-wrap');
-  wrapOutro.style.display = val === 'outro' ? '' : 'none';
-  if (val !== 'outro') document.getElementById('diarista-direcionamento-outro').value = '';
+function onHorarioDiaristaChange(headId, campo, valor) {
+  const item = loteDiaristasSelecionados.find(s => s.headId === headId);
+  if (item) item[campo] = valor;
 }
 
-function limparFormDiarista() {
-  document.getElementById('diarista-nome').value = '';
-  document.getElementById('diarista-cpf').value = '';
-  document.getElementById('diarista-ext').value = '';
-  document.getElementById('diarista-groot').value = '';
-  document.getElementById('diarista-data').value = hojeIsoLocal();
-  document.getElementById('diarista-hora-inicio').value = '';
-  document.getElementById('diarista-hora-fim').value = '';
-  document.getElementById('diarista-custo').value = '';
-  document.getElementById('diarista-direcionamento').value = '';
-  document.getElementById('diarista-direcionamento-outro').value = '';
-  document.getElementById('diarista-direcionamento-wrap').style.display = 'none';
-  document.getElementById('diarista-direcionamento-outro-wrap').style.display = 'none';
+function irParaEtapaDiarista(etapa) {
+  diaristaEtapaAtual = etapa;
+  document.getElementById('diarista-etapa-1').style.display = etapa === 1 ? '' : 'none';
+  document.getElementById('diarista-etapa-2').style.display = etapa === 2 ? '' : 'none';
+  document.getElementById('diarista-etapa-3').style.display = etapa === 3 ? '' : 'none';
+  document.getElementById('btn-diarista-voltar').style.display = etapa === 1 ? 'none' : 'inline-flex';
+  document.getElementById('btn-diarista-avancar').style.display = etapa === 3 ? 'none' : 'inline-flex';
+  document.getElementById('btn-diarista-confirmar').style.display = etapa === 3 ? 'inline-flex' : 'none';
+  document.getElementById('diarista-modal-titulo').textContent = `Lançar Diaristas — Etapa ${etapa} de 3`;
 }
 
-function cancelarEdicaoDiarista() {
-  editingDiaristaId = null;
-  document.getElementById('diarista-form-label').textContent = 'Cadastrar Diarista';
-  document.getElementById('btn-salvar-diarista').textContent = 'Salvar Diarista';
-  limparFormDiarista();
+function onDirecionamentoLoteDiaristaChange() {
+  const val = document.getElementById('diarista-lote-direcionamento').value;
+  document.getElementById('diarista-lote-direcionamento-outro-wrap').style.display = val === 'outro' ? '' : 'none';
 }
 
-async function salvarDiarista() {
-  if (editingDiaristaId && !pode('editar_diarista')) { toast('Seu perfil não permite editar diaristas.', 'error'); return; }
-  if (!editingDiaristaId && !pode('criar_diarista')) { toast('Seu perfil não permite cadastrar diaristas.', 'error'); return; }
+function avancarEtapaDiarista() {
+  if (diaristaEtapaAtual === 1) {
+    const data = document.getElementById('diarista-lote-data').value;
+    if (!data) { toast('Informe a data.', 'error'); return; }
+    if (!loteDiaristasSelecionados.length) { toast('Selecione ao menos um diarista presente.', 'error'); return; }
+    irParaEtapaDiarista(2);
+    return;
+  }
 
-  const nome = document.getElementById('diarista-nome').value.trim();
-  const cpf = document.getElementById('diarista-cpf').value.trim();
-  const ext = document.getElementById('diarista-ext').value.trim();
-  const grootId = document.getElementById('diarista-groot').value.trim();
-  const data = document.getElementById('diarista-data').value;
-  const horaInicio = document.getElementById('diarista-hora-inicio').value;
-  const horaFim = document.getElementById('diarista-hora-fim').value;
-  const custo = document.getElementById('diarista-custo').value;
-  const direcionamento = document.getElementById('diarista-direcionamento').value;
-  const direcionamentoOutro = document.getElementById('diarista-direcionamento-outro').value.trim();
+  if (diaristaEtapaAtual === 2) {
+    const custo = document.getElementById('diarista-lote-custo').value;
+    if (!custo) { toast('Selecione o custo.', 'error'); return; }
+    const is3pl = custo === '3pl_svc' || custo === '3pl_consolidacao';
+    if (is3pl) {
+      irParaEtapaDiarista(3);
+    } else {
+      confirmarLancamentoDiaristas();
+    }
+  }
+}
 
-  if (!nome) { toast('Informe o nome do diarista.', 'error'); return; }
-  if (!cpf) { toast('Informe o CPF.', 'error'); return; }
-  if (!ext) { toast('Informe o EXT.', 'error'); return; }
-  if (!data) { toast('Informe a data.', 'error'); return; }
-  if (!horaInicio || !horaFim) { toast('Informe o horário de início e fim.', 'error'); return; }
-  if (!custo) { toast('Selecione o custo.', 'error'); return; }
+function voltarEtapaDiarista() {
+  if (diaristaEtapaAtual === 3) irParaEtapaDiarista(2);
+  else if (diaristaEtapaAtual === 2) irParaEtapaDiarista(1);
+}
 
+async function confirmarLancamentoDiaristas() {
+  if (!pode('criar_diarista')) { toast('Seu perfil não permite lançar diaristas.', 'error'); return; }
+
+  const data = document.getElementById('diarista-lote-data').value;
+  const custo = document.getElementById('diarista-lote-custo').value;
   const is3pl = custo === '3pl_svc' || custo === '3pl_consolidacao';
+  const direcionamento = document.getElementById('diarista-lote-direcionamento').value;
+  const direcionamentoOutro = document.getElementById('diarista-lote-direcionamento-outro').value.trim();
+
+  if (!data || !loteDiaristasSelecionados.length || !custo) { toast('Revise os dados do lançamento.', 'error'); return; }
   if (is3pl && !direcionamento) { toast('Selecione o direcionamento.', 'error'); return; }
   if (is3pl && direcionamento === 'outro' && !direcionamentoOutro) { toast('Descreva o direcionamento "Outro".', 'error'); return; }
 
-  const btn = document.getElementById('btn-salvar-diarista');
-  setButtonLoading(btn, true, editingDiaristaId ? 'Atualizando...' : 'Salvando...');
+  const btn = document.getElementById('btn-diarista-confirmar');
+  setButtonLoading(btn, true, 'Salvando...');
   try {
-    const dbData = {
-      nome,
-      cpf,
-      ext,
-      groot_id: grootId || null,
+    const grupoId = crypto.randomUUID();
+    const registradoPor = usuarioAtual?.nome || usuarioAtual?.usuario || null;
+    const linhas = loteDiaristasSelecionados.map(item => ({
+      grupo_id: grupoId,
+      head_id: item.headId,
+      nome: item.nome,
+      cpf: item.cpf,
+      ext: item.ext,
+      groot_id: item.grootId,
       data,
-      hora_inicio: horaInicio,
-      hora_fim: horaFim,
+      hora_inicio: item.horaInicio || null,
+      hora_fim: item.horaFim || null,
       custo,
       direcionamento: is3pl ? (direcionamento || null) : null,
-      direcionamento_outro: (is3pl && direcionamento === 'outro') ? direcionamentoOutro : null
-    };
+      direcionamento_outro: (is3pl && direcionamento === 'outro') ? direcionamentoOutro : null,
+      registrado_por: registradoPor
+    }));
 
-    let error;
-    if (editingDiaristaId) {
-      ({ error } = await db.from('controle_diaristas').update(dbData).eq('id', editingDiaristaId));
-    } else {
-      dbData.registrado_por = usuarioAtual?.nome || usuarioAtual?.usuario || null;
-      ({ error } = await db.from('controle_diaristas').insert([dbData]));
-    }
+    const { error } = await db.from('controle_diaristas').insert(linhas);
     if (error) throw error;
 
-    toast(editingDiaristaId ? 'Diarista atualizado.' : 'Diarista cadastrado.', 'success');
-    cancelarEdicaoDiarista();
+    toast(`${linhas.length} diarista${linhas.length !== 1 ? 's' : ''} lançado${linhas.length !== 1 ? 's' : ''} com sucesso.`, 'success');
+    fecharModalLancarDiaristas();
     await carregarDiaristas();
     renderDiaristas();
   } catch (error) {
     console.error(error);
-    toast('Erro ao salvar diarista: ' + (error.message || error), 'error');
+    toast('Erro ao lançar diaristas: ' + (error.message || error), 'error');
   } finally {
     setButtonLoading(btn, false);
   }
 }
 
-function editarDiarista(id) {
+// ── Edição individual de um lançamento já feito ──
+
+function onCustoEdicaoDiaristaChange() {
+  const custo = document.getElementById('diarista-edit-custo').value;
+  const is3pl = custo === '3pl_svc' || custo === '3pl_consolidacao';
+  document.getElementById('diarista-edit-direcionamento-wrap').style.display = is3pl ? '' : 'none';
+  if (!is3pl) {
+    document.getElementById('diarista-edit-direcionamento').value = '';
+    document.getElementById('diarista-edit-direcionamento-outro-wrap').style.display = 'none';
+    document.getElementById('diarista-edit-direcionamento-outro').value = '';
+  } else {
+    onDirecionamentoEdicaoDiaristaChange();
+  }
+}
+
+function onDirecionamentoEdicaoDiaristaChange() {
+  const val = document.getElementById('diarista-edit-direcionamento').value;
+  document.getElementById('diarista-edit-direcionamento-outro-wrap').style.display = val === 'outro' ? '' : 'none';
+}
+
+function abrirModalEditarDiarista(id) {
   if (!pode('editar_diarista')) { toast('Seu perfil não permite editar diaristas.', 'error'); return; }
   const d = diaristas.find(x => String(x.id) === String(id));
   if (!d) return;
 
   editingDiaristaId = id;
-  document.getElementById('diarista-nome').value = d.nome || '';
-  document.getElementById('diarista-cpf').value = d.cpf || '';
-  document.getElementById('diarista-ext').value = d.ext || '';
-  document.getElementById('diarista-groot').value = d.grootId || '';
-  document.getElementById('diarista-data').value = d.data || '';
-  document.getElementById('diarista-hora-inicio').value = d.horaInicio || '';
-  document.getElementById('diarista-hora-fim').value = d.horaFim || '';
-  document.getElementById('diarista-custo').value = d.custo || '';
-  onCustoDiaristaChange();
-  if (d.direcionamento) document.getElementById('diarista-direcionamento').value = d.direcionamento;
-  onDirecionamentoDiaristaChange();
-  document.getElementById('diarista-direcionamento-outro').value = d.direcionamentoOutro || '';
+  document.getElementById('diarista-edit-nome-titulo').textContent = d.nome || '';
+  document.getElementById('diarista-edit-cpf').value = d.cpf || '';
+  document.getElementById('diarista-edit-ext').value = d.ext || '';
+  document.getElementById('diarista-edit-groot').value = d.grootId || '';
+  document.getElementById('diarista-edit-data').value = d.data || '';
+  document.getElementById('diarista-edit-hora-inicio').value = d.horaInicio || '';
+  document.getElementById('diarista-edit-hora-fim').value = d.horaFim || '';
+  document.getElementById('diarista-edit-custo').value = d.custo || '';
+  onCustoEdicaoDiaristaChange();
+  if (d.direcionamento) document.getElementById('diarista-edit-direcionamento').value = d.direcionamento;
+  onDirecionamentoEdicaoDiaristaChange();
+  document.getElementById('diarista-edit-direcionamento-outro').value = d.direcionamentoOutro || '';
 
-  document.getElementById('diarista-form-label').textContent = 'Editar Diarista';
-  document.getElementById('btn-salvar-diarista').textContent = 'Atualizar Diarista';
-  document.getElementById('page-diaristas').scrollIntoView({ behavior: 'smooth' });
+  document.getElementById('modal-editar-diarista').classList.add('open');
+}
+
+function fecharModalEditarDiarista() {
+  document.getElementById('modal-editar-diarista').classList.remove('open');
+  editingDiaristaId = null;
+}
+
+async function salvarEdicaoDiarista() {
+  if (!pode('editar_diarista')) { toast('Seu perfil não permite editar diaristas.', 'error'); return; }
+  if (!editingDiaristaId) return;
+
+  const cpf = document.getElementById('diarista-edit-cpf').value.trim();
+  const ext = document.getElementById('diarista-edit-ext').value.trim();
+  const grootId = document.getElementById('diarista-edit-groot').value.trim();
+  const data = document.getElementById('diarista-edit-data').value;
+  const horaInicio = document.getElementById('diarista-edit-hora-inicio').value;
+  const horaFim = document.getElementById('diarista-edit-hora-fim').value;
+  const custo = document.getElementById('diarista-edit-custo').value;
+  const direcionamento = document.getElementById('diarista-edit-direcionamento').value;
+  const direcionamentoOutro = document.getElementById('diarista-edit-direcionamento-outro').value.trim();
+
+  if (!data) { toast('Informe a data.', 'error'); return; }
+  if (!custo) { toast('Selecione o custo.', 'error'); return; }
+  const is3pl = custo === '3pl_svc' || custo === '3pl_consolidacao';
+  if (is3pl && !direcionamento) { toast('Selecione o direcionamento.', 'error'); return; }
+  if (is3pl && direcionamento === 'outro' && !direcionamentoOutro) { toast('Descreva o direcionamento "Outro".', 'error'); return; }
+
+  const btn = document.getElementById('btn-salvar-edicao-diarista');
+  setButtonLoading(btn, true, 'Salvando...');
+  try {
+    const dbData = {
+      cpf: cpf || null,
+      ext: ext || null,
+      groot_id: grootId || null,
+      data,
+      hora_inicio: horaInicio || null,
+      hora_fim: horaFim || null,
+      custo,
+      direcionamento: is3pl ? (direcionamento || null) : null,
+      direcionamento_outro: (is3pl && direcionamento === 'outro') ? direcionamentoOutro : null
+    };
+    const { error } = await db.from('controle_diaristas').update(dbData).eq('id', editingDiaristaId);
+    if (error) throw error;
+
+    toast('Lançamento atualizado.', 'success');
+    fecharModalEditarDiarista();
+    await carregarDiaristas();
+    renderDiaristas();
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao atualizar: ' + (error.message || error), 'error');
+  } finally {
+    setButtonLoading(btn, false);
+  }
 }
 
 async function excluirDiarista(id) {
@@ -5992,7 +6198,7 @@ function renderDiaristas() {
   if (!tbody) return;
 
   if (!lista.length) {
-    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">👷</div><p>${diaristas.length ? 'Nenhum registro encontrado' : 'Nenhum diarista lançado'}</p><span>${diaristas.length ? 'Tente outros termos' : 'Preencha o formulário acima para começar'}</span></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">👷</div><p>${diaristas.length ? 'Nenhum registro encontrado' : 'Nenhum diarista lançado'}</p><span>${diaristas.length ? 'Tente outros termos' : 'Clique em "Lançar Diaristas do Dia" para começar'}</span></div></td></tr>`;
     return;
   }
 
@@ -6014,7 +6220,7 @@ function renderDiaristas() {
       <td>${custoBadge}</td>
       <td style="font-size:12px">${direcionamentoTxt}</td>
       <td style="text-align:right;white-space:nowrap">
-        ${pode('editar_diarista') ? `<button class="btn btn-secondary btn-sm" onclick="editarDiarista('${id}')" style="margin-right:6px">Editar</button>` : ''}
+        ${pode('editar_diarista') ? `<button class="btn btn-secondary btn-sm" onclick="abrirModalEditarDiarista('${id}')" style="margin-right:6px">Editar</button>` : ''}
         ${pode('excluir_diarista') ? `<button class="btn btn-danger btn-sm" onclick="excluirDiarista('${id}')">Excluir</button>` : ''}
         ${(!pode('editar_diarista') && !pode('excluir_diarista')) ? '<span style="color:var(--text-hint);font-size:12px">—</span>' : ''}
       </td>
@@ -6226,7 +6432,7 @@ async function criarUsuarioSistema() {
     const { data: criado, error: errCriar } = await db.functions.invoke('admin-create-user', {
       body: { email, senha }
     });
-    if (errCriar) throw errCriar;
+    if (errCriar) throw new Error(await extrairErroEdgeFunction(errCriar));
     if (criado?.error) throw new Error(criado.error);
     const novoAuthUid = criado?.userId;
     if (!novoAuthUid) throw new Error('Não foi possível obter o ID do usuário criado.');
@@ -6333,6 +6539,23 @@ function fecharModalEditarUsuario() {
 
 // Altera a senha do usuário-alvo. A própria senha é trocada direto (sessão atual);
 // a senha de outra pessoa exige a Edge Function "admin-set-password" (usa a service role no servidor).
+// Quando a Edge Function responde com status de erro (400/401/403/500), o supabase-js só diz
+// "Edge Function returned a non-2xx status code" — essa função lê o corpo real da resposta
+// (onde a function manda { error: "motivo específico" }) pra mostrar a causa de verdade.
+async function extrairErroEdgeFunction(error) {
+  try {
+    if (error?.context && typeof error.context.json === 'function') {
+      const corpo = await error.context.clone().json();
+      if (corpo?.error) return corpo.error;
+    }
+    if (error?.context && typeof error.context.text === 'function') {
+      const texto = await error.context.clone().text();
+      if (texto) return texto;
+    }
+  } catch (e) { /* corpo não era JSON legível; usa a mensagem genérica mesmo */ }
+  return error?.message || String(error);
+}
+
 async function alterarSenhaUsuario(targetAuthUid, novaSenha) {
   if (String(targetAuthUid) === String(usuarioAtual?.id)) {
     const { error } = await db.auth.updateUser({ password: novaSenha });
@@ -6342,7 +6565,7 @@ async function alterarSenhaUsuario(targetAuthUid, novaSenha) {
   const { data, error } = await db.functions.invoke('admin-set-password', {
     body: { targetAuthUid, novaSenha }
   });
-  if (error) throw error;
+  if (error) throw new Error(await extrairErroEdgeFunction(error));
   if (data?.error) throw new Error(data.error);
 }
 
@@ -6436,7 +6659,7 @@ async function excluirUsuarioSistema(authUid) {
     const { data, error } = await db.functions.invoke('admin-delete-user', {
       body: { targetAuthUid: authUid }
     });
-    if (error) throw error;
+    if (error) throw new Error(await extrairErroEdgeFunction(error));
     if (data?.error) throw new Error(data.error);
 
     toast(`Usuário "${u.nome}" excluído.`, 'success');
