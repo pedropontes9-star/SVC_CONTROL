@@ -8237,6 +8237,29 @@ function editarScheduling(id) {
   document.getElementById('page-scheduling').scrollIntoView({ behavior: 'smooth' });
 }
 
+function duplicarScheduling(id) {
+  if (!pode('criar_sched')) { toast('Seu perfil não permite criar schedulings.', 'error'); return; }
+  const s = schedulings.find(s => s.id === id);
+  if (!s) return;
+
+  cancelarEdicaoSched(); // garante que fica em modo "novo registro", não edição
+
+  document.getElementById('sched-numero').value = s.numero ? `${s.numero}-cópia` : '';
+  document.getElementById('sched-turno').value = s.turnoId || '';
+  onSchedTurnoChange(); // popula campo grupo se necessário
+  if (s.grupo) document.getElementById('sched-grupo').value = s.grupo;
+  document.getElementById('sched-heads').value = s.heads || '';
+  document.getElementById('sched-data-inicio').value = s.dataInicio || '';
+  document.getElementById('sched-data-fim').value = s.dataFim || '';
+  document.getElementById('sched-obs').value = s.obs || '';
+
+  document.getElementById('sched-form-label').textContent = 'Duplicar Scheduling — ajuste o número e o período';
+  document.getElementById('page-scheduling').scrollIntoView({ behavior: 'smooth' });
+  document.getElementById('sched-numero').focus();
+  document.getElementById('sched-numero').select();
+  toast('Dados copiados. Ajuste o número e o período antes de salvar.', 'success');
+}
+
 async function excluirScheduling(id) {
   if (!pode('excluir_sched')) { toast('Seu perfil não permite excluir schedulings.', 'error'); return; }
   if (!confirm('Excluir este scheduling? Esta ação não pode ser desfeita.')) return;
@@ -8292,9 +8315,10 @@ function renderSchedulings() {
       <td>${periodo}</td>
       <td style="color:var(--text-muted);font-size:12px">${escapeHtml(s.obs || '—')}</td>
       <td style="text-align:right;white-space:nowrap">
+        ${pode('criar_sched') ? `<button class="btn btn-secondary btn-sm" onclick="duplicarScheduling('${id}')" style="margin-right:6px">Duplicar</button>` : ''}
         ${pode('editar_sched') ? `<button class="btn btn-secondary btn-sm" onclick="editarScheduling('${id}')" style="margin-right:6px">Editar</button>` : ''}
         ${pode('excluir_sched') ? `<button class="btn btn-danger btn-sm" onclick="excluirScheduling('${id}')">Excluir</button>` : ''}
-        ${(!pode('editar_sched') && !pode('excluir_sched')) ? '<span style="color:var(--text-hint);font-size:12px">—</span>' : ''}
+        ${(!pode('criar_sched') && !pode('editar_sched') && !pode('excluir_sched')) ? '<span style="color:var(--text-hint);font-size:12px">—</span>' : ''}
       </td>
     </tr>`;
   }).join('');
