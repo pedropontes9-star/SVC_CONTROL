@@ -1031,9 +1031,14 @@
       <div class="stat-sub">insucesso + devolução</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Principal transportadora</div>
-      <div class="stat-value" style="font-size:16px;line-height:1.3" id="insucesso-stat-transportadora">—</div>
-      <div class="stat-sub" id="insucesso-stat-transportadora-sub"></div>
+      <div class="stat-label">Principal Transportadora (Insucesso)</div>
+      <div class="stat-value" style="font-size:16px;line-height:1.3" id="insucesso-stat-transportadora-insucesso">—</div>
+      <div class="stat-sub" id="insucesso-stat-transportadora-insucesso-sub"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Principal Transportadora (Devolução)</div>
+      <div class="stat-value" style="font-size:16px;line-height:1.3" id="insucesso-stat-transportadora-devolucao">—</div>
+      <div class="stat-sub" id="insucesso-stat-transportadora-devolucao-sub"></div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Pacotes Bulky hoje</div>
@@ -1047,8 +1052,13 @@
     </div>
     <div class="stat-card">
       <div class="stat-label">Principal Driver (Insucesso)</div>
-      <div class="stat-value" style="font-size:16px;line-height:1.3" id="insucesso-stat-driver">—</div>
-      <div class="stat-sub" id="insucesso-stat-driver-sub"></div>
+      <div class="stat-value" style="font-size:16px;line-height:1.3" id="insucesso-stat-driver-insucesso">—</div>
+      <div class="stat-sub" id="insucesso-stat-driver-insucesso-sub"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Principal Driver (Devolução)</div>
+      <div class="stat-value" style="font-size:16px;line-height:1.3" id="insucesso-stat-driver-devolucao">—</div>
+      <div class="stat-sub" id="insucesso-stat-driver-devolucao-sub"></div>
     </div>
   </div>
 
@@ -5739,7 +5749,28 @@ async function excluirInsucessoAtual() {
   }
 }
 
-// ── Scorecards (pacotes hoje / principal transportadora) ──
+// Encontra a chave (transportadora/motorista) mais frequente numa lista de registros.
+function calcularMaisFrequente(lista, campo) {
+  const contagem = {};
+  lista.forEach(i => {
+    const chave = i[campo] || '—';
+    contagem[chave] = (contagem[chave] || 0) + 1;
+  });
+  let principal = null;
+  Object.entries(contagem).forEach(([nome, qtd]) => {
+    if (!principal || qtd > principal.qtd) principal = { nome, qtd };
+  });
+  return principal;
+}
+
+function preencherCardPrincipal(idValor, idSub, principal, sufixoTexto) {
+  const elValor = document.getElementById(idValor);
+  const elSub = document.getElementById(idSub);
+  if (elValor) elValor.textContent = principal ? principal.nome : '—';
+  if (elSub) elSub.textContent = principal ? `${principal.qtd} ${sufixoTexto}${principal.qtd !== 1 ? 's' : ''}` : 'Sem registros';
+}
+
+// ── Scorecards (pacotes hoje / principal transportadora e driver por tipo) ──
 function renderScorecardsInsucesso() {
   const hoje = hojeIsoLocal();
   const doDia = insucessos.filter(i => i.dataRegistro === hoje);
@@ -5747,20 +5778,18 @@ function renderScorecardsInsucesso() {
   const elHoje = document.getElementById('insucesso-stat-hoje');
   if (elHoje) elHoje.textContent = doDia.length;
 
-  const contagemTransportadora = {};
-  doDia.forEach(i => {
-    const chave = i.transportadora || '—';
-    contagemTransportadora[chave] = (contagemTransportadora[chave] || 0) + 1;
-  });
-  let principal = null;
-  Object.entries(contagemTransportadora).forEach(([nome, qtd]) => {
-    if (!principal || qtd > principal.qtd) principal = { nome, qtd };
-  });
+  // Principal transportadora, separado por tipo — base: hoje.
+  const doDiaInsucesso = doDia.filter(i => i.tipo === 'insucesso');
+  const doDiaDevolucao = doDia.filter(i => i.tipo === 'devolucao');
 
-  const elTransp = document.getElementById('insucesso-stat-transportadora');
-  const elTranspSub = document.getElementById('insucesso-stat-transportadora-sub');
-  if (elTransp) elTransp.textContent = principal ? principal.nome : '—';
-  if (elTranspSub) elTranspSub.textContent = principal ? `${principal.qtd} pacote${principal.qtd !== 1 ? 's' : ''} hoje` : 'Sem registros hoje';
+  preencherCardPrincipal(
+    'insucesso-stat-transportadora-insucesso', 'insucesso-stat-transportadora-insucesso-sub',
+    calcularMaisFrequente(doDiaInsucesso, 'transportadora'), 'pacote'
+  );
+  preencherCardPrincipal(
+    'insucesso-stat-transportadora-devolucao', 'insucesso-stat-transportadora-devolucao-sub',
+    calcularMaisFrequente(doDiaDevolucao, 'transportadora'), 'pacote'
+  );
 
   const elBulky = document.getElementById('insucesso-stat-bulky');
   if (elBulky) elBulky.textContent = doDia.filter(i => i.bulky).length;
@@ -5768,29 +5797,26 @@ function renderScorecardsInsucesso() {
   const elAvariado = document.getElementById('insucesso-stat-avariado');
   if (elAvariado) elAvariado.textContent = doDia.filter(i => i.avariado).length;
 
-  // Principal Driver de Insucesso — mesma janela do gráfico: hoje + 6 dias anteriores, só tipo "insucesso".
+  // Principal Driver, separado por tipo — mesma janela do gráfico: hoje + 6 dias anteriores.
   const inicioJanela7d = new Date(); inicioJanela7d.setHours(0, 0, 0, 0);
   inicioJanela7d.setDate(inicioJanela7d.getDate() - 6);
   const fimJanela7d = new Date(); fimJanela7d.setHours(0, 0, 0, 0);
 
-  const contagemDriver = {};
-  insucessos.forEach(i => {
-    if (i.tipo !== 'insucesso' || !i.criadoEm) return;
+  const janela7dias = insucessos.filter(i => {
+    if (!i.criadoEm) return false;
     const d = new Date(i.criadoEm);
     const diaComparar = new Date(d); diaComparar.setHours(0, 0, 0, 0);
-    if (diaComparar < inicioJanela7d || diaComparar > fimJanela7d) return;
-    const chave = i.motorista || '—';
-    contagemDriver[chave] = (contagemDriver[chave] || 0) + 1;
-  });
-  let principalDriver = null;
-  Object.entries(contagemDriver).forEach(([nome, qtd]) => {
-    if (!principalDriver || qtd > principalDriver.qtd) principalDriver = { nome, qtd };
+    return diaComparar >= inicioJanela7d && diaComparar <= fimJanela7d;
   });
 
-  const elDriver = document.getElementById('insucesso-stat-driver');
-  const elDriverSub = document.getElementById('insucesso-stat-driver-sub');
-  if (elDriver) elDriver.textContent = principalDriver ? principalDriver.nome : '—';
-  if (elDriverSub) elDriverSub.textContent = principalDriver ? `${principalDriver.qtd} insucesso${principalDriver.qtd !== 1 ? 's' : ''} (7 dias)` : 'Sem registros no período';
+  preencherCardPrincipal(
+    'insucesso-stat-driver-insucesso', 'insucesso-stat-driver-insucesso-sub',
+    calcularMaisFrequente(janela7dias.filter(i => i.tipo === 'insucesso'), 'motorista'), 'insucesso (7 dias)'
+  );
+  preencherCardPrincipal(
+    'insucesso-stat-driver-devolucao', 'insucesso-stat-driver-devolucao-sub',
+    calcularMaisFrequente(janela7dias.filter(i => i.tipo === 'devolucao'), 'motorista'), 'devolução (7 dias)'
+  );
 }
 
 function setInsucessoSubTab(tab, btnEl) {
