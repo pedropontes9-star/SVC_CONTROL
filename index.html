@@ -1146,6 +1146,12 @@
       <select id="filtro-turno-sched" onchange="renderSchedulings()" style="min-width:140px">
         <option value="">Todos os turnos</option>
       </select>
+      <div style="display:flex;align-items:center;gap:6px">
+        <input type="date" id="filtro-sched-data-ini" onchange="renderSchedulings()" title="Período — de" style="padding:7px 8px;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:13px">
+        <span style="color:var(--text-hint);font-size:12px">até</span>
+        <input type="date" id="filtro-sched-data-fim" onchange="renderSchedulings()" title="Período — até" style="padding:7px 8px;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:13px">
+        <button class="btn btn-secondary btn-sm" onclick="limparFiltroPeriodoSched()" title="Limpar período">✕</button>
+      </div>
       <span class="count-badge" id="sched-count">0 schedulings</span>
     </div>
     <div class="table-wrap">
@@ -8237,6 +8243,12 @@ function editarScheduling(id) {
   document.getElementById('page-scheduling').scrollIntoView({ behavior: 'smooth' });
 }
 
+function limparFiltroPeriodoSched() {
+  document.getElementById('filtro-sched-data-ini').value = '';
+  document.getElementById('filtro-sched-data-fim').value = '';
+  renderSchedulings();
+}
+
 function duplicarScheduling(id) {
   if (!pode('criar_sched')) { toast('Seu perfil não permite criar schedulings.', 'error'); return; }
   const s = schedulings.find(s => s.id === id);
@@ -8276,12 +8288,17 @@ async function excluirScheduling(id) {
 function renderSchedulings() {
   const busca = lower(document.getElementById('busca-sched')?.value || '');
   const filtTurno = document.getElementById('filtro-turno-sched')?.value || '';
+  const filtDataIni = document.getElementById('filtro-sched-data-ini')?.value || '';
+  const filtDataFim = document.getElementById('filtro-sched-data-fim')?.value || '';
 
   const lista = schedulings.filter(s => {
     const t = turnos.find(tt => tt.id === s.turnoId);
     const mb = !busca || lower(s.numero).includes(busca) || lower(t?.nome || '').includes(busca);
     const mt = !filtTurno || s.turnoId === filtTurno;
-    return mb && mt;
+    // Sobreposição de período: mostra o scheduling se ele tiver pelo menos um dia dentro do período filtrado.
+    const mp = (!filtDataIni || !s.dataFim || s.dataFim >= filtDataIni)
+      && (!filtDataFim || !s.dataInicio || s.dataInicio <= filtDataFim);
+    return mb && mt && mp;
   });
 
   const countEl = document.getElementById('sched-count');
