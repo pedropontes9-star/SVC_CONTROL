@@ -1015,6 +1015,15 @@
 <div id="page-insucesso" class="page">
   <p class="section-label">Insucesso / Devolução</p>
 
+  <div class="monitor-section-header">
+    <span class="monitor-section-title">Visualização</span>
+    <div class="monitor-section-toggle">
+      <button class="monitor-toggle-btn insucesso-subtab-btn active" onclick="setInsucessoSubTab('lancamentos', this)">Lançamentos</button>
+      <button class="monitor-toggle-btn insucesso-subtab-btn" onclick="setInsucessoSubTab('dashboard', this)">Dashboard</button>
+    </div>
+  </div>
+
+  <div id="insucesso-tab-lancamentos">
   <div class="stats-row">
     <div class="stat-card">
       <div class="stat-label">Pacotes registrados hoje</div>
@@ -1026,12 +1035,21 @@
       <div class="stat-value" style="font-size:16px;line-height:1.3" id="insucesso-stat-transportadora">—</div>
       <div class="stat-sub" id="insucesso-stat-transportadora-sub"></div>
     </div>
-  </div>
-
-  <div class="card" style="margin-bottom:20px">
-    <p class="section-label" style="margin-bottom:2px">Pacotes recebidos por hora</p>
-    <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Últimos 7 dias (hoje + 6 dias anteriores), somados por hora do dia</p>
-    <canvas id="insucesso-chart-hora" height="90"></canvas>
+    <div class="stat-card">
+      <div class="stat-label">Pacotes Bulky hoje</div>
+      <div class="stat-value" id="insucesso-stat-bulky">0</div>
+      <div class="stat-sub">recebidos hoje</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pacotes Avariados hoje</div>
+      <div class="stat-value" id="insucesso-stat-avariado">0</div>
+      <div class="stat-sub">recebidos hoje</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Principal Driver (Insucesso)</div>
+      <div class="stat-value" style="font-size:16px;line-height:1.3" id="insucesso-stat-driver">—</div>
+      <div class="stat-sub" id="insucesso-stat-driver-sub"></div>
+    </div>
   </div>
 
   <div class="card">
@@ -1067,6 +1085,15 @@
           <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📦</div><p>Carregando registros...</p></div></td></tr>
         </tbody>
       </table>
+    </div>
+  </div>
+  </div>
+
+  <div id="insucesso-tab-dashboard" style="display:none">
+    <div class="card" style="margin-bottom:20px">
+      <p class="section-label" style="margin-bottom:2px">Pacotes recebidos por hora</p>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Últimos 7 dias (hoje + 6 dias anteriores), somados por hora do dia</p>
+      <canvas id="insucesso-chart-hora" height="90"></canvas>
     </div>
   </div>
 </div>
@@ -5633,7 +5660,8 @@ function renderInsucessos() {
   }
 
   renderScorecardsInsucesso();
-  renderChartHoraInsucesso();
+  const dashboardVisivel = document.getElementById('insucesso-tab-dashboard');
+  if (dashboardVisivel && dashboardVisivel.style.display !== 'none') renderChartHoraInsucesso();
 }
 
 function abrirResumoInsucesso(grupoId) {
@@ -5726,6 +5754,48 @@ function renderScorecardsInsucesso() {
   const elTranspSub = document.getElementById('insucesso-stat-transportadora-sub');
   if (elTransp) elTransp.textContent = principal ? principal.nome : '—';
   if (elTranspSub) elTranspSub.textContent = principal ? `${principal.qtd} pacote${principal.qtd !== 1 ? 's' : ''} hoje` : 'Sem registros hoje';
+
+  const elBulky = document.getElementById('insucesso-stat-bulky');
+  if (elBulky) elBulky.textContent = doDia.filter(i => i.bulky).length;
+
+  const elAvariado = document.getElementById('insucesso-stat-avariado');
+  if (elAvariado) elAvariado.textContent = doDia.filter(i => i.avariado).length;
+
+  // Principal Driver de Insucesso — mesma janela do gráfico: hoje + 6 dias anteriores, só tipo "insucesso".
+  const inicioJanela7d = new Date(); inicioJanela7d.setHours(0, 0, 0, 0);
+  inicioJanela7d.setDate(inicioJanela7d.getDate() - 6);
+  const fimJanela7d = new Date(); fimJanela7d.setHours(0, 0, 0, 0);
+
+  const contagemDriver = {};
+  insucessos.forEach(i => {
+    if (i.tipo !== 'insucesso' || !i.criadoEm) return;
+    const d = new Date(i.criadoEm);
+    const diaComparar = new Date(d); diaComparar.setHours(0, 0, 0, 0);
+    if (diaComparar < inicioJanela7d || diaComparar > fimJanela7d) return;
+    const chave = i.motorista || '—';
+    contagemDriver[chave] = (contagemDriver[chave] || 0) + 1;
+  });
+  let principalDriver = null;
+  Object.entries(contagemDriver).forEach(([nome, qtd]) => {
+    if (!principalDriver || qtd > principalDriver.qtd) principalDriver = { nome, qtd };
+  });
+
+  const elDriver = document.getElementById('insucesso-stat-driver');
+  const elDriverSub = document.getElementById('insucesso-stat-driver-sub');
+  if (elDriver) elDriver.textContent = principalDriver ? principalDriver.nome : '—';
+  if (elDriverSub) elDriverSub.textContent = principalDriver ? `${principalDriver.qtd} insucesso${principalDriver.qtd !== 1 ? 's' : ''} (7 dias)` : 'Sem registros no período';
+}
+
+function setInsucessoSubTab(tab, btnEl) {
+  document.querySelectorAll('.insucesso-subtab-btn').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+
+  const lancamentos = document.getElementById('insucesso-tab-lancamentos');
+  const dashboard = document.getElementById('insucesso-tab-dashboard');
+  if (lancamentos) lancamentos.style.display = tab === 'lancamentos' ? '' : 'none';
+  if (dashboard) dashboard.style.display = tab === 'dashboard' ? '' : 'none';
+
+  if (tab === 'dashboard') renderChartHoraInsucesso();
 }
 
 // ── Gráfico: pacotes recebidos por hora (hoje + 6 dias anteriores, somados) ──
