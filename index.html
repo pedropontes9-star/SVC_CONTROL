@@ -1056,7 +1056,7 @@
     <div class="search-bar">
       <div class="search-input-wrap">
         <span class="search-icon">🔍</span>
-        <input type="text" placeholder="Buscar por transportadora ou motorista..." id="busca-insucesso" oninput="renderInsucessos()">
+        <input type="text" placeholder="Buscar por transportadora, motorista ou nº do pacote..." id="busca-insucesso" oninput="renderInsucessos()">
       </div>
       <button class="btn btn-secondary btn-sm" onclick="abrirModalExportarInsucesso()" style="height:34px;display:inline-flex;align-items:center;gap:6px;">
         <span>⬇️ Exportar CSV</span>
@@ -5629,7 +5629,9 @@ function renderInsucessos() {
   const grupos = agruparInsucessos(insucessos);
   const lista = grupos.filter(g => {
     if (!busca) return true;
-    return lower(g.transportadora).includes(busca) || lower(g.motorista).includes(busca);
+    return lower(g.transportadora).includes(busca)
+      || lower(g.motorista).includes(busca)
+      || g.pacotes.some(p => lower(p.codigo).includes(busca));
   });
 
   const countEl = document.getElementById('insucesso-count');
@@ -5670,6 +5672,7 @@ function abrirResumoInsucesso(grupoId) {
   if (!g) return;
   insucessoResumoAtualGrupoId = g.grupoId;
   const dataFmt = g.dataRegistro ? g.dataRegistro.split('-').reverse().join('/') : '—';
+  const busca = lower(document.getElementById('busca-insucesso')?.value || '');
   document.getElementById('insucesso-resumo-corpo').innerHTML = `
     <div style="margin-bottom:10px"><strong>Tipo:</strong> ${labelTipoInsucesso(g.tipo)}</div>
     <div style="margin-bottom:10px"><strong>Transportadora:</strong> ${escapeHtml(g.transportadora)}</div>
@@ -5677,7 +5680,11 @@ function abrirResumoInsucesso(grupoId) {
     <div style="margin-bottom:10px"><strong>Data:</strong> ${dataFmt}</div>
     <div style="margin-bottom:6px"><strong>Pacotes (${g.pacotes.length}):</strong></div>
     <ul style="margin:0 0 4px 18px;padding:0">
-      ${g.pacotes.map(p => `<li>${escapeHtml(p.codigo)}${p.bulky ? ' <span class="badge badge-orange">Bulky</span>' : ''}${p.avariado ? ' <span class="badge badge-red">Avariado</span>' : ''}</li>`).join('') || '<li style="color:var(--text-hint)">—</li>'}
+      ${g.pacotes.map(p => {
+        const encontrado = busca && lower(p.codigo).includes(busca);
+        const estilo = encontrado ? ' style="background:#fff6d8;border-radius:4px;padding:2px 6px;margin:-2px -6px"' : '';
+        return `<li${estilo}>${escapeHtml(p.codigo)}${encontrado ? ' <span class="badge badge-blue">🔍 buscado</span>' : ''}${p.bulky ? ' <span class="badge badge-orange">Bulky</span>' : ''}${p.avariado ? ' <span class="badge badge-red">Avariado</span>' : ''}</li>`;
+      }).join('') || '<li style="color:var(--text-hint)">—</li>'}
     </ul>
     <div style="margin-top:10px;font-size:12px;color:var(--text-muted)">Registrado por ${escapeHtml(g.registradoPor || '—')}</div>
   `;
