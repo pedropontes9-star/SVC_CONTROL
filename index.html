@@ -1066,7 +1066,7 @@
     <div class="search-bar">
       <div class="search-input-wrap">
         <span class="search-icon">🔍</span>
-        <input type="text" placeholder="Buscar por transportadora, motorista ou nº do pacote..." id="busca-insucesso" oninput="renderInsucessos()">
+        <input type="text" placeholder="Buscar por transportadora, motorista ou nº do pacote..." id="busca-insucesso" oninput="filtrarInsucessosDoInicio()">
       </div>
       <button class="btn btn-secondary btn-sm" onclick="abrirModalExportarInsucesso()" style="height:34px;display:inline-flex;align-items:center;gap:6px;">
         <span>⬇️ Exportar CSV</span>
@@ -1095,6 +1095,11 @@
           <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📦</div><p>Carregando registros...</p></div></td></tr>
         </tbody>
       </table>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:14px;padding:14px 0 4px">
+      <button class="btn btn-secondary btn-sm" onclick="irPaginaAnteriorInsucesso()">‹ Anterior</button>
+      <span style="font-size:13px;color:var(--text-muted)" id="insucesso-pagina-info">Página 1 de 1</span>
+      <button class="btn btn-secondary btn-sm" onclick="irProximaPaginaInsucesso()">Próxima ›</button>
     </div>
   </div>
   </div>
@@ -2836,6 +2841,8 @@ let editingInsucessoCriadoEmOriginal = null;
 let editingInsucessoRegistradoPorOriginal = null;
 let editingInsucessoPacotesOriginais = []; // [{codigo, bulky, avariado}] — usado só ao editar
 let insucessoResumoAtualGrupoId = null;
+let insucessoPaginaAtual = 1;
+const INSUCESSO_ITENS_POR_PAGINA = 100;
 let chartInsucessoHora = null;
 
 // Estado do módulo Controle de Diaristas
@@ -5634,6 +5641,23 @@ async function salvarInsucesso() {
   }
 }
 
+function filtrarInsucessosDoInicio() {
+  insucessoPaginaAtual = 1;
+  renderInsucessos();
+}
+
+function irPaginaAnteriorInsucesso() {
+  if (insucessoPaginaAtual > 1) {
+    insucessoPaginaAtual--;
+    renderInsucessos();
+  }
+}
+
+function irProximaPaginaInsucesso() {
+  insucessoPaginaAtual++;
+  renderInsucessos();
+}
+
 function renderInsucessos() {
   const busca = lower(document.getElementById('busca-insucesso')?.value || '');
   const grupos = agruparInsucessos(insucessos);
@@ -5647,12 +5671,22 @@ function renderInsucessos() {
   const countEl = document.getElementById('insucesso-count');
   if (countEl) countEl.textContent = `${lista.length} registro${lista.length !== 1 ? 's' : ''}`;
 
+  const totalPaginas = Math.max(1, Math.ceil(lista.length / INSUCESSO_ITENS_POR_PAGINA));
+  if (insucessoPaginaAtual > totalPaginas) insucessoPaginaAtual = totalPaginas;
+  if (insucessoPaginaAtual < 1) insucessoPaginaAtual = 1;
+
+  const inicio = (insucessoPaginaAtual - 1) * INSUCESSO_ITENS_POR_PAGINA;
+  const paginaLista = lista.slice(inicio, inicio + INSUCESSO_ITENS_POR_PAGINA);
+
+  const infoEl = document.getElementById('insucesso-pagina-info');
+  if (infoEl) infoEl.textContent = `Página ${insucessoPaginaAtual} de ${totalPaginas}`;
+
   const tbody = document.getElementById('tbody-insucesso');
   if (tbody) {
-    if (!lista.length) {
+    if (!paginaLista.length) {
       tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📦</div><p>${grupos.length ? 'Nenhum registro encontrado' : 'Nenhum registro cadastrado'}</p><span>${grupos.length ? 'Tente outros termos' : 'Use os botões acima para começar'}</span></div></td></tr>`;
     } else {
-      tbody.innerHTML = lista.map(g => {
+      tbody.innerHTML = paginaLista.map(g => {
         const gid = safeId(g.grupoId);
         const qtdPacotes = g.pacotes.length;
         const dataFmt = g.dataRegistro ? g.dataRegistro.split('-').reverse().join('/') : '—';
