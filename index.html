@@ -1989,8 +1989,8 @@
 </div>
 
 <!-- Modal Resumo do Insucesso (Editar / Excluir) -->
-<div class="modal-overlay" id="modal-insucesso-resumo">
-  <div class="modal" onclick="event.stopPropagation()">
+<div class="modal-overlay" id="modal-insucesso-resumo" onclick="fecharModalResumoInsucesso()">
+  <div class="modal modal-lg" onclick="event.stopPropagation()">
     <h3>Resumo do Registro</h3>
     <div id="insucesso-resumo-corpo" style="font-size:13px; color:var(--text); line-height:1.6"></div>
     <div class="modal-actions">
@@ -5683,13 +5683,21 @@ function abrirResumoInsucesso(grupoId) {
   insucessoResumoAtualGrupoId = g.grupoId;
   const dataFmt = g.dataRegistro ? g.dataRegistro.split('-').reverse().join('/') : '—';
   const busca = lower(document.getElementById('busca-insucesso')?.value || '');
+
+  // Lista grande de pacotes vira colunas (como uma tabela) em vez de crescer indefinidamente pra baixo.
+  const totalPacotes = g.pacotes.length;
+  const colunas = totalPacotes > 45 ? 3 : (totalPacotes > 15 ? 2 : 1);
+  const estiloLista = colunas > 1
+    ? `columns:${colunas};column-gap:24px;max-height:55vh;overflow-y:auto;`
+    : 'max-height:55vh;overflow-y:auto;';
+
   document.getElementById('insucesso-resumo-corpo').innerHTML = `
     <div style="margin-bottom:10px"><strong>Tipo:</strong> ${labelTipoInsucesso(g.tipo)}</div>
     <div style="margin-bottom:10px"><strong>Transportadora:</strong> ${escapeHtml(g.transportadora)}</div>
     <div style="margin-bottom:10px"><strong>Motorista:</strong> ${escapeHtml(g.motorista)}</div>
     <div style="margin-bottom:10px"><strong>Data:</strong> ${dataFmt}</div>
     <div style="margin-bottom:6px"><strong>Pacotes (${g.pacotes.length}):</strong></div>
-    <ul style="margin:0 0 4px 18px;padding:0">
+    <ul style="margin:0 0 4px 18px;padding:0;${estiloLista}">
       ${g.pacotes.map(p => {
         const encontrado = busca && lower(p.codigo).includes(busca);
         const estilo = encontrado ? ' style="background:#fff6d8;border-radius:4px;padding:2px 6px;margin:-2px -6px"' : '';
