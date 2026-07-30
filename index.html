@@ -1211,9 +1211,45 @@
 
   <div id="insucesso-xpt-tab-dashboard" style="display:none">
     <div class="card" style="margin-bottom:20px">
-      <p class="section-label" style="margin-bottom:2px">Pacotes recebidos por hora</p>
-      <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Últimos 7 dias (hoje + 6 dias anteriores), somados por hora do dia</p>
-      <canvas id="insucesso-xpt-chart-hora" height="90"></canvas>
+      <p class="section-label" style="margin-bottom:10px">Período de análise</p>
+      <div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
+        <div class="form-group" style="margin-bottom:0">
+          <label style="font-size:11px">Data início</label>
+          <input type="date" id="insucesso-xpt-dash-data-ini" onchange="renderDashboardXpt()">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label style="font-size:11px">Data fim</label>
+          <input type="date" id="insucesso-xpt-dash-data-fim" onchange="renderDashboardXpt()">
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="aplicarPresetDashboardXpt(7)">Últimos 7 dias</button>
+        <button class="btn btn-secondary btn-sm" onclick="aplicarPresetDashboardXpt(30)">Últimos 30 dias</button>
+      </div>
+    </div>
+
+    <div class="stats-row" style="margin-bottom:20px">
+      <div class="stat-card">
+        <div class="stat-label">Total Insucessos</div>
+        <div class="stat-value" id="insucesso-xpt-dash-total-insucesso">0</div>
+        <div class="stat-sub">pacotes no período selecionado</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Devoluções</div>
+        <div class="stat-value" id="insucesso-xpt-dash-total-devolucao">0</div>
+        <div class="stat-sub">pacotes no período selecionado</div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:20px;flex-wrap:wrap">
+      <div class="card" style="flex:1;min-width:340px">
+        <p class="section-label" style="margin-bottom:2px">Casos de Insucesso</p>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Um pacote pode ter mais de um caso ao mesmo tempo</p>
+        <canvas id="insucesso-xpt-chart-casos-insucesso" height="220"></canvas>
+      </div>
+      <div class="card" style="flex:1;min-width:340px">
+        <p class="section-label" style="margin-bottom:2px">Casos de Devolução</p>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Um pacote pode ter mais de um caso ao mesmo tempo</p>
+        <canvas id="insucesso-xpt-chart-casos-devolucao" height="220"></canvas>
+      </div>
     </div>
   </div>
 </div>
@@ -3051,7 +3087,8 @@ let editingInsucessoRegistradoPorOriginalXpt = null;
 let editingInsucessoPacotesOriginaisXpt = [];
 let insucessoResumoAtualGrupoIdXpt = null;
 let insucessoPaginaAtualXpt = 1;
-let chartInsucessoHoraXpt = null;
+let chartCasosInsucessoXpt = null;
+let chartCasosDevolucaoXpt = null;
 
 // Estado do módulo Controle de Diaristas
 let diaristas = [];
@@ -6460,7 +6497,7 @@ function renderInsucessosXpt() {
 
   renderScorecardsInsucessoXpt();
   const dashboardVisivel = document.getElementById('insucesso-xpt-tab-dashboard');
-  if (dashboardVisivel && dashboardVisivel.style.display !== 'none') renderChartHoraInsucessoXpt();
+  if (dashboardVisivel && dashboardVisivel.style.display !== 'none') renderDashboardXpt();
 }
 
 function abrirResumoInsucessoXpt(grupoId) {
@@ -6598,46 +6635,81 @@ function setInsucessoSubTabXpt(tab, btnEl) {
   if (lancamentos) lancamentos.style.display = tab === 'lancamentos' ? '' : 'none';
   if (dashboard) dashboard.style.display = tab === 'dashboard' ? '' : 'none';
 
-  if (tab === 'dashboard') renderChartHoraInsucessoXpt();
+  if (tab === 'dashboard') {
+    if (!document.getElementById('insucesso-xpt-dash-data-ini').value) aplicarPresetDashboardXpt(30);
+    else renderDashboardXpt();
+  }
 }
 
-function renderChartHoraInsucessoXpt() {
-  const canvas = document.getElementById('insucesso-xpt-chart-hora');
-  if (!canvas) return;
+// Conta, para um tipo (insucesso/devolução), quantos pacotes têm cada caso marcado.
+// Os casos não são excludentes entre si (um pacote pode ser Bulky E Avariado ao mesmo tempo).
+function casosPorTipoXpt(lista, tipo) {
+  const doTipo = lista.filter(i => i.tipo === tipo);
+  const bulky = doTipo.filter(i => i.bulky).length;
+  const avariado = doTipo.filter(i => i.avariado).length;
+  const duplicado = doTipo.filter(i => i.duplicado).length;
+  const recusado = doTipo.filter(i => i.recusado).length;
+  const semOcorrencia = doTipo.filter(i => !i.bulky && !i.avariado && !i.duplicado && !i.recusado).length;
+  return { total: doTipo.length, bulky, avariado, duplicado, recusado, semOcorrencia };
+}
 
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  const inicioJanela = new Date(hoje);
-  inicioJanela.setDate(inicioJanela.getDate() - 6);
+function aplicarPresetDashboardXpt(dias) {
+  const fim = new Date();
+  const ini = new Date();
+  ini.setDate(ini.getDate() - (dias - 1));
+  document.getElementById('insucesso-xpt-dash-data-ini').value = dataLocalParaIso(ini);
+  document.getElementById('insucesso-xpt-dash-data-fim').value = dataLocalParaIso(fim);
+  renderDashboardXpt();
+}
 
-  const porHora = new Array(24).fill(0);
-  insucessosXpt.forEach(i => {
-    if (!i.criadoEm) return;
-    const d = new Date(i.criadoEm);
-    if (d < inicioJanela) return;
-    const diaComparar = new Date(d); diaComparar.setHours(0, 0, 0, 0);
-    if (diaComparar > hoje) return;
-    porHora[d.getHours()]++;
-  });
+function renderChartCasosXpt(canvasId, stats, corBase) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return null;
+  const labels = ['Bulky', 'Avariado', 'Duplicado', 'Recusado', 'Sem caso'];
+  const dados = [stats.bulky, stats.avariado, stats.duplicado, stats.recusado, stats.semOcorrencia];
+  const cores = ['#e65100', '#c62828', '#7B2FBE', '#616161', corBase];
 
-  const labels = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, '0')}h`);
-
-  if (chartInsucessoHoraXpt) chartInsucessoHoraXpt.destroy();
-  chartInsucessoHoraXpt = new Chart(canvas, {
+  return new Chart(canvas, {
     type: 'bar',
     data: {
       labels,
-      datasets: [{ label: 'Pacotes recebidos', data: porHora, backgroundColor: '#2D3277', borderRadius: 3 }]
+      datasets: [{ label: 'Pacotes', data: dados, backgroundColor: cores, borderRadius: 4 }]
     },
     options: {
+      indexAxis: 'y',
       responsive: true,
       plugins: { legend: { display: false } },
       scales: {
-        x: { grid: { display: false } },
-        y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,0.05)' } }
+        x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,0.05)' } },
+        y: { grid: { display: false } }
       }
     }
   });
+}
+
+function renderDashboardXpt() {
+  const dataIni = document.getElementById('insucesso-xpt-dash-data-ini')?.value || '';
+  const dataFim = document.getElementById('insucesso-xpt-dash-data-fim')?.value || '';
+
+  const lista = insucessosXpt.filter(i => {
+    if (dataIni && i.dataRegistro < dataIni) return false;
+    if (dataFim && i.dataRegistro > dataFim) return false;
+    return true;
+  });
+
+  const statsInsucesso = casosPorTipoXpt(lista, 'insucesso');
+  const statsDevolucao = casosPorTipoXpt(lista, 'devolucao');
+
+  const elTotalInsucesso = document.getElementById('insucesso-xpt-dash-total-insucesso');
+  if (elTotalInsucesso) elTotalInsucesso.textContent = statsInsucesso.total;
+  const elTotalDevolucao = document.getElementById('insucesso-xpt-dash-total-devolucao');
+  if (elTotalDevolucao) elTotalDevolucao.textContent = statsDevolucao.total;
+
+  if (chartCasosInsucessoXpt) chartCasosInsucessoXpt.destroy();
+  chartCasosInsucessoXpt = renderChartCasosXpt('insucesso-xpt-chart-casos-insucesso', statsInsucesso, '#2D3277');
+
+  if (chartCasosDevolucaoXpt) chartCasosDevolucaoXpt.destroy();
+  chartCasosDevolucaoXpt = renderChartCasosXpt('insucesso-xpt-chart-casos-devolucao', statsDevolucao, '#1a7d3c');
 }
 
 function abrirModalExportarInsucessoXpt() {
