@@ -534,7 +534,8 @@
       </button>
       <div class="nav-group-items">
         <button class="tab-btn nav-item" id="tab-anomalias" data-tab="anomalias" onclick="switchTab('anomalias',this)"><span class="nav-icon">⚠️</span><span>Anomalias (CIA/COA)</span></button>
-        <button class="tab-btn nav-item" id="tab-insucesso" data-tab="insucesso" onclick="switchTab('insucesso',this)"><span class="nav-icon">🚫</span><span>Insucesso / Devolução</span></button>
+        <button class="tab-btn nav-item" id="tab-insucesso" data-tab="insucesso" onclick="switchTab('insucesso',this)"><span class="nav-icon">🚫</span><span>Insucesso/Devolução - SVC</span></button>
+        <button class="tab-btn nav-item" id="tab-insucesso-xpt" data-tab="insucesso-xpt" onclick="switchTab('insucesso-xpt',this)"><span class="nav-icon">🚫</span><span>Insucesso/Devolução - XPT</span></button>
       </div>
     </section>
     <section class="nav-group" data-nav-group="ferramentas">
@@ -1013,7 +1014,7 @@
      INSUCESSO
 ════════════════════════════════════════ -->
 <div id="page-insucesso" class="page">
-  <p class="section-label">Insucesso / Devolução</p>
+  <p class="section-label">Insucesso/Devolução - SVC</p>
 
   <div class="monitor-section-header">
     <span class="monitor-section-title">Visualização</span>
@@ -1109,6 +1110,110 @@
       <p class="section-label" style="margin-bottom:2px">Pacotes recebidos por hora</p>
       <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Últimos 7 dias (hoje + 6 dias anteriores), somados por hora do dia</p>
       <canvas id="insucesso-chart-hora" height="90"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     INSUCESSO / DEVOLUÇÃO - XPT
+════════════════════════════════════════ -->
+<div id="page-insucesso-xpt" class="page">
+  <p class="section-label">Insucesso/Devolução - XPT</p>
+
+  <div class="monitor-section-header">
+    <span class="monitor-section-title">Visualização</span>
+    <div class="monitor-section-toggle">
+      <button class="monitor-toggle-btn insucesso-xpt-subtab-btn active" onclick="setInsucessoSubTabXpt('lancamentos', this)">Lançamentos</button>
+      <button class="monitor-toggle-btn insucesso-xpt-subtab-btn" onclick="setInsucessoSubTabXpt('dashboard', this)">Dashboard</button>
+    </div>
+  </div>
+
+  <div id="insucesso-xpt-tab-lancamentos">
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Pacotes registrados hoje</div>
+      <div class="stat-value" id="insucesso-xpt-stat-hoje">0</div>
+      <div class="stat-sub">insucesso + devolução</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Principal Transportadora (Insucesso)</div>
+      <div class="stat-value" style="font-size:16px;line-height:1.3" id="insucesso-xpt-stat-transportadora-insucesso">—</div>
+      <div class="stat-sub" id="insucesso-xpt-stat-transportadora-insucesso-sub"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Principal Transportadora (Devolução)</div>
+      <div class="stat-value" style="font-size:16px;line-height:1.3" id="insucesso-xpt-stat-transportadora-devolucao">—</div>
+      <div class="stat-sub" id="insucesso-xpt-stat-transportadora-devolucao-sub"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pacotes Bulky hoje</div>
+      <div class="stat-value" id="insucesso-xpt-stat-bulky">0</div>
+      <div class="stat-sub">recebidos hoje</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pacotes Avariados hoje</div>
+      <div class="stat-value" id="insucesso-xpt-stat-avariado">0</div>
+      <div class="stat-sub">recebidos hoje</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Principal Driver (Insucesso)</div>
+      <div class="stat-value" style="font-size:16px;line-height:1.3" id="insucesso-xpt-stat-driver-insucesso">—</div>
+      <div class="stat-sub" id="insucesso-xpt-stat-driver-insucesso-sub"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Principal Driver (Devolução)</div>
+      <div class="stat-value" style="font-size:16px;line-height:1.3" id="insucesso-xpt-stat-driver-devolucao">—</div>
+      <div class="stat-sub" id="insucesso-xpt-stat-driver-devolucao-sub"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="search-bar">
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Buscar por transportadora, motorista ou nº do pacote..." id="busca-insucesso-xpt" oninput="filtrarInsucessosXptDoInicio()">
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="abrirModalExportarInsucessoXpt()" style="height:34px;display:inline-flex;align-items:center;gap:6px;">
+        <span>⬇️ Exportar CSV</span>
+      </button>
+      <button class="btn btn-primary btn-sm" id="btn-registrar-insucesso-xpt" onclick="abrirModalInsucessoXpt('insucesso')" style="height:34px;display:inline-flex;align-items:center;gap:6px;">
+        <span>➕ Registrar Insucesso</span>
+      </button>
+      <button class="btn btn-primary btn-sm" id="btn-registrar-devolucao-xpt" onclick="abrirModalInsucessoXpt('devolucao')" style="height:34px;display:inline-flex;align-items:center;gap:6px;">
+        <span>↩️ Registrar Devolução</span>
+      </button>
+      <span class="count-badge" id="insucesso-xpt-count">0 registros</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Tipo</th>
+            <th>Transportadora</th>
+            <th>Motorista</th>
+            <th>Pacotes</th>
+            <th>Registrado por</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-insucesso-xpt">
+          <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📦</div><p>Carregando registros...</p></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:14px;padding:14px 0 4px">
+      <button class="btn btn-secondary btn-sm" onclick="irPaginaAnteriorInsucessoXpt()">‹ Anterior</button>
+      <span style="font-size:13px;color:var(--text-muted)" id="insucesso-xpt-pagina-info">Página 1 de 1</span>
+      <button class="btn btn-secondary btn-sm" onclick="irProximaPaginaInsucessoXpt()">Próxima ›</button>
+    </div>
+  </div>
+  </div>
+
+  <div id="insucesso-xpt-tab-dashboard" style="display:none">
+    <div class="card" style="margin-bottom:20px">
+      <p class="section-label" style="margin-bottom:2px">Pacotes recebidos por hora</p>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Últimos 7 dias (hoje + 6 dias anteriores), somados por hora do dia</p>
+      <canvas id="insucesso-xpt-chart-hora" height="90"></canvas>
     </div>
   </div>
 </div>
@@ -2026,6 +2131,82 @@
   </div>
 </div>
 
+<!-- ═══ XPT: mesmos três modais, com IDs próprios (base zerada, tabela separada) ═══ -->
+<div class="modal-overlay" id="modal-insucesso-registro-xpt">
+  <div class="modal modal-lg" onclick="event.stopPropagation()">
+    <h3 id="insucesso-xpt-modal-titulo">Registrar Insucesso — Etapa 1 de 2</h3>
+
+    <div id="insucesso-xpt-etapa-1">
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Transportadora</label>
+        <input type="text" id="insucesso-xpt-transportadora" placeholder="Ex: DHL, Mendes, TSI, SRM..." maxlength="80">
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Motorista</label>
+        <input type="text" id="insucesso-xpt-motorista" placeholder="Nome do motorista" maxlength="80">
+      </div>
+
+      <div class="form-group">
+        <label>Pacotes</label>
+        <textarea id="insucesso-xpt-pacotes" rows="4" placeholder="Um código de pacote por linha" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px; resize:vertical; font-family:inherit; font-size:13px; color:var(--text); outline:none;"></textarea>
+        <span class="field-hint">Informe um código de pacote por linha quando houver mais de um.</span>
+      </div>
+    </div>
+
+    <div id="insucesso-xpt-etapa-2" style="display:none">
+      <div style="margin-bottom:18px">
+        <p style="font-weight:600;font-size:13px;margin-bottom:8px">Algum pacote é Bulky?</p>
+        <div id="insucesso-xpt-lista-bulky" class="insucesso-checklist"></div>
+      </div>
+      <div>
+        <p style="font-weight:600;font-size:13px;margin-bottom:8px">Algum pacote está avariado?</p>
+        <div id="insucesso-xpt-lista-avariado" class="insucesso-checklist"></div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="fecharModalInsucessoXpt()">Cancelar</button>
+      <button class="btn btn-secondary btn-sm" id="btn-insucesso-xpt-voltar" style="display:none" onclick="voltarInsucessoXptEtapa1()">Voltar</button>
+      <button class="btn btn-primary btn-sm" id="btn-insucesso-xpt-avancar" onclick="avancarInsucessoXptEtapa2()">Avançar</button>
+      <button class="btn btn-primary btn-sm" id="btn-insucesso-xpt-confirmar" style="display:none" onclick="salvarInsucessoXpt()">Confirmar registro</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Resumo do Insucesso XPT (Editar / Excluir) -->
+<div class="modal-overlay" id="modal-insucesso-resumo-xpt" onclick="fecharModalResumoInsucessoXpt()">
+  <div class="modal modal-lg" onclick="event.stopPropagation()">
+    <h3>Resumo do Registro</h3>
+    <div id="insucesso-xpt-resumo-corpo" style="font-size:13px; color:var(--text); line-height:1.6"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="fecharModalResumoInsucessoXpt()">Fechar</button>
+      <button class="btn btn-danger btn-sm" id="btn-excluir-insucesso-xpt" onclick="excluirInsucessoXptAtual()">Excluir</button>
+      <button class="btn btn-primary btn-sm" id="btn-editar-insucesso-xpt" onclick="editarInsucessoXptAtual()">Editar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Exportar Insucesso XPT (CSV) -->
+<div class="modal-overlay" id="modal-exportar-insucesso-xpt">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3>Exportar Insucessos XPT (CSV)</h3>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Data inicial</label>
+      <input type="date" id="insucesso-xpt-export-data-ini">
+    </div>
+    <div class="form-group">
+      <label>Data final</label>
+      <input type="date" id="insucesso-xpt-export-data-fim">
+    </div>
+    <span class="field-hint" style="display:block;margin-top:10px">Uma linha por pacote no arquivo gerado.</span>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="fecharModalExportarInsucessoXpt()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" id="btn-gerar-exportacao-insucesso-xpt" onclick="gerarExportacaoInsucessoXptCSV()">Gerar relatório</button>
+    </div>
+  </div>
+</div>
+
 </div>
 
 <div class="toast" id="toast"></div>
@@ -2168,7 +2349,7 @@ const EXIGIR_CADASTRO_PERFIL = true; // Com a tabela svc_usuarios configurada, t
 
 // Abas com permissão configurável (visualizar/editar) para os perfis Auditor e Operador.
 // Cada aba mapeia para os "flags" granulares já usados no restante do sistema.
-const ABAS_CONFIGURAVEIS = ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'diaristas', 'monitor', 'crachas'];
+const ABAS_CONFIGURAVEIS = ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'insucesso-xpt', 'diaristas', 'monitor', 'crachas'];
 
 const MAPA_PERMISSOES_ABA = {
   turnos:     { base: [], editar: ['criar_turnos', 'editar_turnos', 'excluir_turnos'] },
@@ -2177,6 +2358,7 @@ const MAPA_PERMISSOES_ABA = {
   abs:        { base: [], editar: ['registrar_abs', 'excluir_abs'] },
   anomalias:  { base: ['ver_anomalias'], editar: ['atualizar_anomalias', 'tratar_anomalias'] },
   insucesso:  { base: [], editar: ['registrar_insucesso', 'editar_insucesso', 'excluir_insucesso'] },
+  'insucesso-xpt': { base: [], editar: ['registrar_insucesso_xpt', 'editar_insucesso_xpt', 'excluir_insucesso_xpt'] },
   diaristas:  { base: [], editar: ['criar_diarista', 'editar_diarista', 'excluir_diarista'] },
   monitor:    { base: [], editar: ['editar_monitor'] },
   crachas:    { base: [], editar: ['gerar_crachas'] }
@@ -2194,6 +2376,7 @@ function perfilVazioDinamico(label) {
     criar_sched: false, editar_sched: false, excluir_sched: false,
     registrar_abs: false, ver_todos_abs: false, excluir_abs: false,
     registrar_insucesso: false, editar_insucesso: false, excluir_insucesso: false,
+    registrar_insucesso_xpt: false, editar_insucesso_xpt: false, excluir_insucesso_xpt: false,
     criar_diarista: false, editar_diarista: false, excluir_diarista: false,
     editar_monitor: false,
     criar_usuarios: false, gerenciar_permissoes: false, excluir_usuarios: false
@@ -2239,7 +2422,7 @@ async function carregarPermissoesDinamicasSeNecessario() {
 const PERFIS_ACESSO = {
   admin: {
     label: 'Administrador',
-    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'diaristas', 'monitor', 'crachas', 'usuarios'],
+    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'insucesso-xpt', 'diaristas', 'monitor', 'crachas', 'usuarios'],
     gerar_crachas: true,
     criar_turnos: true, editar_turnos: true, excluir_turnos: true,
     criar_hc: true, editar_hc: true, excluir_hc: true, exportar_hc: true,
@@ -2247,13 +2430,14 @@ const PERFIS_ACESSO = {
     criar_sched: true, editar_sched: true, excluir_sched: true,
     registrar_abs: true, ver_todos_abs: true, excluir_abs: true,
     registrar_insucesso: true, editar_insucesso: true, excluir_insucesso: true,
+    registrar_insucesso_xpt: true, editar_insucesso_xpt: true, excluir_insucesso_xpt: true,
     criar_diarista: true, editar_diarista: true, excluir_diarista: true,
     editar_monitor: true,
     criar_usuarios: true, gerenciar_permissoes: true, excluir_usuarios: true
   },
   coordenador: {
     label: 'Coordenador',
-    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'diaristas', 'monitor', 'crachas', 'usuarios'],
+    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'insucesso-xpt', 'diaristas', 'monitor', 'crachas', 'usuarios'],
     gerar_crachas: true,
     criar_turnos: false, editar_turnos: false, excluir_turnos: false,
     criar_hc: true, editar_hc: true, excluir_hc: false, exportar_hc: true,
@@ -2261,6 +2445,7 @@ const PERFIS_ACESSO = {
     criar_sched: true, editar_sched: true, excluir_sched: false,
     registrar_abs: true, ver_todos_abs: false, excluir_abs: false,
     registrar_insucesso: true, editar_insucesso: true, excluir_insucesso: false,
+    registrar_insucesso_xpt: true, editar_insucesso_xpt: true, excluir_insucesso_xpt: false,
     criar_diarista: true, editar_diarista: true, excluir_diarista: false,
     editar_monitor: true,
     criar_usuarios: false, gerenciar_permissoes: true, excluir_usuarios: false
@@ -2338,7 +2523,8 @@ const HOME_SHORTCUTS = [
   { tab: 'scheduling', icon: '📅', titulo: 'Scheduling', desc: 'Agendamentos e escalas' },
   { tab: 'abs', icon: '🩺', titulo: 'ABS', desc: 'Registros de absenteísmo' },
   { tab: 'anomalias', icon: '⚠️', titulo: 'Anomalias (CIA/COA)', desc: 'Monitoramento de ponto' },
-  { tab: 'insucesso', icon: '🚫', titulo: 'Insucesso / Devolução', desc: 'Pacotes não entregues ou devolvidos' },
+  { tab: 'insucesso', icon: '🚫', titulo: 'Insucesso/Devolução - SVC', desc: 'Pacotes não entregues ou devolvidos (SVC)' },
+  { tab: 'insucesso-xpt', icon: '🚫', titulo: 'Insucesso/Devolução - XPT', desc: 'Pacotes não entregues ou devolvidos (XPT)' },
   { tab: 'monitor', icon: '📦', titulo: 'Monitor — Ciclos', desc: 'Upload e histórico de ciclos' },
   { tab: 'crachas', icon: '🏷️', titulo: 'Crachás LMS', desc: 'Gerador de crachás' },
   { tab: 'usuarios', icon: '🔐', titulo: 'Usuários', desc: 'Gestão de acessos do sistema' }
@@ -2566,6 +2752,8 @@ function aplicarControleAcesso() {
   setVisibleById('btn-registrar-abs', pode('registrar_abs'), 'inline-flex');
   setVisibleById('btn-registrar-insucesso', pode('registrar_insucesso'), 'inline-flex');
   setVisibleById('btn-registrar-devolucao', pode('registrar_insucesso'), 'inline-flex');
+  setVisibleById('btn-registrar-insucesso-xpt', pode('registrar_insucesso_xpt'), 'inline-flex');
+  setVisibleById('btn-registrar-devolucao-xpt', pode('registrar_insucesso_xpt'), 'inline-flex');
   setVisibleById('card-form-usuario', pode('criar_usuarios'));
   setVisibleById('card-form-diarista', pode('criar_diarista') || pode('editar_diarista'));
   setVisibleById('monitor-btn-nova-base', pode('editar_monitor'), 'inline-flex');
@@ -2845,6 +3033,18 @@ let insucessoPaginaAtual = 1;
 const INSUCESSO_ITENS_POR_PAGINA = 100;
 let chartInsucessoHora = null;
 
+// Estado do módulo Insucesso / Devolução - XPT (base separada, tabela própria)
+let insucessosXpt = [];
+let tipoInsucessoAtualXpt = 'insucesso';
+let editingInsucessoGrupoIdXpt = null;
+let editingInsucessoDataOriginalXpt = null;
+let editingInsucessoCriadoEmOriginalXpt = null;
+let editingInsucessoRegistradoPorOriginalXpt = null;
+let editingInsucessoPacotesOriginaisXpt = [];
+let insucessoResumoAtualGrupoIdXpt = null;
+let insucessoPaginaAtualXpt = 1;
+let chartInsucessoHoraXpt = null;
+
 // Estado do módulo Controle de Diaristas
 let diaristas = [];
 let editingDiaristaId = null;
@@ -3077,6 +3277,8 @@ async function carregarDadosDoBanco() {
     await carregarAbsenteismo();
     await carregarInsucessos();
     renderInsucessos();
+    await carregarInsucessosXpt();
+    renderInsucessosXpt();
     await carregarDiaristas();
     renderDiaristas();
     await carregarHistoricoMedidas();
@@ -3160,6 +3362,10 @@ function switchTab(tab, btn) {
 
   if (tab === 'insucesso') {
     renderInsucessos();
+  }
+
+  if (tab === 'insucesso-xpt') {
+    renderInsucessosXpt();
   }
 
   if (tab === 'diaristas') {
@@ -6000,6 +6206,471 @@ function gerarExportacaoInsucessoCSV() {
 
   toast(`Relatório gerado com ${linhas.length} pacote${linhas.length !== 1 ? 's' : ''}.`, 'success');
   fecharModalExportarInsucesso();
+}
+
+// ════════════════════════════════════════
+//  INSUCESSO / DEVOLUÇÃO - XPT — mesma lógica do SVC, tabela e DOM próprios
+// ════════════════════════════════════════
+async function carregarInsucessosXpt() {
+  try {
+    const TAMANHO_PAGINA = 1000;
+    let todasLinhas = [];
+    let inicio = 0;
+
+    while (true) {
+      const { data, error } = await db.from('insucessos_xpt')
+        .select('*')
+        .order('criado_em', { ascending: false })
+        .range(inicio, inicio + TAMANHO_PAGINA - 1);
+
+      if (error) {
+        if (error.code === '42P01' || /does not exist/i.test(error.message || '')) {
+          insucessosXpt = [];
+          console.warn('Tabela "insucessos_xpt" ainda não existe no Supabase.');
+          return;
+        }
+        throw error;
+      }
+
+      todasLinhas = todasLinhas.concat(data || []);
+      if (!data || data.length < TAMANHO_PAGINA) break;
+      inicio += TAMANHO_PAGINA;
+    }
+
+    insucessosXpt = todasLinhas.map(i => ({
+      id: i.id,
+      grupoId: i.grupo_id,
+      tipo: i.tipo === 'devolucao' ? 'devolucao' : 'insucesso',
+      transportadora: i.transportadora,
+      motorista: i.motorista,
+      pacote: i.pacote,
+      bulky: !!i.bulky,
+      avariado: !!i.avariado,
+      dataRegistro: i.data_registro,
+      registradoPor: i.registrado_por,
+      criadoEm: i.criado_em
+    }));
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao buscar registros de insucesso/devolução (XPT): ' + (error.message || error), 'error');
+  }
+}
+
+function atualizarTituloModalInsucessoXpt(etapa) {
+  const rotulo = labelTipoInsucesso(tipoInsucessoAtualXpt);
+  const acao = editingInsucessoGrupoIdXpt ? 'Editar' : 'Registrar';
+  document.getElementById('insucesso-xpt-modal-titulo').textContent = `${acao} ${rotulo} — Etapa ${etapa} de 2`;
+}
+
+function irParaEtapa1InsucessoXpt() {
+  document.getElementById('insucesso-xpt-etapa-1').style.display = '';
+  document.getElementById('insucesso-xpt-etapa-2').style.display = 'none';
+  document.getElementById('btn-insucesso-xpt-avancar').style.display = 'inline-flex';
+  document.getElementById('btn-insucesso-xpt-voltar').style.display = 'none';
+  document.getElementById('btn-insucesso-xpt-confirmar').style.display = 'none';
+  atualizarTituloModalInsucessoXpt(1);
+}
+
+function abrirModalInsucessoXpt(tipo) {
+  if (!pode('registrar_insucesso_xpt')) { toast('Seu perfil não permite registrar.', 'error'); return; }
+  tipoInsucessoAtualXpt = tipo === 'devolucao' ? 'devolucao' : 'insucesso';
+  editingInsucessoGrupoIdXpt = null;
+  editingInsucessoDataOriginalXpt = null;
+  editingInsucessoRegistradoPorOriginalXpt = null;
+  editingInsucessoCriadoEmOriginalXpt = null;
+  editingInsucessoPacotesOriginaisXpt = [];
+  document.getElementById('insucesso-xpt-transportadora').value = '';
+  document.getElementById('insucesso-xpt-motorista').value = '';
+  document.getElementById('insucesso-xpt-pacotes').value = '';
+  irParaEtapa1InsucessoXpt();
+  document.getElementById('modal-insucesso-registro-xpt').classList.add('open');
+}
+
+function fecharModalInsucessoXpt() {
+  document.getElementById('modal-insucesso-registro-xpt').classList.remove('open');
+  editingInsucessoGrupoIdXpt = null;
+  editingInsucessoDataOriginalXpt = null;
+  editingInsucessoRegistradoPorOriginalXpt = null;
+  editingInsucessoCriadoEmOriginalXpt = null;
+  editingInsucessoPacotesOriginaisXpt = [];
+}
+
+function avancarInsucessoXptEtapa2() {
+  const transportadora = document.getElementById('insucesso-xpt-transportadora').value.trim();
+  const motorista = document.getElementById('insucesso-xpt-motorista').value.trim();
+  const pacotesLista = parsePacotesInsucesso(document.getElementById('insucesso-xpt-pacotes').value);
+
+  if (!transportadora) { toast('Informe a transportadora.', 'error'); return; }
+  if (!motorista) { toast('Informe o motorista.', 'error'); return; }
+  if (!pacotesLista.length) { toast('Informe ao menos um pacote.', 'error'); return; }
+
+  const bulkyOriginais = new Map();
+  const avariadoOriginais = new Map();
+  editingInsucessoPacotesOriginaisXpt.forEach(p => {
+    bulkyOriginais.set(p.codigo, p.bulky);
+    avariadoOriginais.set(p.codigo, p.avariado);
+  });
+
+  renderChecklistPacotesInsucesso('insucesso-xpt-lista-bulky', pacotesLista, 'chk-bulky-xpt', bulkyOriginais);
+  renderChecklistPacotesInsucesso('insucesso-xpt-lista-avariado', pacotesLista, 'chk-avariado-xpt', avariadoOriginais);
+
+  document.getElementById('insucesso-xpt-etapa-1').style.display = 'none';
+  document.getElementById('insucesso-xpt-etapa-2').style.display = '';
+  document.getElementById('btn-insucesso-xpt-avancar').style.display = 'none';
+  document.getElementById('btn-insucesso-xpt-voltar').style.display = 'inline-flex';
+  document.getElementById('btn-insucesso-xpt-confirmar').style.display = 'inline-flex';
+  atualizarTituloModalInsucessoXpt(2);
+}
+
+function voltarInsucessoXptEtapa1() {
+  irParaEtapa1InsucessoXpt();
+}
+
+async function salvarInsucessoXpt() {
+  if (editingInsucessoGrupoIdXpt && !pode('editar_insucesso_xpt')) { toast('Seu perfil não permite editar insucessos.', 'error'); return; }
+  if (!editingInsucessoGrupoIdXpt && !pode('registrar_insucesso_xpt')) { toast('Seu perfil não permite registrar insucessos.', 'error'); return; }
+
+  const transportadora = document.getElementById('insucesso-xpt-transportadora').value.trim();
+  const motorista = document.getElementById('insucesso-xpt-motorista').value.trim();
+  const pacotesLista = parsePacotesInsucesso(document.getElementById('insucesso-xpt-pacotes').value);
+
+  if (!transportadora || !motorista || !pacotesLista.length) { toast('Revise os dados da etapa 1.', 'error'); return; }
+
+  const bulkySet = new Set(Array.from(document.querySelectorAll('.chk-bulky-xpt:checked')).map(el => el.dataset.pacote));
+  const avariadoSet = new Set(Array.from(document.querySelectorAll('.chk-avariado-xpt:checked')).map(el => el.dataset.pacote));
+
+  const btn = document.getElementById('btn-insucesso-xpt-confirmar');
+  setButtonLoading(btn, true, editingInsucessoGrupoIdXpt ? 'Atualizando...' : 'Salvando...');
+  try {
+    if (editingInsucessoGrupoIdXpt) {
+      const { error: errDel } = await db.from('insucessos_xpt').delete().eq('grupo_id', editingInsucessoGrupoIdXpt);
+      if (errDel) throw errDel;
+    }
+    const grupoId = editingInsucessoGrupoIdXpt || crypto.randomUUID();
+    const linhas = pacotesLista.map(p => ({
+      grupo_id: grupoId,
+      tipo: tipoInsucessoAtualXpt,
+      transportadora,
+      motorista,
+      pacote: p,
+      bulky: bulkySet.has(p),
+      avariado: avariadoSet.has(p),
+      data_registro: editingInsucessoDataOriginalXpt || hojeIsoLocal(),
+      registrado_por: editingInsucessoRegistradoPorOriginalXpt || (usuarioAtual?.nome || usuarioAtual?.usuario || null),
+      ...(editingInsucessoCriadoEmOriginalXpt ? { criado_em: editingInsucessoCriadoEmOriginalXpt } : {})
+    }));
+    const { error } = await db.from('insucessos_xpt').insert(linhas);
+    if (error) throw error;
+
+    toast(editingInsucessoGrupoIdXpt ? 'Registro atualizado.' : `${labelTipoInsucesso(tipoInsucessoAtualXpt)} registrado.`, 'success');
+    fecharModalInsucessoXpt();
+    await carregarInsucessosXpt();
+    renderInsucessosXpt();
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao salvar: ' + (error.message || error), 'error');
+  } finally {
+    setButtonLoading(btn, false);
+  }
+}
+
+function filtrarInsucessosXptDoInicio() {
+  insucessoPaginaAtualXpt = 1;
+  renderInsucessosXpt();
+}
+
+function irPaginaAnteriorInsucessoXpt() {
+  if (insucessoPaginaAtualXpt > 1) {
+    insucessoPaginaAtualXpt--;
+    renderInsucessosXpt();
+  }
+}
+
+function irProximaPaginaInsucessoXpt() {
+  insucessoPaginaAtualXpt++;
+  renderInsucessosXpt();
+}
+
+function renderInsucessosXpt() {
+  const busca = lower(document.getElementById('busca-insucesso-xpt')?.value || '');
+  const grupos = agruparInsucessos(insucessosXpt);
+  const lista = grupos.filter(g => {
+    if (!busca) return true;
+    return lower(g.transportadora).includes(busca)
+      || lower(g.motorista).includes(busca)
+      || g.pacotes.some(p => lower(p.codigo).includes(busca));
+  });
+
+  const countEl = document.getElementById('insucesso-xpt-count');
+  if (countEl) countEl.textContent = `${lista.length} registro${lista.length !== 1 ? 's' : ''}`;
+
+  const totalPaginas = Math.max(1, Math.ceil(lista.length / INSUCESSO_ITENS_POR_PAGINA));
+  if (insucessoPaginaAtualXpt > totalPaginas) insucessoPaginaAtualXpt = totalPaginas;
+  if (insucessoPaginaAtualXpt < 1) insucessoPaginaAtualXpt = 1;
+
+  const inicio = (insucessoPaginaAtualXpt - 1) * INSUCESSO_ITENS_POR_PAGINA;
+  const paginaLista = lista.slice(inicio, inicio + INSUCESSO_ITENS_POR_PAGINA);
+
+  const infoEl = document.getElementById('insucesso-xpt-pagina-info');
+  if (infoEl) infoEl.textContent = `Página ${insucessoPaginaAtualXpt} de ${totalPaginas}`;
+
+  const tbody = document.getElementById('tbody-insucesso-xpt');
+  if (tbody) {
+    if (!paginaLista.length) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📦</div><p>${grupos.length ? 'Nenhum registro encontrado' : 'Nenhum registro cadastrado'}</p><span>${grupos.length ? 'Tente outros termos' : 'Use os botões acima para começar'}</span></div></td></tr>`;
+    } else {
+      tbody.innerHTML = paginaLista.map(g => {
+        const gid = safeId(g.grupoId);
+        const qtdPacotes = g.pacotes.length;
+        const dataFmt = g.dataRegistro ? g.dataRegistro.split('-').reverse().join('/') : '—';
+        const tipoBadge = g.tipo === 'devolucao'
+          ? '<span class="badge badge-purple">Devolução</span>'
+          : '<span class="badge badge-blue">Insucesso</span>';
+        return `<tr onclick="abrirResumoInsucessoXpt('${gid}')" style="cursor:pointer">
+          <td>${dataFmt}</td>
+          <td>${tipoBadge}</td>
+          <td><strong>${escapeHtml(g.transportadora)}</strong></td>
+          <td>${escapeHtml(g.motorista)}</td>
+          <td><span class="badge badge-red">${qtdPacotes} pacote${qtdPacotes !== 1 ? 's' : ''}</span></td>
+          <td style="color:var(--text-muted);font-size:12px">${escapeHtml(g.registradoPor || '—')}</td>
+        </tr>`;
+      }).join('');
+    }
+  }
+
+  renderScorecardsInsucessoXpt();
+  const dashboardVisivel = document.getElementById('insucesso-xpt-tab-dashboard');
+  if (dashboardVisivel && dashboardVisivel.style.display !== 'none') renderChartHoraInsucessoXpt();
+}
+
+function abrirResumoInsucessoXpt(grupoId) {
+  const grupos = agruparInsucessos(insucessosXpt);
+  const g = grupos.find(r => String(r.grupoId) === String(grupoId));
+  if (!g) return;
+  insucessoResumoAtualGrupoIdXpt = g.grupoId;
+  const dataFmt = g.dataRegistro ? g.dataRegistro.split('-').reverse().join('/') : '—';
+  const busca = lower(document.getElementById('busca-insucesso-xpt')?.value || '');
+
+  const totalPacotes = g.pacotes.length;
+  const colunas = totalPacotes > 45 ? 3 : (totalPacotes > 15 ? 2 : 1);
+  const estiloLista = colunas > 1
+    ? `columns:${colunas};column-gap:24px;max-height:55vh;overflow-y:auto;`
+    : 'max-height:55vh;overflow-y:auto;';
+
+  document.getElementById('insucesso-xpt-resumo-corpo').innerHTML = `
+    <div style="margin-bottom:10px"><strong>Tipo:</strong> ${labelTipoInsucesso(g.tipo)}</div>
+    <div style="margin-bottom:10px"><strong>Transportadora:</strong> ${escapeHtml(g.transportadora)}</div>
+    <div style="margin-bottom:10px"><strong>Motorista:</strong> ${escapeHtml(g.motorista)}</div>
+    <div style="margin-bottom:10px"><strong>Data:</strong> ${dataFmt}</div>
+    <div style="margin-bottom:6px"><strong>Pacotes (${g.pacotes.length}):</strong></div>
+    <ul style="margin:0 0 4px 18px;padding:0;${estiloLista}">
+      ${g.pacotes.map(p => {
+        const encontrado = busca && lower(p.codigo).includes(busca);
+        const estilo = encontrado ? ' style="background:#fff6d8;border-radius:4px;padding:2px 6px;margin:-2px -6px"' : '';
+        return `<li${estilo}>${escapeHtml(p.codigo)}${encontrado ? ' <span class="badge badge-blue">🔍 buscado</span>' : ''}${p.bulky ? ' <span class="badge badge-orange">Bulky</span>' : ''}${p.avariado ? ' <span class="badge badge-red">Avariado</span>' : ''}</li>`;
+      }).join('') || '<li style="color:var(--text-hint)">—</li>'}
+    </ul>
+    <div style="margin-top:10px;font-size:12px;color:var(--text-muted)">Registrado por ${escapeHtml(g.registradoPor || '—')}</div>
+  `;
+  setVisibleById('btn-editar-insucesso-xpt', pode('editar_insucesso_xpt'), 'inline-flex');
+  setVisibleById('btn-excluir-insucesso-xpt', pode('excluir_insucesso_xpt'), 'inline-flex');
+  document.getElementById('modal-insucesso-resumo-xpt').classList.add('open');
+}
+
+function fecharModalResumoInsucessoXpt() {
+  document.getElementById('modal-insucesso-resumo-xpt').classList.remove('open');
+  insucessoResumoAtualGrupoIdXpt = null;
+}
+
+function editarInsucessoXptAtual() {
+  if (!pode('editar_insucesso_xpt')) { toast('Seu perfil não permite editar insucessos.', 'error'); return; }
+  const grupos = agruparInsucessos(insucessosXpt);
+  const g = grupos.find(r => String(r.grupoId) === String(insucessoResumoAtualGrupoIdXpt));
+  if (!g) return;
+  fecharModalResumoInsucessoXpt();
+
+  tipoInsucessoAtualXpt = g.tipo === 'devolucao' ? 'devolucao' : 'insucesso';
+  editingInsucessoGrupoIdXpt = g.grupoId;
+  editingInsucessoDataOriginalXpt = g.dataRegistro;
+  editingInsucessoRegistradoPorOriginalXpt = g.registradoPor;
+  editingInsucessoCriadoEmOriginalXpt = g.criadoEm;
+  editingInsucessoPacotesOriginaisXpt = g.pacotes.map(p => ({ codigo: p.codigo, bulky: p.bulky, avariado: p.avariado }));
+
+  document.getElementById('insucesso-xpt-transportadora').value = g.transportadora || '';
+  document.getElementById('insucesso-xpt-motorista').value = g.motorista || '';
+  document.getElementById('insucesso-xpt-pacotes').value = g.pacotes.map(p => p.codigo).join('\n');
+
+  irParaEtapa1InsucessoXpt();
+  document.getElementById('modal-insucesso-registro-xpt').classList.add('open');
+}
+
+async function excluirInsucessoXptAtual() {
+  if (!pode('excluir_insucesso_xpt')) { toast('Seu perfil não permite excluir insucessos.', 'error'); return; }
+  const grupos = agruparInsucessos(insucessosXpt);
+  const g = grupos.find(r => String(r.grupoId) === String(insucessoResumoAtualGrupoIdXpt));
+  if (!g) return;
+  if (!confirm(`Excluir o registro de ${labelTipoInsucesso(g.tipo).toLowerCase()} de "${g.transportadora}" (${g.pacotes.length} pacote${g.pacotes.length !== 1 ? 's' : ''})? Esta ação não pode ser desfeita.`)) return;
+  try {
+    const { error } = await db.from('insucessos_xpt').delete().eq('grupo_id', g.grupoId);
+    if (error) throw error;
+    toast('Registro excluído.', 'success');
+    fecharModalResumoInsucessoXpt();
+    await carregarInsucessosXpt();
+    renderInsucessosXpt();
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao excluir registro: ' + (error.message || error), 'error');
+  }
+}
+
+function renderScorecardsInsucessoXpt() {
+  const hoje = hojeIsoLocal();
+  const doDia = insucessosXpt.filter(i => i.dataRegistro === hoje);
+
+  const elHoje = document.getElementById('insucesso-xpt-stat-hoje');
+  if (elHoje) elHoje.textContent = doDia.length;
+
+  const doDiaInsucesso = doDia.filter(i => i.tipo === 'insucesso');
+  const doDiaDevolucao = doDia.filter(i => i.tipo === 'devolucao');
+
+  preencherCardPrincipal(
+    'insucesso-xpt-stat-transportadora-insucesso', 'insucesso-xpt-stat-transportadora-insucesso-sub',
+    calcularMaisFrequente(doDiaInsucesso, 'transportadora'), 'pacote'
+  );
+  preencherCardPrincipal(
+    'insucesso-xpt-stat-transportadora-devolucao', 'insucesso-xpt-stat-transportadora-devolucao-sub',
+    calcularMaisFrequente(doDiaDevolucao, 'transportadora'), 'pacote'
+  );
+
+  const elBulky = document.getElementById('insucesso-xpt-stat-bulky');
+  if (elBulky) elBulky.textContent = doDia.filter(i => i.bulky).length;
+
+  const elAvariado = document.getElementById('insucesso-xpt-stat-avariado');
+  if (elAvariado) elAvariado.textContent = doDia.filter(i => i.avariado).length;
+
+  const inicioJanela7d = new Date(); inicioJanela7d.setHours(0, 0, 0, 0);
+  inicioJanela7d.setDate(inicioJanela7d.getDate() - 6);
+  const fimJanela7d = new Date(); fimJanela7d.setHours(0, 0, 0, 0);
+
+  const janela7dias = insucessosXpt.filter(i => {
+    if (!i.criadoEm) return false;
+    const d = new Date(i.criadoEm);
+    const diaComparar = new Date(d); diaComparar.setHours(0, 0, 0, 0);
+    return diaComparar >= inicioJanela7d && diaComparar <= fimJanela7d;
+  });
+
+  preencherCardPrincipal(
+    'insucesso-xpt-stat-driver-insucesso', 'insucesso-xpt-stat-driver-insucesso-sub',
+    calcularMaisFrequente(janela7dias.filter(i => i.tipo === 'insucesso'), 'motorista'), 'insucesso (7 dias)'
+  );
+  preencherCardPrincipal(
+    'insucesso-xpt-stat-driver-devolucao', 'insucesso-xpt-stat-driver-devolucao-sub',
+    calcularMaisFrequente(janela7dias.filter(i => i.tipo === 'devolucao'), 'motorista'), 'devolução (7 dias)'
+  );
+}
+
+function setInsucessoSubTabXpt(tab, btnEl) {
+  document.querySelectorAll('.insucesso-xpt-subtab-btn').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+
+  const lancamentos = document.getElementById('insucesso-xpt-tab-lancamentos');
+  const dashboard = document.getElementById('insucesso-xpt-tab-dashboard');
+  if (lancamentos) lancamentos.style.display = tab === 'lancamentos' ? '' : 'none';
+  if (dashboard) dashboard.style.display = tab === 'dashboard' ? '' : 'none';
+
+  if (tab === 'dashboard') renderChartHoraInsucessoXpt();
+}
+
+function renderChartHoraInsucessoXpt() {
+  const canvas = document.getElementById('insucesso-xpt-chart-hora');
+  if (!canvas) return;
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const inicioJanela = new Date(hoje);
+  inicioJanela.setDate(inicioJanela.getDate() - 6);
+
+  const porHora = new Array(24).fill(0);
+  insucessosXpt.forEach(i => {
+    if (!i.criadoEm) return;
+    const d = new Date(i.criadoEm);
+    if (d < inicioJanela) return;
+    const diaComparar = new Date(d); diaComparar.setHours(0, 0, 0, 0);
+    if (diaComparar > hoje) return;
+    porHora[d.getHours()]++;
+  });
+
+  const labels = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, '0')}h`);
+
+  if (chartInsucessoHoraXpt) chartInsucessoHoraXpt.destroy();
+  chartInsucessoHoraXpt = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label: 'Pacotes recebidos', data: porHora, backgroundColor: '#2D3277', borderRadius: 3 }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,0.05)' } }
+      }
+    }
+  });
+}
+
+function abrirModalExportarInsucessoXpt() {
+  const hoje = hojeIsoLocal();
+  const seteDiasAtras = new Date();
+  seteDiasAtras.setDate(seteDiasAtras.getDate() - 6);
+  const iniPadrao = seteDiasAtras.toISOString().slice(0, 10);
+
+  const inputIni = document.getElementById('insucesso-xpt-export-data-ini');
+  const inputFim = document.getElementById('insucesso-xpt-export-data-fim');
+  if (inputIni) inputIni.value = iniPadrao;
+  if (inputFim) inputFim.value = hoje;
+
+  document.getElementById('modal-exportar-insucesso-xpt').classList.add('open');
+}
+
+function fecharModalExportarInsucessoXpt() {
+  document.getElementById('modal-exportar-insucesso-xpt').classList.remove('open');
+}
+
+function gerarExportacaoInsucessoXptCSV() {
+  const dataIni = document.getElementById('insucesso-xpt-export-data-ini').value;
+  const dataFim = document.getElementById('insucesso-xpt-export-data-fim').value;
+
+  if (!dataIni || !dataFim) { toast('Informe o período (data inicial e final).', 'error'); return; }
+  if (dataIni > dataFim) { toast('A data inicial não pode ser depois da data final.', 'error'); return; }
+
+  const linhas = insucessosXpt
+    .filter(i => i.dataRegistro >= dataIni && i.dataRegistro <= dataFim)
+    .sort((a, b) => new Date(a.criadoEm) - new Date(b.criadoEm));
+
+  if (!linhas.length) { toast('Nenhum registro encontrado nesse período.', 'error'); return; }
+
+  const cabecalho = ['Tipo', 'Data', 'Hora', 'Transportadora', 'Motorista', 'Pacote', 'Bulky', 'Avariado', 'Registrado por'];
+  const corpo = linhas.map(i => {
+    const dataFmt = i.dataRegistro ? i.dataRegistro.split('-').reverse().join('/') : '';
+    const horaFmt = i.criadoEm ? new Date(i.criadoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+    return [labelTipoInsucesso(i.tipo), dataFmt, horaFmt, i.transportadora, i.motorista, i.pacote, i.bulky ? 'Sim' : 'Não', i.avariado ? 'Sim' : 'Não', i.registradoPor || ''].map(csvEscape).join(',');
+  });
+
+  const csv = '\uFEFF' + [cabecalho.join(','), ...corpo].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `insucessos_devolucoes_xpt_${dataIni}_a_${dataFim}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  toast(`Relatório gerado com ${linhas.length} pacote${linhas.length !== 1 ? 's' : ''}.`, 'success');
+  fecharModalExportarInsucessoXpt();
 }
 
 // ════════════════════════════════════════
