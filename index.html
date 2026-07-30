@@ -2159,9 +2159,17 @@
         <p style="font-weight:600;font-size:13px;margin-bottom:8px">Algum pacote é Bulky?</p>
         <div id="insucesso-xpt-lista-bulky" class="insucesso-checklist"></div>
       </div>
-      <div>
+      <div style="margin-bottom:18px">
         <p style="font-weight:600;font-size:13px;margin-bottom:8px">Algum pacote está avariado?</p>
         <div id="insucesso-xpt-lista-avariado" class="insucesso-checklist"></div>
+      </div>
+      <div style="margin-bottom:18px">
+        <p style="font-weight:600;font-size:13px;margin-bottom:8px">Algum pacote é Duplicado?</p>
+        <div id="insucesso-xpt-lista-duplicado" class="insucesso-checklist"></div>
+      </div>
+      <div>
+        <p style="font-weight:600;font-size:13px;margin-bottom:8px">Algum pacote foi Recusado?</p>
+        <div id="insucesso-xpt-lista-recusado" class="insucesso-checklist"></div>
       </div>
     </div>
 
@@ -5735,7 +5743,7 @@ function agruparInsucessos(lista) {
         pacotes: []
       });
     }
-    mapa.get(row.grupoId).pacotes.push({ codigo: row.pacote, bulky: row.bulky, avariado: row.avariado });
+    mapa.get(row.grupoId).pacotes.push({ codigo: row.pacote, bulky: row.bulky, avariado: row.avariado, duplicado: row.duplicado, recusado: row.recusado });
   });
   return Array.from(mapa.values()).sort((a, b) => new Date(b.criadoEm) - new Date(a.criadoEm));
 }
@@ -6246,6 +6254,8 @@ async function carregarInsucessosXpt() {
       pacote: i.pacote,
       bulky: !!i.bulky,
       avariado: !!i.avariado,
+      duplicado: !!i.duplicado,
+      recusado: !!i.recusado,
       dataRegistro: i.data_registro,
       registradoPor: i.registrado_por,
       criadoEm: i.criado_em
@@ -6306,13 +6316,19 @@ function avancarInsucessoXptEtapa2() {
 
   const bulkyOriginais = new Map();
   const avariadoOriginais = new Map();
+  const duplicadoOriginais = new Map();
+  const recusadoOriginais = new Map();
   editingInsucessoPacotesOriginaisXpt.forEach(p => {
     bulkyOriginais.set(p.codigo, p.bulky);
     avariadoOriginais.set(p.codigo, p.avariado);
+    duplicadoOriginais.set(p.codigo, p.duplicado);
+    recusadoOriginais.set(p.codigo, p.recusado);
   });
 
   renderChecklistPacotesInsucesso('insucesso-xpt-lista-bulky', pacotesLista, 'chk-bulky-xpt', bulkyOriginais);
   renderChecklistPacotesInsucesso('insucesso-xpt-lista-avariado', pacotesLista, 'chk-avariado-xpt', avariadoOriginais);
+  renderChecklistPacotesInsucesso('insucesso-xpt-lista-duplicado', pacotesLista, 'chk-duplicado-xpt', duplicadoOriginais);
+  renderChecklistPacotesInsucesso('insucesso-xpt-lista-recusado', pacotesLista, 'chk-recusado-xpt', recusadoOriginais);
 
   document.getElementById('insucesso-xpt-etapa-1').style.display = 'none';
   document.getElementById('insucesso-xpt-etapa-2').style.display = '';
@@ -6338,6 +6354,8 @@ async function salvarInsucessoXpt() {
 
   const bulkySet = new Set(Array.from(document.querySelectorAll('.chk-bulky-xpt:checked')).map(el => el.dataset.pacote));
   const avariadoSet = new Set(Array.from(document.querySelectorAll('.chk-avariado-xpt:checked')).map(el => el.dataset.pacote));
+  const duplicadoSet = new Set(Array.from(document.querySelectorAll('.chk-duplicado-xpt:checked')).map(el => el.dataset.pacote));
+  const recusadoSet = new Set(Array.from(document.querySelectorAll('.chk-recusado-xpt:checked')).map(el => el.dataset.pacote));
 
   const btn = document.getElementById('btn-insucesso-xpt-confirmar');
   setButtonLoading(btn, true, editingInsucessoGrupoIdXpt ? 'Atualizando...' : 'Salvando...');
@@ -6355,6 +6373,8 @@ async function salvarInsucessoXpt() {
       pacote: p,
       bulky: bulkySet.has(p),
       avariado: avariadoSet.has(p),
+      duplicado: duplicadoSet.has(p),
+      recusado: recusadoSet.has(p),
       data_registro: editingInsucessoDataOriginalXpt || hojeIsoLocal(),
       registrado_por: editingInsucessoRegistradoPorOriginalXpt || (usuarioAtual?.nome || usuarioAtual?.usuario || null),
       ...(editingInsucessoCriadoEmOriginalXpt ? { criado_em: editingInsucessoCriadoEmOriginalXpt } : {})
@@ -6467,7 +6487,7 @@ function abrirResumoInsucessoXpt(grupoId) {
       ${g.pacotes.map(p => {
         const encontrado = busca && lower(p.codigo).includes(busca);
         const estilo = encontrado ? ' style="background:#fff6d8;border-radius:4px;padding:2px 6px;margin:-2px -6px"' : '';
-        return `<li${estilo}>${escapeHtml(p.codigo)}${encontrado ? ' <span class="badge badge-blue">🔍 buscado</span>' : ''}${p.bulky ? ' <span class="badge badge-orange">Bulky</span>' : ''}${p.avariado ? ' <span class="badge badge-red">Avariado</span>' : ''}</li>`;
+        return `<li${estilo}>${escapeHtml(p.codigo)}${encontrado ? ' <span class="badge badge-blue">🔍 buscado</span>' : ''}${p.bulky ? ' <span class="badge badge-orange">Bulky</span>' : ''}${p.avariado ? ' <span class="badge badge-red">Avariado</span>' : ''}${p.duplicado ? ' <span class="badge badge-purple">Duplicado</span>' : ''}${p.recusado ? ' <span class="badge badge-gray">Recusado</span>' : ''}</li>`;
       }).join('') || '<li style="color:var(--text-hint)">—</li>'}
     </ul>
     <div style="margin-top:10px;font-size:12px;color:var(--text-muted)">Registrado por ${escapeHtml(g.registradoPor || '—')}</div>
@@ -6494,7 +6514,7 @@ function editarInsucessoXptAtual() {
   editingInsucessoDataOriginalXpt = g.dataRegistro;
   editingInsucessoRegistradoPorOriginalXpt = g.registradoPor;
   editingInsucessoCriadoEmOriginalXpt = g.criadoEm;
-  editingInsucessoPacotesOriginaisXpt = g.pacotes.map(p => ({ codigo: p.codigo, bulky: p.bulky, avariado: p.avariado }));
+  editingInsucessoPacotesOriginaisXpt = g.pacotes.map(p => ({ codigo: p.codigo, bulky: p.bulky, avariado: p.avariado, duplicado: p.duplicado, recusado: p.recusado }));
 
   document.getElementById('insucesso-xpt-transportadora').value = g.transportadora || '';
   document.getElementById('insucesso-xpt-motorista').value = g.motorista || '';
@@ -6651,11 +6671,11 @@ function gerarExportacaoInsucessoXptCSV() {
 
   if (!linhas.length) { toast('Nenhum registro encontrado nesse período.', 'error'); return; }
 
-  const cabecalho = ['Tipo', 'Data', 'Hora', 'Transportadora', 'Motorista', 'Pacote', 'Bulky', 'Avariado', 'Registrado por'];
+  const cabecalho = ['Tipo', 'Data', 'Hora', 'Transportadora', 'Motorista', 'Pacote', 'Bulky', 'Avariado', 'Duplicado', 'Recusado', 'Registrado por'];
   const corpo = linhas.map(i => {
     const dataFmt = i.dataRegistro ? i.dataRegistro.split('-').reverse().join('/') : '';
     const horaFmt = i.criadoEm ? new Date(i.criadoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
-    return [labelTipoInsucesso(i.tipo), dataFmt, horaFmt, i.transportadora, i.motorista, i.pacote, i.bulky ? 'Sim' : 'Não', i.avariado ? 'Sim' : 'Não', i.registradoPor || ''].map(csvEscape).join(',');
+    return [labelTipoInsucesso(i.tipo), dataFmt, horaFmt, i.transportadora, i.motorista, i.pacote, i.bulky ? 'Sim' : 'Não', i.avariado ? 'Sim' : 'Não', i.duplicado ? 'Sim' : 'Não', i.recusado ? 'Sim' : 'Não', i.registradoPor || ''].map(csvEscape).join(',');
   });
 
   const csv = '\uFEFF' + [cabecalho.join(','), ...corpo].join('\n');
