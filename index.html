@@ -1211,44 +1211,84 @@
 
   <div id="insucesso-xpt-tab-dashboard" style="display:none">
     <div class="card" style="margin-bottom:20px">
-      <p class="section-label" style="margin-bottom:10px">Período de análise</p>
-      <div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
-        <div class="form-group" style="margin-bottom:0">
-          <label style="font-size:11px">Data início</label>
-          <input type="date" id="insucesso-xpt-dash-data-ini" onchange="renderDashboardXpt()">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
+          <div>
+            <p class="section-label" style="margin-bottom:10px">Período de análise</p>
+            <div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
+              <div class="form-group" style="margin-bottom:0">
+                <label style="font-size:11px">Data início</label>
+                <input type="date" id="insucesso-xpt-dash-data-ini" onchange="renderDashboardXpt()">
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label style="font-size:11px">Data fim</label>
+                <input type="date" id="insucesso-xpt-dash-data-fim" onchange="renderDashboardXpt()">
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="aplicarPresetDashboardXpt(7)">Últimos 7 dias</button>
+              <button class="btn btn-secondary btn-sm" onclick="aplicarPresetDashboardXpt(30)">Últimos 30 dias</button>
+            </div>
+          </div>
         </div>
-        <div class="form-group" style="margin-bottom:0">
-          <label style="font-size:11px">Data fim</label>
-          <input type="date" id="insucesso-xpt-dash-data-fim" onchange="renderDashboardXpt()">
-        </div>
-        <button class="btn btn-secondary btn-sm" onclick="aplicarPresetDashboardXpt(7)">Últimos 7 dias</button>
-        <button class="btn btn-secondary btn-sm" onclick="aplicarPresetDashboardXpt(30)">Últimos 30 dias</button>
+        <button class="btn btn-primary btn-sm" onclick="exportarDashboardInsucessoXptPNG()" style="height:34px;display:inline-flex;align-items:center;gap:6px;">
+          <span>⬇️ Exportar Dashboard</span>
+        </button>
       </div>
     </div>
 
-    <div class="stats-row" style="margin-bottom:20px">
-      <div class="stat-card">
-        <div class="stat-label">Total Insucessos</div>
-        <div class="stat-value" id="insucesso-xpt-dash-total-insucesso">0</div>
-        <div class="stat-sub">pacotes no período selecionado</div>
+    <div id="insucesso-xpt-dashboard-conteudo">
+      <div class="stats-row" style="margin-bottom:20px">
+        <div class="stat-card">
+          <div class="stat-label">Total Insucessos</div>
+          <div class="stat-value" id="insucesso-xpt-dash-total-insucesso">0</div>
+          <div class="stat-sub">pacotes no período selecionado</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Devoluções</div>
+          <div class="stat-value" id="insucesso-xpt-dash-total-devolucao">0</div>
+          <div class="stat-sub">pacotes no período selecionado</div>
+        </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Total Devoluções</div>
-        <div class="stat-value" id="insucesso-xpt-dash-total-devolucao">0</div>
-        <div class="stat-sub">pacotes no período selecionado</div>
-      </div>
-    </div>
 
-    <div style="display:flex;gap:20px;flex-wrap:wrap">
-      <div class="card" style="flex:1;min-width:340px">
-        <p class="section-label" style="margin-bottom:2px">Casos de Insucesso</p>
-        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Um pacote pode ter mais de um caso ao mesmo tempo</p>
-        <canvas id="insucesso-xpt-chart-casos-insucesso" height="220"></canvas>
+      <p class="section-label" style="margin-bottom:10px">Consolidado de hoje (Insucesso + Devolução)</p>
+      <div class="stats-row" style="margin-bottom:20px">
+        <div class="stat-card">
+          <div class="stat-label">Principal Transportadora (hoje)</div>
+          <div class="stat-value" style="font-size:16px;line-height:1.3" id="insucesso-xpt-dash-transportadora-hoje">—</div>
+          <div class="stat-sub" id="insucesso-xpt-dash-transportadora-hoje-sub"></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Principal Motorista (hoje)</div>
+          <div class="stat-value" style="font-size:16px;line-height:1.3" id="insucesso-xpt-dash-motorista-hoje">—</div>
+          <div class="stat-sub" id="insucesso-xpt-dash-motorista-hoje-sub"></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Avarias hoje</div>
+          <div class="stat-value" id="insucesso-xpt-dash-avarias-hoje">0</div>
+          <div class="stat-sub">insucesso + devolução</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Recusas hoje</div>
+          <div class="stat-value" id="insucesso-xpt-dash-recusas-hoje">0</div>
+          <div class="stat-sub">insucesso + devolução</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Duplicatas hoje</div>
+          <div class="stat-value" id="insucesso-xpt-dash-duplicatas-hoje">0</div>
+          <div class="stat-sub">insucesso + devolução</div>
+        </div>
       </div>
-      <div class="card" style="flex:1;min-width:340px">
-        <p class="section-label" style="margin-bottom:2px">Casos de Devolução</p>
-        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Um pacote pode ter mais de um caso ao mesmo tempo</p>
-        <canvas id="insucesso-xpt-chart-casos-devolucao" height="220"></canvas>
+
+      <div style="display:flex;gap:20px;flex-wrap:wrap">
+        <div class="card" style="flex:1;min-width:340px">
+          <p class="section-label" style="margin-bottom:2px">Casos de Insucesso</p>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Um pacote pode ter mais de um caso ao mesmo tempo</p>
+          <canvas id="insucesso-xpt-chart-casos-insucesso" height="220"></canvas>
+        </div>
+        <div class="card" style="flex:1;min-width:340px">
+          <p class="section-label" style="margin-bottom:2px">Casos de Devolução</p>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Um pacote pode ter mais de um caso ao mesmo tempo</p>
+          <canvas id="insucesso-xpt-chart-casos-devolucao" height="220"></canvas>
+        </div>
       </div>
     </div>
   </div>
@@ -6710,6 +6750,50 @@ function renderDashboardXpt() {
 
   if (chartCasosDevolucaoXpt) chartCasosDevolucaoXpt.destroy();
   chartCasosDevolucaoXpt = renderChartCasosXpt('insucesso-xpt-chart-casos-devolucao', statsDevolucao, '#1a7d3c');
+
+  // Consolidado de hoje — soma insucesso + devolução, independente do período filtrado acima.
+  const hoje = hojeIsoLocal();
+  const doDiaConsolidado = insucessosXpt.filter(i => i.dataRegistro === hoje);
+
+  preencherCardPrincipal(
+    'insucesso-xpt-dash-transportadora-hoje', 'insucesso-xpt-dash-transportadora-hoje-sub',
+    calcularMaisFrequente(doDiaConsolidado, 'transportadora'), 'pacote'
+  );
+  preencherCardPrincipal(
+    'insucesso-xpt-dash-motorista-hoje', 'insucesso-xpt-dash-motorista-hoje-sub',
+    calcularMaisFrequente(doDiaConsolidado, 'motorista'), 'pacote'
+  );
+
+  const elAvariasHoje = document.getElementById('insucesso-xpt-dash-avarias-hoje');
+  if (elAvariasHoje) elAvariasHoje.textContent = doDiaConsolidado.filter(i => i.avariado).length;
+
+  const elRecusasHoje = document.getElementById('insucesso-xpt-dash-recusas-hoje');
+  if (elRecusasHoje) elRecusasHoje.textContent = doDiaConsolidado.filter(i => i.recusado).length;
+
+  const elDuplicatasHoje = document.getElementById('insucesso-xpt-dash-duplicatas-hoje');
+  if (elDuplicatasHoje) elDuplicatasHoje.textContent = doDiaConsolidado.filter(i => i.duplicado).length;
+}
+
+function exportarDashboardInsucessoXptPNG() {
+  const el = document.getElementById('insucesso-xpt-dashboard-conteudo');
+  if (!el) return;
+  if (typeof html2canvas === 'undefined') {
+    toast('Biblioteca de exportação não carregou. Verifique sua conexão.', 'error');
+    return;
+  }
+  toast('Gerando imagem do dashboard...', '');
+  html2canvas(el, { backgroundColor: '#EBEBEB', scale: 2, useCORS: true }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = `dashboard-insucesso-xpt-${hojeIsoLocal()}.png`;
+    link.href = canvas.toDataURL('image/png');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast('Dashboard exportado com sucesso!', 'success');
+  }).catch(err => {
+    console.error(err);
+    toast('Erro ao exportar o dashboard: ' + (err.message || err), 'error');
+  });
 }
 
 function abrirModalExportarInsucessoXpt() {
