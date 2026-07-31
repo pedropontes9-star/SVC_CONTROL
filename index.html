@@ -428,8 +428,6 @@
   .insucesso-checklist label:last-child { border-bottom: none; }
 
   /* ── Monitor YMS — faixas de tempo e painel ── */
-  .yms-kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
-  .yms-kpi-card { border-radius: var(--radius); padding: 14px 16px; text-align: center; box-shadow: var(--shadow); }
   .yms-kpi-valor { font-size: 26px; font-weight: 800; line-height: 1.1; }
   .yms-kpi-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; margin-top: 4px; }
   .yms-kpi-verde     { background: #e8f5e9; color: #1b5e20; }
@@ -438,7 +436,11 @@
   .yms-kpi-vermelho  { background: #ffebee; color: #b71c1c; }
   .yms-kpi-critico   { background: #212121; color: #fff; }
 
-  .yms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+  .yms-kanban { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; align-items: start; }
+  .yms-kanban-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .yms-kanban-header { border-radius: var(--radius); padding: 14px 16px; text-align: center; box-shadow: var(--shadow); position: sticky; top: 0; }
+  .yms-kanban-cards { display: flex; flex-direction: column; gap: 10px; max-height: 68vh; overflow-y: auto; padding: 2px; }
+
   .yms-card { border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); transition: transform .12s; }
   .yms-card-rota { font-size: 15px; font-weight: 800; margin-bottom: 2px; }
   .yms-card-vaga { font-size: 12px; opacity: .85; margin-bottom: 10px; }
@@ -1402,30 +1404,43 @@
 
   <!-- ── MONITOR (display) ── -->
   <div id="yms-tab-monitor" style="display:none">
-    <div class="yms-kpi-row">
-      <div class="yms-kpi-card yms-kpi-verde">
-        <div class="yms-kpi-valor" id="yms-kpi-verde">0</div>
-        <div class="yms-kpi-label">0–10 min</div>
+    <div class="yms-kanban">
+      <div class="yms-kanban-col">
+        <div class="yms-kanban-header yms-kpi-verde">
+          <div class="yms-kpi-valor" id="yms-kpi-verde">0</div>
+          <div class="yms-kpi-label">0–10 min</div>
+        </div>
+        <div class="yms-kanban-cards" id="yms-col-verde"></div>
       </div>
-      <div class="yms-kpi-card yms-kpi-amarelo">
-        <div class="yms-kpi-valor" id="yms-kpi-amarelo">0</div>
-        <div class="yms-kpi-label">11–20 min</div>
+      <div class="yms-kanban-col">
+        <div class="yms-kanban-header yms-kpi-amarelo">
+          <div class="yms-kpi-valor" id="yms-kpi-amarelo">0</div>
+          <div class="yms-kpi-label">11–20 min</div>
+        </div>
+        <div class="yms-kanban-cards" id="yms-col-amarelo"></div>
       </div>
-      <div class="yms-kpi-card yms-kpi-laranja">
-        <div class="yms-kpi-valor" id="yms-kpi-laranja">0</div>
-        <div class="yms-kpi-label">21–25 min</div>
+      <div class="yms-kanban-col">
+        <div class="yms-kanban-header yms-kpi-laranja">
+          <div class="yms-kpi-valor" id="yms-kpi-laranja">0</div>
+          <div class="yms-kpi-label">21–25 min</div>
+        </div>
+        <div class="yms-kanban-cards" id="yms-col-laranja"></div>
       </div>
-      <div class="yms-kpi-card yms-kpi-vermelho">
-        <div class="yms-kpi-valor" id="yms-kpi-vermelho">0</div>
-        <div class="yms-kpi-label">26–30 min</div>
+      <div class="yms-kanban-col">
+        <div class="yms-kanban-header yms-kpi-vermelho">
+          <div class="yms-kpi-valor" id="yms-kpi-vermelho">0</div>
+          <div class="yms-kpi-label">26–30 min</div>
+        </div>
+        <div class="yms-kanban-cards" id="yms-col-vermelho"></div>
       </div>
-      <div class="yms-kpi-card yms-kpi-critico">
-        <div class="yms-kpi-valor" id="yms-kpi-critico">0</div>
-        <div class="yms-kpi-label">💀 acima de 30 min</div>
+      <div class="yms-kanban-col">
+        <div class="yms-kanban-header yms-kpi-critico">
+          <div class="yms-kpi-valor" id="yms-kpi-critico">0</div>
+          <div class="yms-kpi-label">💀 acima de 30 min</div>
+        </div>
+        <div class="yms-kanban-cards" id="yms-col-critico"></div>
       </div>
     </div>
-
-    <div class="yms-grid" id="yms-monitor-grid"></div>
   </div>
 </div>
 
@@ -7487,33 +7502,40 @@ function renderTabelaAtivosYms(tbodyId) {
 }
 
 function renderMonitorYms() {
-  const grid = document.getElementById('yms-monitor-grid');
-  if (!grid) return;
+  const faixas = ['verde', 'amarelo', 'laranja', 'vermelho', 'critico'];
+  const colunas = { verde: [], amarelo: [], laranja: [], vermelho: [], critico: [] };
 
-  const contagem = { verde: 0, amarelo: 0, laranja: 0, vermelho: 0, critico: 0 };
-  const listaOrdenada = [...ymsAtivos].sort((a, b) => calcularMinutosDecorridosYms(b.horaEntrada) - calcularMinutosDecorridosYms(a.horaEntrada));
+  ymsAtivos.forEach(r => {
+    const minutos = calcularMinutosDecorridosYms(r.horaEntrada);
+    const faixa = corFaixaYms(minutos);
+    colunas[faixa].push({ ...r, minutos });
+  });
 
-  if (!listaOrdenada.length) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🚛</div><p>Nenhuma rota no pátio agora</p></div>`;
-  } else {
-    grid.innerHTML = listaOrdenada.map(r => {
-      const minutos = calcularMinutosDecorridosYms(r.horaEntrada);
-      const faixa = corFaixaYms(minutos);
-      contagem[faixa]++;
+  faixas.forEach(faixa => {
+    const container = document.getElementById(`yms-col-${faixa}`);
+    if (!container) return;
+
+    // Ordem decrescente por minutos: quem está mais perto de virar para a próxima faixa aparece primeiro.
+    const lista = colunas[faixa].sort((a, b) => b.minutos - a.minutos);
+
+    const elKpi = document.getElementById(`yms-kpi-${faixa}`);
+    if (elKpi) elKpi.textContent = lista.length;
+
+    if (!lista.length) {
+      container.innerHTML = `<div class="empty-state"><p style="font-size:12px">Vazio</p></div>`;
+      return;
+    }
+
+    container.innerHTML = lista.map(r => {
       const horaFmt = new Date(r.horaEntrada).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
       const emoji = faixa === 'critico' ? '💀 ' : '';
       return `<div class="yms-card yms-card-${faixa}">
         <div class="yms-card-rota">${escapeHtml(r.rota)}</div>
         <div class="yms-card-vaga">Vaga ${escapeHtml(r.vaga)}</div>
-        <div class="yms-card-tempo">${emoji}${formatarTempoDecorridoYms(minutos)}</div>
+        <div class="yms-card-tempo">${emoji}${formatarTempoDecorridoYms(r.minutos)}</div>
         <div class="yms-card-hora">Entrou às ${horaFmt}</div>
       </div>`;
     }).join('');
-  }
-
-  ['verde', 'amarelo', 'laranja', 'vermelho', 'critico'].forEach(faixa => {
-    const el = document.getElementById(`yms-kpi-${faixa}`);
-    if (el) el.textContent = contagem[faixa];
   });
 }
 
