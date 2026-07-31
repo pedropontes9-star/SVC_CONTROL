@@ -427,6 +427,30 @@
   .insucesso-checklist label { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f2f2f2; }
   .insucesso-checklist label:last-child { border-bottom: none; }
 
+  /* ── Monitor YMS — faixas de tempo e painel ── */
+  .yms-kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+  .yms-kpi-card { border-radius: var(--radius); padding: 14px 16px; text-align: center; box-shadow: var(--shadow); }
+  .yms-kpi-valor { font-size: 26px; font-weight: 800; line-height: 1.1; }
+  .yms-kpi-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; margin-top: 4px; }
+  .yms-kpi-verde     { background: #e8f5e9; color: #1b5e20; }
+  .yms-kpi-amarelo   { background: #fffde7; color: #8d6e00; }
+  .yms-kpi-laranja   { background: #fff3e0; color: #e65100; }
+  .yms-kpi-vermelho  { background: #ffebee; color: #b71c1c; }
+  .yms-kpi-critico   { background: #212121; color: #fff; }
+
+  .yms-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+  .yms-card { border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); transition: transform .12s; }
+  .yms-card-rota { font-size: 15px; font-weight: 800; margin-bottom: 2px; }
+  .yms-card-vaga { font-size: 12px; opacity: .85; margin-bottom: 10px; }
+  .yms-card-tempo { font-size: 24px; font-weight: 800; line-height: 1; }
+  .yms-card-hora { font-size: 11px; opacity: .8; margin-top: 6px; }
+  .yms-card-verde     { background: #e8f5e9; color: #1b5e20; }
+  .yms-card-amarelo   { background: #fffde7; color: #8d6e00; }
+  .yms-card-laranja   { background: #fff3e0; color: #e65100; }
+  .yms-card-vermelho  { background: #ffebee; color: #b71c1c; }
+  .yms-card-critico   { background: #212121; color: #fff; box-shadow: 0 0 0 2px #ff1744; }
+
+
   /* ── Scheduling — visão calendário ── */
   .sched-cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
   .sched-cal-titulo { font-size: 16px; font-weight: 700; color: var(--text); text-transform: capitalize; min-width: 160px; }
@@ -536,6 +560,7 @@
         <button class="tab-btn nav-item" id="tab-anomalias" data-tab="anomalias" onclick="switchTab('anomalias',this)"><span class="nav-icon">⚠️</span><span>Anomalias (CIA/COA)</span></button>
         <button class="tab-btn nav-item" id="tab-insucesso" data-tab="insucesso" onclick="switchTab('insucesso',this)"><span class="nav-icon">🚫</span><span>Insucesso/Devolução - SVC</span></button>
         <button class="tab-btn nav-item" id="tab-insucesso-xpt" data-tab="insucesso-xpt" onclick="switchTab('insucesso-xpt',this)"><span class="nav-icon">🚫</span><span>Insucesso/Devolução - XPT</span></button>
+        <button class="tab-btn nav-item" id="tab-yms" data-tab="yms" onclick="switchTab('yms',this)"><span class="nav-icon">🚛</span><span>Monitor YMS</span></button>
       </div>
     </section>
     <section class="nav-group" data-nav-group="ferramentas">
@@ -1291,6 +1316,116 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     MONITOR YMS
+════════════════════════════════════════ -->
+<div id="page-yms" class="page">
+  <p class="section-label">Monitor YMS</p>
+
+  <div class="monitor-section-header">
+    <span class="monitor-section-title">Visualização</span>
+    <div class="monitor-section-toggle">
+      <button class="monitor-toggle-btn yms-subtab-btn active" onclick="setYmsSubTab('entrada', this)">Entrada YMS</button>
+      <button class="monitor-toggle-btn yms-subtab-btn" onclick="setYmsSubTab('saida', this)">Saída YMS</button>
+      <button class="monitor-toggle-btn yms-subtab-btn" onclick="setYmsSubTab('monitor', this)">Monitor YMS</button>
+    </div>
+  </div>
+
+  <!-- ── ENTRADA ── -->
+  <div id="yms-tab-entrada">
+    <div class="form-card card" style="margin-bottom:24px;max-width:480px">
+      <p class="section-label">Registrar Entrada</p>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Rota</label>
+          <input type="text" id="yms-entrada-rota" placeholder="Ex: RT-1234" maxlength="40">
+        </div>
+        <div class="form-group">
+          <label>Vaga</label>
+          <input type="text" id="yms-entrada-vaga" placeholder="Ex: V-12" maxlength="40">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="btn-yms-entrada" onclick="registrarEntradaYms()">Registrar Entrada</button>
+        <button class="btn btn-secondary" onclick="limparFormEntradaYms()">Limpar</button>
+      </div>
+    </div>
+
+    <p class="section-label">Rotas atualmente no pátio</p>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Rota</th><th>Vaga</th><th>Hora de Entrada</th><th>Tempo decorrido</th><th style="text-align:right">Ações</th></tr></thead>
+          <tbody id="tbody-yms-entrada">
+            <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🚛</div><p>Carregando...</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SAÍDA ── -->
+  <div id="yms-tab-saida" style="display:none">
+    <div class="form-card card" style="margin-bottom:24px;max-width:480px">
+      <p class="section-label">Registrar Saída</p>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Rota</label>
+          <input type="text" id="yms-saida-rota" placeholder="Ex: RT-1234" maxlength="40">
+        </div>
+        <div class="form-group">
+          <label>Vaga</label>
+          <input type="text" id="yms-saida-vaga" placeholder="Ex: V-12" maxlength="40">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="btn-yms-saida" onclick="registrarSaidaYms()">Registrar Saída</button>
+        <button class="btn btn-secondary" onclick="limparFormSaidaYms()">Limpar</button>
+      </div>
+    </div>
+
+    <p class="section-label">Rotas atualmente no pátio</p>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Rota</th><th>Vaga</th><th>Hora de Entrada</th><th>Tempo decorrido</th><th style="text-align:right">Ações</th></tr></thead>
+          <tbody id="tbody-yms-saida">
+            <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🚛</div><p>Carregando...</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MONITOR (display) ── -->
+  <div id="yms-tab-monitor" style="display:none">
+    <div class="yms-kpi-row">
+      <div class="yms-kpi-card yms-kpi-verde">
+        <div class="yms-kpi-valor" id="yms-kpi-verde">0</div>
+        <div class="yms-kpi-label">0–10 min</div>
+      </div>
+      <div class="yms-kpi-card yms-kpi-amarelo">
+        <div class="yms-kpi-valor" id="yms-kpi-amarelo">0</div>
+        <div class="yms-kpi-label">11–20 min</div>
+      </div>
+      <div class="yms-kpi-card yms-kpi-laranja">
+        <div class="yms-kpi-valor" id="yms-kpi-laranja">0</div>
+        <div class="yms-kpi-label">21–25 min</div>
+      </div>
+      <div class="yms-kpi-card yms-kpi-vermelho">
+        <div class="yms-kpi-valor" id="yms-kpi-vermelho">0</div>
+        <div class="yms-kpi-label">26–30 min</div>
+      </div>
+      <div class="yms-kpi-card yms-kpi-critico">
+        <div class="yms-kpi-valor" id="yms-kpi-critico">0</div>
+        <div class="yms-kpi-label">💀 acima de 30 min</div>
+      </div>
+    </div>
+
+    <div class="yms-grid" id="yms-monitor-grid"></div>
   </div>
 </div>
 
@@ -2433,7 +2568,7 @@ const EXIGIR_CADASTRO_PERFIL = true; // Com a tabela svc_usuarios configurada, t
 
 // Abas com permissão configurável (visualizar/editar) para os perfis Auditor e Operador.
 // Cada aba mapeia para os "flags" granulares já usados no restante do sistema.
-const ABAS_CONFIGURAVEIS = ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'insucesso-xpt', 'diaristas', 'monitor', 'crachas'];
+const ABAS_CONFIGURAVEIS = ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'insucesso-xpt', 'diaristas', 'yms', 'monitor', 'crachas'];
 
 const MAPA_PERMISSOES_ABA = {
   turnos:     { base: [], editar: ['criar_turnos', 'editar_turnos', 'excluir_turnos'] },
@@ -2444,6 +2579,7 @@ const MAPA_PERMISSOES_ABA = {
   insucesso:  { base: [], editar: ['registrar_insucesso', 'editar_insucesso', 'excluir_insucesso'] },
   'insucesso-xpt': { base: [], editar: ['registrar_insucesso_xpt', 'editar_insucesso_xpt', 'excluir_insucesso_xpt'] },
   diaristas:  { base: [], editar: ['criar_diarista', 'editar_diarista', 'excluir_diarista'] },
+  yms:        { base: ['ver_monitor_yms'], editar: ['registrar_yms', 'excluir_yms'] },
   monitor:    { base: [], editar: ['editar_monitor'] },
   crachas:    { base: [], editar: ['gerar_crachas'] }
 };
@@ -2462,6 +2598,7 @@ function perfilVazioDinamico(label) {
     registrar_insucesso: false, editar_insucesso: false, excluir_insucesso: false,
     registrar_insucesso_xpt: false, editar_insucesso_xpt: false, excluir_insucesso_xpt: false,
     criar_diarista: false, editar_diarista: false, excluir_diarista: false,
+    ver_monitor_yms: false, registrar_yms: false, excluir_yms: false,
     editar_monitor: false,
     criar_usuarios: false, gerenciar_permissoes: false, excluir_usuarios: false
   };
@@ -2506,7 +2643,7 @@ async function carregarPermissoesDinamicasSeNecessario() {
 const PERFIS_ACESSO = {
   admin: {
     label: 'Administrador',
-    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'insucesso-xpt', 'diaristas', 'monitor', 'crachas', 'usuarios'],
+    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'insucesso-xpt', 'diaristas', 'yms', 'monitor', 'crachas', 'usuarios'],
     gerar_crachas: true,
     criar_turnos: true, editar_turnos: true, excluir_turnos: true,
     criar_hc: true, editar_hc: true, excluir_hc: true, exportar_hc: true,
@@ -2516,12 +2653,13 @@ const PERFIS_ACESSO = {
     registrar_insucesso: true, editar_insucesso: true, excluir_insucesso: true,
     registrar_insucesso_xpt: true, editar_insucesso_xpt: true, excluir_insucesso_xpt: true,
     criar_diarista: true, editar_diarista: true, excluir_diarista: true,
+    ver_monitor_yms: true, registrar_yms: true, excluir_yms: true,
     editar_monitor: true,
     criar_usuarios: true, gerenciar_permissoes: true, excluir_usuarios: true
   },
   coordenador: {
     label: 'Coordenador',
-    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'insucesso-xpt', 'diaristas', 'monitor', 'crachas', 'usuarios'],
+    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'insucesso-xpt', 'diaristas', 'yms', 'monitor', 'crachas', 'usuarios'],
     gerar_crachas: true,
     criar_turnos: false, editar_turnos: false, excluir_turnos: false,
     criar_hc: true, editar_hc: true, excluir_hc: false, exportar_hc: true,
@@ -2531,6 +2669,7 @@ const PERFIS_ACESSO = {
     registrar_insucesso: true, editar_insucesso: true, excluir_insucesso: false,
     registrar_insucesso_xpt: true, editar_insucesso_xpt: true, excluir_insucesso_xpt: false,
     criar_diarista: true, editar_diarista: true, excluir_diarista: false,
+    ver_monitor_yms: true, registrar_yms: true, excluir_yms: false,
     editar_monitor: true,
     criar_usuarios: false, gerenciar_permissoes: true, excluir_usuarios: false
   },
@@ -2840,6 +2979,9 @@ function aplicarControleAcesso() {
   setVisibleById('btn-registrar-devolucao-xpt', pode('registrar_insucesso_xpt'), 'inline-flex');
   setVisibleById('card-form-usuario', pode('criar_usuarios'));
   setVisibleById('card-form-diarista', pode('criar_diarista') || pode('editar_diarista'));
+  document.querySelectorAll('#yms-tab-entrada .form-card, #yms-tab-saida .form-card').forEach(el => {
+    el.style.display = pode('registrar_yms') ? '' : 'none';
+  });
   setVisibleById('monitor-btn-nova-base', pode('editar_monitor'), 'inline-flex');
   setVisibleById('monitor-btn-nova-base-dash', pode('editar_monitor'), 'inline-flex');
 
@@ -3133,6 +3275,10 @@ let chartCasosDevolucaoXpt = null;
 // Estado do módulo Controle de Diaristas
 let diaristas = [];
 let editingDiaristaId = null;
+
+// Estado do módulo Monitor YMS
+let ymsAtivos = [];
+let ymsIntervaloAutoAtualizacao = null;
 
 // Estado do módulo Usuários (gestão de acessos)
 let usuariosSistema = [];
@@ -3455,6 +3601,12 @@ function switchTab(tab, btn) {
 
   if (tab === 'diaristas') {
     renderDiaristas();
+  }
+
+  if (tab === 'yms') {
+    iniciarAutoAtualizacaoYms();
+  } else {
+    pararAutoAtualizacaoYms();
   }
 
   if (tab === 'monitor') {
@@ -7248,6 +7400,236 @@ function renderDiaristas() {
       </td>
     </tr>`;
   }).join('');
+}
+
+// ════════════════════════════════════════
+//  MONITOR YMS — Entrada / Saída / Monitor (display ao vivo)
+// ════════════════════════════════════════
+async function carregarYmsAtivos() {
+  try {
+    const { data, error } = await db.from('yms_registros')
+      .select('*')
+      .is('hora_saida', null)
+      .order('hora_entrada', { ascending: true });
+    if (error) {
+      if (error.code === '42P01' || /does not exist/i.test(error.message || '')) {
+        ymsAtivos = [];
+        console.warn('Tabela "yms_registros" ainda não existe no Supabase.');
+        return;
+      }
+      throw error;
+    }
+    ymsAtivos = (data || []).map(r => ({
+      id: r.id,
+      rota: r.rota,
+      vaga: r.vaga,
+      horaEntrada: r.hora_entrada,
+      registradoPorEntrada: r.registrado_por_entrada
+    }));
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao buscar registros do YMS: ' + (error.message || error), 'error');
+  }
+}
+
+function setYmsSubTab(tab, btnEl) {
+  document.querySelectorAll('.yms-subtab-btn').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+  ['entrada', 'saida', 'monitor'].forEach(t => {
+    const el = document.getElementById(`yms-tab-${t}`);
+    if (el) el.style.display = t === tab ? '' : 'none';
+  });
+  renderYms();
+}
+
+function calcularMinutosDecorridosYms(horaEntradaIso) {
+  const inicio = new Date(horaEntradaIso);
+  const agora = new Date();
+  return Math.max(0, Math.floor((agora - inicio) / 60000));
+}
+
+function corFaixaYms(minutos) {
+  if (minutos <= 10) return 'verde';
+  if (minutos <= 20) return 'amarelo';
+  if (minutos <= 25) return 'laranja';
+  if (minutos <= 30) return 'vermelho';
+  return 'critico';
+}
+
+function formatarTempoDecorridoYms(minutos) {
+  if (minutos < 60) return `${minutos} min`;
+  const h = Math.floor(minutos / 60);
+  const m = minutos % 60;
+  return `${h}h ${String(m).padStart(2, '0')}min`;
+}
+
+function renderTabelaAtivosYms(tbodyId) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+
+  if (!ymsAtivos.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🚛</div><p>Nenhuma rota no pátio agora</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = ymsAtivos.map(r => {
+    const minutos = calcularMinutosDecorridosYms(r.horaEntrada);
+    const faixa = corFaixaYms(minutos);
+    const horaFmt = new Date(r.horaEntrada).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    return `<tr>
+      <td><strong>${escapeHtml(r.rota)}</strong></td>
+      <td>${escapeHtml(r.vaga)}</td>
+      <td>${horaFmt}</td>
+      <td><span class="yms-card-${faixa}" style="padding:3px 10px;border-radius:12px;font-weight:700;font-size:12px">${formatarTempoDecorridoYms(minutos)}</span></td>
+      <td style="text-align:right">${pode('excluir_yms') ? `<button class="btn btn-danger btn-sm" onclick="excluirRegistroYms('${safeId(r.id)}')">Excluir</button>` : '<span style="color:var(--text-hint);font-size:12px">—</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderMonitorYms() {
+  const grid = document.getElementById('yms-monitor-grid');
+  if (!grid) return;
+
+  const contagem = { verde: 0, amarelo: 0, laranja: 0, vermelho: 0, critico: 0 };
+  const listaOrdenada = [...ymsAtivos].sort((a, b) => calcularMinutosDecorridosYms(b.horaEntrada) - calcularMinutosDecorridosYms(a.horaEntrada));
+
+  if (!listaOrdenada.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🚛</div><p>Nenhuma rota no pátio agora</p></div>`;
+  } else {
+    grid.innerHTML = listaOrdenada.map(r => {
+      const minutos = calcularMinutosDecorridosYms(r.horaEntrada);
+      const faixa = corFaixaYms(minutos);
+      contagem[faixa]++;
+      const horaFmt = new Date(r.horaEntrada).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      const emoji = faixa === 'critico' ? '💀 ' : '';
+      return `<div class="yms-card yms-card-${faixa}">
+        <div class="yms-card-rota">${escapeHtml(r.rota)}</div>
+        <div class="yms-card-vaga">Vaga ${escapeHtml(r.vaga)}</div>
+        <div class="yms-card-tempo">${emoji}${formatarTempoDecorridoYms(minutos)}</div>
+        <div class="yms-card-hora">Entrou às ${horaFmt}</div>
+      </div>`;
+    }).join('');
+  }
+
+  ['verde', 'amarelo', 'laranja', 'vermelho', 'critico'].forEach(faixa => {
+    const el = document.getElementById(`yms-kpi-${faixa}`);
+    if (el) el.textContent = contagem[faixa];
+  });
+}
+
+function renderYms() {
+  renderTabelaAtivosYms('tbody-yms-entrada');
+  renderTabelaAtivosYms('tbody-yms-saida');
+  renderMonitorYms();
+}
+
+function limparFormEntradaYms() {
+  document.getElementById('yms-entrada-rota').value = '';
+  document.getElementById('yms-entrada-vaga').value = '';
+}
+
+async function registrarEntradaYms() {
+  if (!pode('registrar_yms')) { toast('Seu perfil não permite registrar no YMS.', 'error'); return; }
+
+  const rota = document.getElementById('yms-entrada-rota').value.trim();
+  const vaga = document.getElementById('yms-entrada-vaga').value.trim();
+  if (!rota) { toast('Informe a rota.', 'error'); return; }
+  if (!vaga) { toast('Informe a vaga.', 'error'); return; }
+
+  const jaAtivo = ymsAtivos.find(r => lower(r.rota) === lower(rota) && lower(r.vaga) === lower(vaga));
+  if (jaAtivo) { toast('Já existe uma entrada ativa para essa rota/vaga.', 'error'); return; }
+
+  const btn = document.getElementById('btn-yms-entrada');
+  setButtonLoading(btn, true, 'Registrando...');
+  try {
+    const { error } = await db.from('yms_registros').insert([{
+      rota,
+      vaga,
+      hora_entrada: new Date().toISOString(),
+      registrado_por_entrada: usuarioAtual?.nome || usuarioAtual?.usuario || null
+    }]);
+    if (error) throw error;
+    toast('Entrada registrada.', 'success');
+    limparFormEntradaYms();
+    await carregarYmsAtivos();
+    renderYms();
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao registrar entrada: ' + (error.message || error), 'error');
+  } finally {
+    setButtonLoading(btn, false);
+  }
+}
+
+function limparFormSaidaYms() {
+  document.getElementById('yms-saida-rota').value = '';
+  document.getElementById('yms-saida-vaga').value = '';
+}
+
+async function registrarSaidaYms() {
+  if (!pode('registrar_yms')) { toast('Seu perfil não permite registrar no YMS.', 'error'); return; }
+
+  const rota = document.getElementById('yms-saida-rota').value.trim();
+  const vaga = document.getElementById('yms-saida-vaga').value.trim();
+  if (!rota) { toast('Informe a rota.', 'error'); return; }
+  if (!vaga) { toast('Informe a vaga.', 'error'); return; }
+
+  const ativo = ymsAtivos.find(r => lower(r.rota) === lower(rota) && lower(r.vaga) === lower(vaga));
+  if (!ativo) { toast('Nenhuma entrada ativa encontrada para essa rota/vaga.', 'error'); return; }
+
+  const btn = document.getElementById('btn-yms-saida');
+  setButtonLoading(btn, true, 'Registrando...');
+  try {
+    const { error } = await db.from('yms_registros').update({
+      hora_saida: new Date().toISOString(),
+      registrado_por_saida: usuarioAtual?.nome || usuarioAtual?.usuario || null
+    }).eq('id', ativo.id);
+    if (error) throw error;
+    toast('Saída registrada.', 'success');
+    limparFormSaidaYms();
+    await carregarYmsAtivos();
+    renderYms();
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao registrar saída: ' + (error.message || error), 'error');
+  } finally {
+    setButtonLoading(btn, false);
+  }
+}
+
+async function excluirRegistroYms(id) {
+  if (!pode('excluir_yms')) { toast('Seu perfil não permite excluir registros do YMS.', 'error'); return; }
+  const r = ymsAtivos.find(x => String(x.id) === String(id));
+  if (!r) return;
+  if (!confirm(`Excluir o registro de entrada da rota "${r.rota}" (vaga ${r.vaga})? Esta ação não pode ser desfeita.`)) return;
+  try {
+    const { error } = await db.from('yms_registros').delete().eq('id', id);
+    if (error) throw error;
+    toast('Registro excluído.', 'success');
+    await carregarYmsAtivos();
+    renderYms();
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao excluir: ' + (error.message || error), 'error');
+  }
+}
+
+async function atualizarYmsAgora() {
+  await carregarYmsAtivos();
+  renderYms();
+}
+
+function iniciarAutoAtualizacaoYms() {
+  pararAutoAtualizacaoYms();
+  atualizarYmsAgora();
+  ymsIntervaloAutoAtualizacao = setInterval(atualizarYmsAgora, 30000);
+}
+
+function pararAutoAtualizacaoYms() {
+  if (ymsIntervaloAutoAtualizacao) {
+    clearInterval(ymsIntervaloAutoAtualizacao);
+    ymsIntervaloAutoAtualizacao = null;
+  }
 }
 
 // ════════════════════════════════════════
