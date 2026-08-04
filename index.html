@@ -2161,7 +2161,7 @@
 
       <div class="form-group">
         <label>Dados para importação</label>
-        <textarea id="hc-import-textarea" class="bulk-import-textarea" placeholder="Nome;Groot ID;EXT;3PL;Turno;Grupo;Gestor;Status&#10;João Silva;123456;ext_joao.silva;K+N;T2 14:00;A;Carlos Souza;ativo&#10;Maria Santos;789012;maria.santos;Mendes;T1 06:00;Grupo B;Ana Lima;ativo"></textarea>
+        <textarea id="hc-import-textarea" class="bulk-import-textarea" placeholder="Nome;Groot ID;EXT;3PL;Turno;Grupo;Gestor;Status;CPF&#10;João Silva;123456;ext_joao.silva;K+N;T2 14:00;A;Carlos Souza;ativo;000.000.000-00&#10;Maria Santos;789012;maria.santos;Mendes;T1 06:00;Grupo B;Ana Lima;ativo;111.111.111-11"></textarea>
         <span class="field-hint">Aceita ponto e vírgula, vírgula ou tabulação. Você pode colar do Excel/Sheets ou carregar um arquivo .csv/.tsv.</span>
       </div>
     </div>
@@ -2185,7 +2185,7 @@
       <table>
         <thead>
           <tr>
-            <th>Linha</th><th>Nome</th><th>Groot ID</th><th>EXT</th><th>3PL</th><th>Turno</th><th>Grupo</th><th>Status</th><th>Resultado</th>
+            <th>Linha</th><th>Nome</th><th>Groot ID</th><th>CPF</th><th>EXT</th><th>3PL</th><th>Turno</th><th>Grupo</th><th>Status</th><th>Resultado</th>
           </tr>
         </thead>
         <tbody id="tbody-hc-import-preview"></tbody>
@@ -8221,9 +8221,9 @@ function limparImportacaoHC() {
 function baixarModeloImportacaoHC(tipo = 'csv') {
   const separador = tipo === 'tsv' ? '\t' : ';';
   const linhas = [
-    ['Nome', 'Groot ID', 'EXT', '3PL', 'Turno', 'Grupo', 'Gestor', 'Status'],
-    ['João Silva', '123456', 'ext_joao.silva', 'K+N', 'NOME DO TURNO', 'A', 'Carlos Souza', 'ativo'],
-    ['Maria Santos', '789012', 'maria.santos', 'Mendes', 'NOME DO TURNO', 'B', 'Ana Lima', 'ativo']
+    ['Nome', 'Groot ID', 'EXT', '3PL', 'Turno', 'Grupo', 'Gestor', 'Status', 'CPF'],
+    ['João Silva', '123456', 'ext_joao.silva', 'K+N', 'NOME DO TURNO', 'A', 'Carlos Souza', 'ativo', '000.000.000-00'],
+    ['Maria Santos', '789012', 'maria.santos', 'Mendes', 'NOME DO TURNO', 'B', 'Ana Lima', 'ativo', '111.111.111-11']
   ];
   const conteudo = linhas.map(cols => cols.map(v => {
     const txt = asText(v);
@@ -8365,7 +8365,8 @@ function montarMapaCabecalhoImportacao(headers) {
     turno: ['turno', 'turno associado', 'nome do turno'],
     grupo: ['grupo', 'grupo de escala', 'grupo escala'],
     gestor: ['gestor', 'gestor direto', 'supervisor', 'coordenador'],
-    status: ['status', 'status atual', 'situacao', 'situação']
+    status: ['status', 'status atual', 'situacao', 'situação'],
+    cpf: ['cpf']
   };
 
   const normalizados = headers.map(normalizarChaveImportacao);
@@ -8385,6 +8386,12 @@ function linhaPareceCabecalhoImportacao(cols) {
 function obterValorImportado(cols, mapa, campo, fallbackIdx) {
   const idx = mapa[campo] !== undefined ? mapa[campo] : fallbackIdx;
   return asText(cols[idx]).trim();
+}
+
+function formatarCPFImportado(valor) {
+  const digitos = asText(valor).replace(/\D/g, '');
+  if (digitos.length !== 11) return asText(valor).trim(); // deixa como veio; não bloqueia a importação por CPF fora do padrão
+  return digitos.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
 }
 
 function encontrarTurnoPorNomeImportacao(nomeTurno) {
@@ -8433,7 +8440,7 @@ function preValidarImportacaoHC(mostrarToast = true) {
 
   const separador = detectarSeparadorImportacao(linhas[0]);
   let startIdx = 0;
-  let mapa = { nome: 0, groot: 1, ext: 2, tpl: 3, turno: 4, grupo: 5, gestor: 6, status: 7 };
+  let mapa = { nome: 0, groot: 1, ext: 2, tpl: 3, turno: 4, grupo: 5, gestor: 6, status: 7, cpf: 8 };
   const primeiraCols = parseLinhaDelimitada(linhas[0], separador);
 
   if (linhaPareceCabecalhoImportacao(primeiraCols)) {
@@ -8457,6 +8464,7 @@ function preValidarImportacaoHC(mostrarToast = true) {
       grupo: normalizarGrupoEscala(obterValorImportado(cols, mapa, 'grupo', 5)),
       gestor: obterValorImportado(cols, mapa, 'gestor', 6),
       statusRaw: obterValorImportado(cols, mapa, 'status', 7),
+      cpf: formatarCPFImportado(obterValorImportado(cols, mapa, 'cpf', 8)),
       turno: null,
       tpl: '',
       status: '',
@@ -8559,6 +8567,7 @@ function renderPreviewImportacaoHC() {
       <td>${item.linha}</td>
       <td><strong>${escapeHtml(item.nome || '—')}</strong></td>
       <td style="font-family:monospace;font-size:12px">${escapeHtml(item.groot || '—')}</td>
+      <td style="font-family:monospace;font-size:12px">${item.cpf ? escapeHtml(item.cpf) : '<span style="color:var(--text-hint)">—</span>'}</td>
       <td style="font-family:monospace;font-size:12px">${item.ext ? '<span style="color:var(--text-hint)">ext_</span>' + escapeHtml(item.ext) : '—'}</td>
       <td>${item.tpl ? tplBadge(item.tpl) : '<span class="badge badge-red">Inválido</span>'}</td>
       <td>${item.turno ? turnoBadge(item.turno.id) : escapeHtml(item.turnoRaw || '—')}</td>
@@ -8578,6 +8587,7 @@ function dbDataImportacaoHC(item) {
   return {
     nome: item.nome,
     groot_id: item.groot,
+    cpf: item.cpf || null,
     ext: item.ext || null,
     tpl: item.tpl,
     gestor: item.gestor || null,
