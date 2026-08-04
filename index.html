@@ -689,7 +689,7 @@
   <div class="stats-row">
     <div class="stat-card"><div class="stat-label">Total Ativo</div><div class="stat-value" id="stat-total">0</div><div class="stat-sub">colaboradores</div></div>
     <div class="stat-card"><div class="stat-label">Turnos</div><div class="stat-value" id="stat-turnos">0</div><div class="stat-sub">configurados</div></div>
-    <div class="stat-card"><div class="stat-label">K+N</div><div class="stat-value" id="stat-K+N">0</div><div class="stat-sub">colaboradores</div></div>
+    <div class="stat-card"><div class="stat-label">DHL</div><div class="stat-value" id="stat-dhl">0</div><div class="stat-sub">colaboradores</div></div>
     <div class="stat-card"><div class="stat-label">3PL Parceiros</div><div class="stat-value" id="stat-3pl">0</div><div class="stat-sub">Mendes / TSI / SRM</div></div>
   </div>
 
@@ -726,7 +726,7 @@
       <div class="form-group">
         <label>3PL</label>
         <select id="hc-3pl">
-          <option value="K+N">K+N</option>
+          <option value="DHL">DHL</option>
           <option value="Mendes">Mendes</option>
           <option value="TSI">TSI</option>
           <option value="SRM">SRM</option>
@@ -782,7 +782,7 @@
       </select>
       <select id="filtro-3pl-hc" onchange="renderHeads()">
         <option value="">Todos os 3PL</option>
-        <option value="K+N">K+N</option>
+        <option value="DHL">DHL</option>
         <option value="Mendes">Mendes</option>
         <option value="TSI">TSI</option>
         <option value="SRM">SRM</option>
@@ -2161,7 +2161,7 @@
 
       <div class="form-group">
         <label>Dados para importação</label>
-        <textarea id="hc-import-textarea" class="bulk-import-textarea" placeholder="Nome;Groot ID;EXT;3PL;Turno;Grupo;Gestor;Status&#10;João Silva;123456;ext_joao.silva;K+N;T2 14:00;A;Carlos Souza;ativo&#10;Maria Santos;789012;maria.santos;Mendes;T1 06:00;Grupo B;Ana Lima;ativo"></textarea>
+        <textarea id="hc-import-textarea" class="bulk-import-textarea" placeholder="Nome;Groot ID;EXT;3PL;Turno;Grupo;Gestor;Status&#10;João Silva;123456;ext_joao.silva;DHL;T2 14:00;A;Carlos Souza;ativo&#10;Maria Santos;789012;maria.santos;Mendes;T1 06:00;Grupo B;Ana Lima;ativo"></textarea>
         <span class="field-hint">Aceita ponto e vírgula, vírgula ou tabulação. Você pode colar do Excel/Sheets ou carregar um arquivo .csv/.tsv.</span>
       </div>
     </div>
@@ -2288,7 +2288,7 @@
     <div id="insucesso-etapa-1">
       <div class="form-group" style="margin-bottom:14px">
         <label>Transportadora</label>
-        <input type="text" id="insucesso-transportadora" placeholder="Ex: K+N, Mendes, TSI, SRM..." maxlength="80">
+        <input type="text" id="insucesso-transportadora" placeholder="Ex: DHL, Mendes, TSI, SRM..." maxlength="80">
       </div>
 
       <div class="form-group" style="margin-bottom:14px">
@@ -2365,7 +2365,7 @@
     <div id="insucesso-xpt-etapa-1">
       <div class="form-group" style="margin-bottom:14px">
         <label>Transportadora</label>
-        <input type="text" id="insucesso-xpt-transportadora" placeholder="Ex: K+N, Mendes, TSI, SRM..." maxlength="80">
+        <input type="text" id="insucesso-xpt-transportadora" placeholder="Ex: DHL, Mendes, TSI, SRM..." maxlength="80">
       </div>
 
       <div class="form-group" style="margin-bottom:14px">
@@ -5299,7 +5299,7 @@ async function salvarHead() {
 function limparFormHC() {
   ['hc-nome','hc-groot','hc-cpf','hc-ext','hc-gestor'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('hc-turno').value  = '';
-  document.getElementById('hc-3pl').value    = 'K+N';
+  document.getElementById('hc-3pl').value    = 'DHL';
   document.getElementById('hc-status').value = 'ativo';
   document.getElementById('hc-grupo-wrap').style.display = 'none';
   document.getElementById('hc-grupo').innerHTML = '<option value="">— Selecionar —</option>';
@@ -5316,7 +5316,7 @@ function editarHead(id) {
   document.getElementById('hc-groot').value  = h.groot || '';
   document.getElementById('hc-cpf').value    = h.cpf || '';
   document.getElementById('hc-ext').value    = normalizeExt(h.ext);
-  document.getElementById('hc-3pl').value    = h.tpl || 'K+N';
+  document.getElementById('hc-3pl').value    = h.tpl || 'DHL';
   document.getElementById('hc-gestor').value = h.gestor || '';
   document.getElementById('hc-turno').value  = h.turnoId || '';
   document.getElementById('hc-status').value = h.status || 'ativo';
@@ -8097,7 +8097,7 @@ async function excluirUsuarioSistema(authUid) {
 }
 
 function tplBadge(tpl) {
-  const map = { K+N:'badge-blue', Mendes:'badge-purple', TSI:'badge-orange', SRM:'badge-green' };
+  const map = { DHL:'badge-blue', Mendes:'badge-purple', TSI:'badge-orange', SRM:'badge-green' };
   const val = asText(tpl) || '—';
   return `<span class="badge ${map[val] || 'badge-gray'}">${escapeHtml(val)}</span>`;
 }
@@ -8186,8 +8186,8 @@ function atualizarStats() {
   const ativos = heads.filter(h => h.status === 'ativo');
   document.getElementById('stat-total').textContent  = ativos.length;
   document.getElementById('stat-turnos').textContent = turnos.length;
-  document.getElementById('stat-K+N').textContent    = ativos.filter(h => h.tpl === 'K+N').length;
-  document.getElementById('stat-3pl').textContent    = ativos.filter(h => h.tpl !== 'K+N').length;
+  document.getElementById('stat-dhl').textContent    = ativos.filter(h => h.tpl === 'DHL').length;
+  document.getElementById('stat-3pl').textContent    = ativos.filter(h => h.tpl !== 'DHL').length;
 }
 
 
@@ -8221,7 +8221,7 @@ function baixarModeloImportacaoHC(tipo = 'csv') {
   const separador = tipo === 'tsv' ? '\t' : ';';
   const linhas = [
     ['Nome', 'Groot ID', 'EXT', '3PL', 'Turno', 'Grupo', 'Gestor', 'Status'],
-    ['João Silva', '123456', 'ext_joao.silva', 'K+N', 'NOME DO TURNO', 'A', 'Carlos Souza', 'ativo'],
+    ['João Silva', '123456', 'ext_joao.silva', 'DHL', 'NOME DO TURNO', 'A', 'Carlos Souza', 'ativo'],
     ['Maria Santos', '789012', 'maria.santos', 'Mendes', 'NOME DO TURNO', 'B', 'Ana Lima', 'ativo']
   ];
   const conteudo = linhas.map(cols => cols.map(v => {
@@ -8333,7 +8333,7 @@ function normalizarChaveImportacao(value) {
 
 function normalizar3PL(value) {
   const chave = normalizarChaveImportacao(value);
-  const map = { K+N: 'K+N', mendes: 'Mendes', tsi: 'TSI', srm: 'SRM' };
+  const map = { dhl: 'DHL', mendes: 'Mendes', tsi: 'TSI', srm: 'SRM' };
   return map[chave] || '';
 }
 
