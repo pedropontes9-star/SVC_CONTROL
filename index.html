@@ -808,10 +808,10 @@
     <div class="table-wrap">
       <table>
         <thead><tr>
-          <th>Nome</th><th>Groot ID</th><th>EXT</th><th>3PL</th><th>Turno</th><th>Grupo</th><th>Folga esta semana</th><th>Gestor</th><th>Status</th><th style="text-align:right">Ações</th>
+          <th>Nome</th><th>Groot ID</th><th>CPF</th><th>EXT</th><th>3PL</th><th>Turno</th><th>Grupo</th><th>Folga esta semana</th><th>Gestor</th><th>Status</th><th style="text-align:right">Ações</th>
         </tr></thead>
         <tbody id="tbody-headcount">
-          <tr><td colspan="10"><div class="empty-state"><div class="empty-icon">👤</div><p>Nenhum colaborador cadastrado</p><span>Preencha o formulário acima para começar</span></div></td></tr>
+          <tr><td colspan="11"><div class="empty-state"><div class="empty-icon">👤</div><p>Nenhum colaborador cadastrado</p><span>Preencha o formulário acima para começar</span></div></td></tr>
         </tbody>
       </table>
     </div>
@@ -8156,7 +8156,7 @@ function renderHeads() {
 
   const tbody = document.getElementById('tbody-headcount');
   if (!lista.length) {
-    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">👤</div><p>${heads.length?'Nenhum resultado para os filtros':'Nenhum colaborador cadastrado'}</p><span>${heads.length?'Tente outros filtros':'Preencha o formulário acima para começar'}</span></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state"><div class="empty-icon">👤</div><p>${heads.length?'Nenhum resultado para os filtros':'Nenhum colaborador cadastrado'}</p><span>${heads.length?'Tente outros filtros':'Preencha o formulário acima para começar'}</span></div></td></tr>`;
     return;
   }
 
@@ -8166,6 +8166,7 @@ function renderHeads() {
     return `<tr>
       <td><strong>${escapeHtml(h.nome)}</strong></td>
       <td style="font-family:monospace;font-size:12px">${escapeHtml(h.groot)}</td>
+      <td style="font-family:monospace;font-size:12px">${h.cpf ? escapeHtml(h.cpf) : '<span style="color:var(--text-hint)">—</span>'}</td>
       <td style="font-family:monospace;font-size:12px">${ext?`<span style="color:var(--text-hint)">ext_</span>${escapeHtml(ext)}`:'<span style="color:var(--text-hint)">—</span>'}</td>
       <td>${tplBadge(h.tpl)}</td>
       <td>${turnoBadge(h.turnoId)}</td>
