@@ -1462,7 +1462,8 @@
 ════════════════════════════════════════ -->
 <div id="page-revisao-ponto" class="page">
   <p class="section-label">Revisão de Ponto</p>
-  <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Cruza as batidas do LMS (MELI) com as do relógio de ponto K+N, dia a dia, e mostra onde só um dos dois registrou presença. A comparação é local — os arquivos não são enviados a lugar nenhum, só processados aqui no navegador.</p>
+  <p style="font-size:12px;color:var(--text-muted);margin-bottom:6px">Cruza as batidas do LMS (MELI) com as do relógio de ponto K+N, dia a dia, e mostra onde só um dos dois registrou presença. A comparação é local — os arquivos não são enviados a lugar nenhum, só processados aqui no navegador.</p>
+  <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">⚠️ Só entram na comparação colaboradores com Função <strong>Auxiliar de Operações Logísticas</strong> — os demais não batem LMS na operação. Auxiliares do turno de <strong>Consolidação</strong> também ficam de fora, pelo mesmo motivo.</p>
 
   <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:20px">
     <div class="card" style="flex:1;min-width:300px">
@@ -1492,7 +1493,7 @@
       <div class="stat-card">
         <div class="stat-label">Colaboradores comparados</div>
         <div class="stat-value" id="rp-stat-comparados">0</div>
-        <div class="stat-sub">com EXT e/ou Matrícula 3PL cadastrados</div>
+        <div class="stat-sub">Auxiliar Op. Logísticas, exceto Consolidação</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Não identificados — LMS</div>
@@ -7836,6 +7837,15 @@ function normalizarMatricula(valor) {
   return asText(valor).trim().replace(/\.0$/, '');
 }
 
+// Só entra na comparação LMS x K+N quem realmente bate LMS na operação:
+// Auxiliares de Operações Logísticas, exceto os do turno de Consolidação.
+function colaboradorElegivelParaLms(h) {
+  if (h.funcao !== 'AUXILIAR DE OPERAÇÕES LOGÍSTICAS') return false;
+  const turno = turnos.find(t => t.id === h.turnoId);
+  if (turno && turno.escala === 'consolidacao') return false;
+  return true;
+}
+
 // Acha, num objeto de linha, o valor da primeira chave cujo nome bate com um dos candidatos (sem acento/case).
 function valorPorChaveAproximada(linha, candidatos) {
   const chaves = Object.keys(linha);
@@ -7919,12 +7929,14 @@ function processarRevisaoPonto() {
     });
 
     // ── Cruza com o Headcount ──
+    // Só entram na comparação quem realmente deveria bater LMS: Auxiliares de
+    // Operações Logísticas, exceto os do turno de Consolidação (que não batem LMS).
     const extsUsados = new Set();
     const matriculasUsadas = new Set();
     const divergencias = [];
     let comparados = 0;
 
-    heads.forEach(h => {
+    heads.filter(colaboradorElegivelParaLms).forEach(h => {
       const ext = normalizeExt(h.ext);
       const matricula = normalizarMatricula(h.matriculaTpl);
       const temExt = ext && mapaLms.has(ext);
