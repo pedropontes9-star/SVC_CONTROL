@@ -756,6 +756,7 @@
         <select id="hc-turno" onchange="onHcTurnoChange()">
           <option value="">— Selecionar —</option>
         </select>
+        <span class="form-hint">Obrigatório apenas para Auxiliar de Operações Logísticas</span>
       </div>
 
       <div class="form-group" id="hc-grupo-wrap" style="display:none">
@@ -5371,13 +5372,20 @@ async function salvarHead() {
 
   if (!nome)  { toast('Informe o nome do colaborador.', 'error'); return; }
   if (!groot) { toast('Informe o Groot ID.', 'error'); return; }
-  if (!turnoId) { toast('Selecione o turno do colaborador.', 'error'); return; }
 
-  const turno = turnos.find(t => t.id === turnoId);
-  if (!turno) { toast('Turno selecionado não foi encontrado. Atualize a página e tente novamente.', 'error'); return; }
+  // Turno/Grupo só são obrigatórios pra quem realmente segue escala de turno
+  // (Auxiliar de Operações Logísticas). Demais funções podem ficar sem.
+  const exigeTurno = funcao === 'AUXILIAR DE OPERAÇÕES LOGÍSTICAS';
+  if (exigeTurno && !turnoId) { toast('Selecione o turno do colaborador.', 'error'); return; }
+
+  let turno = null;
+  if (turnoId) {
+    turno = turnos.find(t => t.id === turnoId);
+    if (!turno) { toast('Turno selecionado não foi encontrado. Atualize a página e tente novamente.', 'error'); return; }
+  }
 
   const grupoNormalizado = normalizarGrupoFolga(grupo);
-  if (turnoPossuiGrupos(turno) && !grupoNormalizado) {
+  if (turno && turnoPossuiGrupos(turno) && !grupoNormalizado) {
     toast('Selecione o grupo para esta escala.', 'error'); return;
   }
 
@@ -5402,8 +5410,8 @@ async function salvarHead() {
     ext: ext || null,
     tpl,
     gestor: gestor || null,
-    turno_id: turnoId,
-    grupo: turnoPossuiGrupos(turno) ? grupoNormalizado : null,
+    turno_id: turnoId || null,
+    grupo: (turno && turnoPossuiGrupos(turno)) ? grupoNormalizado : null,
     status
   };
 
@@ -9001,7 +9009,11 @@ function validarLinhaImportacaoHC(item, modo, contagemGroot, contagemExt) {
   if (!item.nome) item.erros.push('Nome obrigatório');
   if (!item.groot) item.erros.push('Groot ID obrigatório');
   if (!item.tpl) item.erros.push('3PL inválido');
-  if (!item.turnoRaw) item.erros.push('Turno obrigatório');
+
+  // Turno/Grupo só são obrigatórios pra Auxiliar de Operações Logísticas — demais
+  // funções não seguem escala de turno e podem vir sem essa informação.
+  const exigeTurno = item.funcao === 'AUXILIAR DE OPERAÇÕES LOGÍSTICAS';
+  if (exigeTurno && !item.turnoRaw) item.erros.push('Turno obrigatório para Auxiliar de Operações Logísticas');
   if (item.turnoRaw && !item.turno) item.erros.push(`Turno não encontrado: ${item.turnoRaw}`);
   if (!item.status) item.erros.push('Status inválido');
   if (item.groot && contagemGroot.get(item.groot) > 1) item.erros.push('Groot ID duplicado na lista');
@@ -9097,8 +9109,8 @@ function dbDataImportacaoHC(item) {
     ext: item.ext || null,
     tpl: item.tpl,
     gestor: item.gestor || null,
-    turno_id: item.turno.id,
-    grupo: item.grupo || null,
+    turno_id: item.turno ? item.turno.id : null,
+    grupo: item.turno ? (item.grupo || null) : null,
     status: item.status || 'ativo'
   };
 }
