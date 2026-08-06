@@ -1505,6 +1505,11 @@
         <div class="stat-value" id="rp-stat-nao-id-kn">0</div>
         <div class="stat-sub">Matrícula sem colaborador correspondente</div>
       </div>
+      <div class="stat-card">
+        <div class="stat-label">Sem nenhuma batida</div>
+        <div class="stat-value" id="rp-stat-sem-batida">0</div>
+        <div class="stat-sub">nem LMS, nem K+N, no período</div>
+      </div>
     </div>
 
     <p class="section-label">Divergências por dia</p>
@@ -1530,10 +1535,11 @@
     </div>
 
     <div class="monitor-section-header">
-      <span class="monitor-section-title">Não identificados</span>
+      <span class="monitor-section-title">Não identificados / Sem batida</span>
       <div class="monitor-section-toggle">
         <button class="monitor-toggle-btn rp-naoid-subtab-btn active" onclick="setRevisaoPontoNaoIdTab('lms', this)">LMS</button>
         <button class="monitor-toggle-btn rp-naoid-subtab-btn" onclick="setRevisaoPontoNaoIdTab('kn', this)">K+N</button>
+        <button class="monitor-toggle-btn rp-naoid-subtab-btn" onclick="setRevisaoPontoNaoIdTab('sem-batida', this)">Sem batida</button>
       </div>
     </div>
     <div class="card">
@@ -1547,6 +1553,12 @@
         <table>
           <thead><tr><th>Matrícula</th><th>Nome (conforme K+N)</th><th>Dias com batida no período</th></tr></thead>
           <tbody id="tbody-rp-naoid-kn"></tbody>
+        </table>
+      </div>
+      <div id="rp-naoid-sem-batida" class="table-wrap" style="display:none">
+        <table>
+          <thead><tr><th>Colaborador</th><th>EXT</th><th>Matrícula 3PL</th></tr></thead>
+          <tbody id="tbody-rp-sem-batida"></tbody>
         </table>
       </div>
     </div>
@@ -7785,6 +7797,7 @@ let rpDadosKn = null;  // array de objetos (linhas cruas da planilha K+N)
 let rpDivergencias = [];
 let rpNaoIdLms = [];
 let rpNaoIdKn = [];
+let rpSemNenhumaBatida = [];
 
 function lerArquivoPlanilhaGenerico(file, callback) {
   const reader = new FileReader();
@@ -7885,6 +7898,7 @@ function limparRevisaoPonto() {
   rpDivergencias = [];
   rpNaoIdLms = [];
   rpNaoIdKn = [];
+  rpSemNenhumaBatida = [];
   document.getElementById('rp-arquivo-lms').value = '';
   document.getElementById('rp-arquivo-kn').value = '';
   document.getElementById('rp-lms-status').textContent = 'Nenhum arquivo carregado.';
@@ -7934,6 +7948,7 @@ function processarRevisaoPonto() {
     const extsUsados = new Set();
     const matriculasUsadas = new Set();
     const divergencias = [];
+    const semNenhumaBatida = [];
     let comparados = 0;
 
     heads.filter(colaboradorElegivelParaLms).forEach(h => {
@@ -7941,7 +7956,10 @@ function processarRevisaoPonto() {
       const matricula = normalizarMatricula(h.matriculaTpl);
       const temExt = ext && mapaLms.has(ext);
       const temMatricula = matricula && mapaKn.has(matricula);
-      if (!temExt && !temMatricula) return; // colaborador sem batida em nenhuma das duas bases nesse período
+      if (!temExt && !temMatricula) {
+        semNenhumaBatida.push({ nome: h.nome, ext: ext || '—', matricula: matricula || '—' });
+        return; // colaborador sem batida em nenhuma das duas bases nesse período
+      }
 
       comparados++;
       if (temExt) extsUsados.add(ext);
@@ -7979,10 +7997,13 @@ function processarRevisaoPonto() {
       .filter(m => !matriculasUsadas.has(m))
       .map(m => ({ matricula: m, nome: nomesKn.get(m) || '—', dias: Array.from(mapaKn.get(m)).sort() }));
 
+    rpSemNenhumaBatida = semNenhumaBatida.sort((a, b) => a.nome.localeCompare(b.nome));
+
     document.getElementById('rp-stat-divergencias').textContent = rpDivergencias.length;
     document.getElementById('rp-stat-comparados').textContent = comparados;
     document.getElementById('rp-stat-nao-id-lms').textContent = rpNaoIdLms.length;
     document.getElementById('rp-stat-nao-id-kn').textContent = rpNaoIdKn.length;
+    document.getElementById('rp-stat-sem-batida').textContent = rpSemNenhumaBatida.length;
 
     document.getElementById('rp-resultado').style.display = 'block';
     renderDivergenciasRevisaoPonto();
@@ -8036,6 +8057,7 @@ function setRevisaoPontoNaoIdTab(tab, btnEl) {
   if (btnEl) btnEl.classList.add('active');
   document.getElementById('rp-naoid-lms').style.display = tab === 'lms' ? '' : 'none';
   document.getElementById('rp-naoid-kn').style.display = tab === 'kn' ? '' : 'none';
+  document.getElementById('rp-naoid-sem-batida').style.display = tab === 'sem-batida' ? '' : 'none';
 }
 
 function renderNaoIdentificadosRevisaoPonto() {
@@ -8058,6 +8080,17 @@ function renderNaoIdentificadosRevisaoPonto() {
           <td style="font-size:12px">${i.dias.map(d => d.split('-').reverse().join('/')).join(', ')}</td>
         </tr>`).join('')
       : `<tr><td colspan="3"><div class="empty-state"><p>Todas as matrículas do K+N foram identificadas no Headcount 🎉</p></div></td></tr>`;
+  }
+
+  const tbodySemBatida = document.getElementById('tbody-rp-sem-batida');
+  if (tbodySemBatida) {
+    tbodySemBatida.innerHTML = rpSemNenhumaBatida.length
+      ? rpSemNenhumaBatida.map(i => `<tr>
+          <td><strong>${escapeHtml(i.nome)}</strong></td>
+          <td style="font-family:monospace;font-size:12px">${escapeHtml(i.ext)}</td>
+          <td style="font-family:monospace;font-size:12px">${escapeHtml(i.matricula)}</td>
+        </tr>`).join('')
+      : `<tr><td colspan="3"><div class="empty-state"><p>Todo mundo elegível teve pelo menos uma batida no período 🎉</p></div></td></tr>`;
   }
 }
 
