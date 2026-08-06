@@ -432,9 +432,9 @@
   .rp-matrix-table { border-collapse: separate; border-spacing: 0; font-size: 12px; white-space: nowrap; }
   .rp-matrix-table th, .rp-matrix-table td { border-bottom: 1px solid #eee; border-right: 1px solid #eee; padding: 5px 10px; text-align: center; }
   .rp-matrix-table thead th { position: sticky; top: 0; background: #fafafa; z-index: 2; font-size: 11px; color: var(--text-muted); }
-  .rp-matrix-col-nome { position: sticky; left: 0; z-index: 3; background: #fff; text-align: left; min-width: 170px; max-width: 170px; }
-  .rp-matrix-col-ext { position: sticky; left: 170px; z-index: 3; background: #fff; min-width: 90px; max-width: 90px; }
-  .rp-matrix-col-mat { position: sticky; left: 260px; z-index: 3; background: #fff; min-width: 90px; max-width: 90px; border-right: 2px solid var(--border); }
+  .rp-matrix-col-nome { position: sticky; left: 0; z-index: 3; background: #fff; text-align: left; min-width: 140px; padding-right: 16px; }
+  .rp-matrix-col-ext { position: sticky; left: 140px; z-index: 3; background: #fff; min-width: 90px; }
+  .rp-matrix-col-mat { position: sticky; left: 230px; z-index: 3; background: #fff; min-width: 100px; border-right: 2px solid var(--border); }
   .rp-matrix-table thead .rp-matrix-col-nome,
   .rp-matrix-table thead .rp-matrix-col-ext,
   .rp-matrix-table thead .rp-matrix-col-mat { z-index: 4; background: #fafafa; }
@@ -8210,6 +8210,8 @@ function processarRevisaoPonto() {
   }
 }
 
+const DIAS_SEMANA_ABREV_PT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
 function renderMatrizRevisaoPonto() {
   const thead = document.getElementById('rp-matrix-thead');
   const tbody = document.getElementById('rp-matrix-tbody');
@@ -8219,7 +8221,8 @@ function renderMatrizRevisaoPonto() {
   const linhaSub = ['<tr>'];
   rpDatasColunas.forEach(data => {
     const dataFmt = data.split('-').reverse().join('/');
-    linhaData.push(`<th class="rp-matrix-dia-header" colspan="3">${dataFmt}</th>`);
+    const diaSemana = DIAS_SEMANA_ABREV_PT[isoParaDataLocal(data).getDay()];
+    linhaData.push(`<th class="rp-matrix-dia-header" colspan="3">${dataFmt} - ${diaSemana}</th>`);
     linhaSub.push('<th class="rp-matrix-dia-header">LMS</th><th>K+N</th><th>Result.</th>');
   });
   linhaData.push('</tr>');
@@ -8253,6 +8256,34 @@ function renderMatrizRevisaoPonto() {
       ${celulasDias}
     </tr>`;
   }).join('');
+
+  ajustarStickyMatrizRevisaoPonto();
+}
+
+// Mede as larguras reais da coluna Colaborador/EXT (que agora se ajustam ao conteúdo) e a
+// altura real da 1ª linha do cabeçalho, aplicando como offset das colunas/linhas "congeladas"
+// seguintes — evita depender de pixels fixos, que quebrariam com nomes de tamanhos variados.
+function ajustarStickyMatrizRevisaoPonto() {
+  const table = document.getElementById('rp-matrix-table');
+  if (!table) return;
+
+  const linhaCorpo = table.querySelector('tbody tr');
+  if (linhaCorpo) {
+    const celNome = linhaCorpo.querySelector('.rp-matrix-col-nome');
+    const celExt = linhaCorpo.querySelector('.rp-matrix-col-ext');
+    if (celNome && celExt) {
+      const larguraNome = celNome.offsetWidth;
+      const larguraExt = celExt.offsetWidth;
+      table.querySelectorAll('.rp-matrix-col-ext').forEach(el => { el.style.left = larguraNome + 'px'; });
+      table.querySelectorAll('.rp-matrix-col-mat').forEach(el => { el.style.left = (larguraNome + larguraExt) + 'px'; });
+    }
+  }
+
+  const linhasHead = table.querySelectorAll('thead tr');
+  if (linhasHead.length === 2) {
+    const alturaPrimeiraLinha = linhasHead[0].offsetHeight;
+    linhasHead[1].querySelectorAll('th').forEach(th => { th.style.top = alturaPrimeiraLinha + 'px'; });
+  }
 }
 
 function renderPadroesFaltaRevisaoPonto() {
@@ -10681,3 +10712,4 @@ window.addEventListener('DOMContentLoaded', async function() {
 
 </body>
 </html>
+  
