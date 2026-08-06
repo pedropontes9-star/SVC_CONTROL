@@ -427,7 +427,24 @@
   .insucesso-checklist label { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f2f2f2; }
   .insucesso-checklist label:last-child { border-bottom: none; }
 
-  /* ── Monitor YMS — faixas de tempo e painel ── */
+  /* ── Revisão de Ponto — matriz por dia com colunas fixas ── */
+  .rp-matrix-wrap { overflow: auto; max-height: 65vh; border: 1px solid var(--border); border-radius: 6px; }
+  .rp-matrix-table { border-collapse: separate; border-spacing: 0; font-size: 12px; white-space: nowrap; }
+  .rp-matrix-table th, .rp-matrix-table td { border-bottom: 1px solid #eee; border-right: 1px solid #eee; padding: 5px 10px; text-align: center; }
+  .rp-matrix-table thead th { position: sticky; top: 0; background: #fafafa; z-index: 2; font-size: 11px; color: var(--text-muted); }
+  .rp-matrix-col-nome { position: sticky; left: 0; z-index: 3; background: #fff; text-align: left; min-width: 170px; max-width: 170px; }
+  .rp-matrix-col-ext { position: sticky; left: 170px; z-index: 3; background: #fff; min-width: 90px; max-width: 90px; }
+  .rp-matrix-col-mat { position: sticky; left: 260px; z-index: 3; background: #fff; min-width: 90px; max-width: 90px; border-right: 2px solid var(--border); }
+  .rp-matrix-table thead .rp-matrix-col-nome,
+  .rp-matrix-table thead .rp-matrix-col-ext,
+  .rp-matrix-table thead .rp-matrix-col-mat { z-index: 4; background: #fafafa; }
+  .rp-matrix-dia-header { border-left: 2px solid var(--border); }
+  .rp-matrix-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; }
+  .rp-matrix-ok { background: var(--success-fill); color: var(--success-text); }
+  .rp-matrix-inconsistente { background: #fff3e0; color: #e65100; }
+  .rp-matrix-falta { background: var(--danger-fill); color: var(--danger-text); }
+
+
   .yms-kpi-valor { font-size: 26px; font-weight: 800; line-height: 1.1; }
   .yms-kpi-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; margin-top: 4px; }
   .yms-kpi-verde     { background: #e8f5e9; color: #1b5e20; }
@@ -1487,9 +1504,14 @@
   <div id="rp-resultado" style="display:none">
     <div class="stats-row" style="margin-bottom:20px">
       <div class="stat-card">
-        <div class="stat-label">Divergências encontradas</div>
-        <div class="stat-value" id="rp-stat-divergencias">0</div>
-        <div class="stat-sub">dias com batida em só um sistema</div>
+        <div class="stat-label">Dias Inconsistentes</div>
+        <div class="stat-value" id="rp-stat-inconsistentes">0</div>
+        <div class="stat-sub">bateu em só um dos sistemas</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Dias de Falta</div>
+        <div class="stat-value" id="rp-stat-faltas">0</div>
+        <div class="stat-sub">não bateu em nenhum sistema</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Colaboradores comparados</div>
@@ -1513,25 +1535,67 @@
       </div>
     </div>
 
-    <p class="section-label">Divergências por dia</p>
+    <div class="card" style="margin-bottom:20px">
+      <p class="section-label" style="margin-bottom:10px">Período analisado</p>
+      <div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
+        <div class="form-group" style="margin-bottom:0">
+          <label style="font-size:11px">Data início</label>
+          <input type="date" id="rp-filtro-data-ini" onchange="processarRevisaoPonto()">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label style="font-size:11px">Data fim</label>
+          <input type="date" id="rp-filtro-data-fim" onchange="processarRevisaoPonto()">
+        </div>
+        <span style="font-size:12px;color:var(--text-muted)">Vem preenchido com o período encontrado nos arquivos — ajuste se quiser um recorte menor.</span>
+      </div>
+    </div>
+
+    <p class="section-label">Batidas por dia</p>
     <div class="card" style="margin-bottom:20px">
       <div class="search-bar">
         <div class="search-input-wrap">
           <span class="search-icon">🔍</span>
-          <input type="text" placeholder="Buscar por nome, EXT ou matrícula..." id="rp-busca" oninput="renderDivergenciasRevisaoPonto()">
+          <input type="text" placeholder="Buscar por nome, EXT ou matrícula..." id="rp-busca" oninput="renderMatrizRevisaoPonto()">
         </div>
-        <button class="btn btn-secondary btn-sm" onclick="exportarDivergenciasRevisaoPontoCSV()" style="height:34px;display:inline-flex;align-items:center;gap:6px;">
+        <button class="btn btn-secondary btn-sm" onclick="exportarMatrizRevisaoPontoCSV()" style="height:34px;display:inline-flex;align-items:center;gap:6px;">
           <span>⬇️ Exportar CSV</span>
         </button>
-        <span class="count-badge" id="rp-count">0 divergências</span>
+        <span class="count-badge" id="rp-count">0 colaboradores</span>
+      </div>
+      <div class="rp-matrix-wrap" id="rp-matrix-wrap">
+        <table class="rp-matrix-table" id="rp-matrix-table">
+          <thead id="rp-matrix-thead"></thead>
+          <tbody id="rp-matrix-tbody"></tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--text-muted);flex-wrap:wrap">
+        <span><span class="badge badge-green">Ok</span> bateu os dois sistemas</span>
+        <span><span class="badge badge-orange">Inconsistente</span> bateu só um sistema</span>
+        <span><span class="badge badge-red">Falta</span> não bateu nenhum</span>
+      </div>
+    </div>
+
+    <p class="section-label">Padrões de falta no período</p>
+    <div class="card" style="margin-bottom:20px">
+      <div class="search-bar">
+        <div class="search-input-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Buscar por nome, EXT ou matrícula..." id="rp-busca-padroes" oninput="renderPadroesFaltaRevisaoPonto()">
+        </div>
+        <span class="count-badge" id="rp-padroes-count">0 colaboradores</span>
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Colaborador</th><th>EXT</th><th>Matrícula 3PL</th><th>Data</th><th>LMS</th><th>K+N</th></tr></thead>
-          <tbody id="tbody-rp-divergencias">
-            <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🕵️</div><p>Nenhuma divergência</p></div></td></tr>
+          <thead><tr><th>Colaborador</th><th>EXT</th><th>Matrícula 3PL</th><th>Classificação</th><th>Faltas no período</th></tr></thead>
+          <tbody id="tbody-rp-padroes">
+            <tr><td colspan="5"><div class="empty-state"><p>Nenhum padrão de falta identificado</p></div></td></tr>
           </tbody>
         </table>
+      </div>
+      <div style="display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--text-muted);flex-wrap:wrap">
+        <span><span class="badge badge-red">Desistente</span> só teve falta no período inteiro</span>
+        <span><span class="badge badge-orange">Analisar</span> mais de 2 faltas seguidas</span>
+        <span><span class="badge badge-blue">Verificar</span> faltas intercaladas</span>
       </div>
     </div>
 
@@ -7802,7 +7866,9 @@ function pararAutoAtualizacaoYms() {
 // ════════════════════════════════════════
 let rpDadosLms = null; // array de objetos (linhas cruas da planilha LMS)
 let rpDadosKn = null;  // array de objetos (linhas cruas da planilha K+N)
-let rpDivergencias = [];
+let rpMatriz = [];          // [{ nome, ext, matricula, dias: [{data, bateuLms, bateuKn, resultado}] }]
+let rpDatasColunas = [];    // datas ISO, em ordem, que formam as colunas da matriz
+let rpPadroesFalta = [];    // [{ nome, ext, matricula, classificacao, totalFaltas, totalDias }]
 let rpNaoIdLms = [];
 let rpNaoIdKn = [];
 let rpSemNenhumaBatida = [];
@@ -7903,7 +7969,9 @@ function onArquivoRevisaoPonto(tipo, inputEl) {
 function limparRevisaoPonto() {
   rpDadosLms = null;
   rpDadosKn = null;
-  rpDivergencias = [];
+  rpMatriz = [];
+  rpDatasColunas = [];
+  rpPadroesFalta = [];
   rpNaoIdLms = [];
   rpNaoIdKn = [];
   rpSemNenhumaBatida = [];
@@ -7911,8 +7979,27 @@ function limparRevisaoPonto() {
   document.getElementById('rp-arquivo-kn').value = '';
   document.getElementById('rp-lms-status').textContent = 'Nenhum arquivo carregado.';
   document.getElementById('rp-kn-status').textContent = 'Nenhum arquivo carregado.';
+  document.getElementById('rp-filtro-data-ini').value = '';
+  document.getElementById('rp-filtro-data-fim').value = '';
   document.getElementById('btn-processar-revisao-ponto').disabled = true;
   document.getElementById('rp-resultado').style.display = 'none';
+}
+
+// Classifica o padrão de falta de um colaborador dentro do período analisado.
+// resultados: array cronológico de 'falta'|'ok'|'inconsistente'. Retorna null se não há falta alguma.
+function classificarPadraoFaltas(resultados) {
+  const totalDias = resultados.length;
+  const faltas = resultados.filter(r => r === 'falta').length;
+  if (faltas === 0) return null;
+  if (faltas === totalDias) return 'desistente'; // só teve falta o período inteiro
+
+  let maiorSequencia = 0, atual = 0;
+  resultados.forEach(r => {
+    if (r === 'falta') { atual++; maiorSequencia = Math.max(maiorSequencia, atual); }
+    else atual = 0;
+  });
+  if (maiorSequencia > 2) return 'analisar'; // mais de duas faltas seguidas
+  return 'verificar'; // faltas intercaladas
 }
 
 function processarRevisaoPonto() {
@@ -7937,7 +8024,7 @@ function processarRevisaoPonto() {
 
     // ── Mapa K+N: matrícula -> Set de datas com batida ──
     const mapaKn = new Map();
-    const nomesKn = new Map(); // matricula -> nome (pra listar não identificados de forma legível)
+    const nomesKn = new Map();
     rpDadosKn.forEach(linha => {
       const matriculaBruta = valorPorChaveAproximada(linha, ['Matrícula', 'Matricula', 'Crachá', 'Cracha']);
       const dataBruta = valorPorChaveAproximada(linha, ['Data da batida', 'Data']);
@@ -7950,83 +8037,137 @@ function processarRevisaoPonto() {
       if (nome) nomesKn.set(matricula, asText(nome).trim());
     });
 
-    // ── Cruza com o Headcount ──
+    // ── Período efetivo: usa o filtro se preenchido, senão o range observado nos arquivos ──
+    const todasDatasObservadas = new Set();
+    mapaLms.forEach(set => set.forEach(d => todasDatasObservadas.add(d)));
+    mapaKn.forEach(set => set.forEach(d => todasDatasObservadas.add(d)));
+    const datasOrdenadas = Array.from(todasDatasObservadas).sort();
+
+    if (!datasOrdenadas.length) {
+      toast('Nenhuma data válida encontrada nos arquivos.', 'error');
+      return;
+    }
+
+    const inputIni = document.getElementById('rp-filtro-data-ini');
+    const inputFim = document.getElementById('rp-filtro-data-fim');
+    const filtroIni = inputIni.value || datasOrdenadas[0];
+    const filtroFim = inputFim.value || datasOrdenadas[datasOrdenadas.length - 1];
+    if (filtroIni > filtroFim) { toast('A data início não pode ser depois da data fim.', 'error'); return; }
+    inputIni.value = filtroIni;
+    inputFim.value = filtroFim;
+
+    // Filtra os mapas pro período efetivo — tudo daqui pra frente já considera só essa janela.
+    const filtrarMapaPorPeriodo = mapa => {
+      const filtrado = new Map();
+      mapa.forEach((set, chave) => {
+        const datasFiltradas = new Set(Array.from(set).filter(d => d >= filtroIni && d <= filtroFim));
+        if (datasFiltradas.size) filtrado.set(chave, datasFiltradas);
+      });
+      return filtrado;
+    };
+    const mapaLmsF = filtrarMapaPorPeriodo(mapaLms);
+    const mapaKnF = filtrarMapaPorPeriodo(mapaKn);
+
+    // Colunas do dia: todo dia corrido entre filtroIni e filtroFim (inclui fins de semana).
+    const colunasDias = [];
+    let cursor = isoParaDataLocal(filtroIni);
+    const fim = isoParaDataLocal(filtroFim);
+    while (cursor <= fim) {
+      colunasDias.push(dataLocalParaIso(cursor));
+      cursor = adicionarDiasLocal(cursor, 1);
+    }
+    rpDatasColunas = colunasDias;
+
+    // ── Reconhecimento geral: qualquer EXT/Matrícula que bate com QUALQUER colaborador do
+    // Headcount, independente da função — só serve pra saber se a pessoa está cadastrada.
     const extsUsados = new Set();
     const matriculasUsadas = new Set();
-    const divergencias = [];
-    const semNenhumaBatida = [];
-    let comparados = 0;
-
-    // Passo 1: marca como "identificado" qualquer EXT/Matrícula que bate com QUALQUER
-    // colaborador do Headcount, independente da função — isso só serve pra saber se a
-    // pessoa está cadastrada, não se ela deve ser comparada (indiretos batem K+N mesmo
-    // não batendo LMS, e precisam ser reconhecidos aqui pra não caírem em "não identificado").
     heads.forEach(h => {
       const ext = normalizeExt(h.ext);
       const matricula = normalizarMatricula(h.matriculaTpl);
-      if (ext && mapaLms.has(ext)) extsUsados.add(ext);
-      if (matricula && mapaKn.has(matricula)) matriculasUsadas.add(matricula);
+      if (ext && mapaLmsF.has(ext)) extsUsados.add(ext);
+      if (matricula && mapaKnF.has(matricula)) matriculasUsadas.add(matricula);
     });
 
-    // Passo 2: a comparação de divergência em si (dia a dia) só vale pra quem realmente
-    // deveria bater LMS: Auxiliares de Operações Logísticas, exceto os do turno de Consolidação.
+    // ── Matriz por dia: só pra quem realmente deveria bater LMS (Auxiliar, exceto Consolidação) ──
+    const matriz = [];
+    const semNenhumaBatida = [];
+    const padroesFalta = [];
+    let comparados = 0, totalFaltas = 0, totalInconsistentes = 0;
+
     heads.filter(colaboradorElegivelParaLms).forEach(h => {
       const ext = normalizeExt(h.ext);
       const matricula = normalizarMatricula(h.matriculaTpl);
-      const temExt = ext && mapaLms.has(ext);
-      const temMatricula = matricula && mapaKn.has(matricula);
-      if (!temExt && !temMatricula) {
-        semNenhumaBatida.push({ nome: h.nome, ext: ext || '—', matricula: matricula || '—' });
-        return; // colaborador sem batida em nenhuma das duas bases nesse período
-      }
+      const datasLms = ext ? (mapaLmsF.get(ext) || new Set()) : new Set();
+      const datasKn = matricula ? (mapaKnF.get(matricula) || new Set()) : new Set();
 
+      if (!datasLms.size && !datasKn.size) {
+        semNenhumaBatida.push({ nome: h.nome, ext: ext || '—', matricula: matricula || '—' });
+        return;
+      }
       comparados++;
 
-      const datasLms = temExt ? mapaLms.get(ext) : new Set();
-      const datasKn = temMatricula ? mapaKn.get(matricula) : new Set();
-      const todasDatas = new Set([...datasLms, ...datasKn]);
-
-      todasDatas.forEach(data => {
+      const dias = colunasDias.map(data => {
         const bateuLms = datasLms.has(data);
         const bateuKn = datasKn.has(data);
-        if (bateuLms !== bateuKn) {
-          divergencias.push({
-            nome: h.nome,
-            ext: ext || '—',
-            matricula: matricula || '—',
-            data,
-            bateuLms,
-            bateuKn
-          });
-        }
+        let resultado;
+        if (bateuLms && bateuKn) resultado = 'ok';
+        else if (!bateuLms && !bateuKn) resultado = 'falta';
+        else resultado = 'inconsistente';
+        return { data, bateuLms, bateuKn, resultado };
       });
+
+      dias.forEach(d => {
+        if (d.resultado === 'falta') totalFaltas++;
+        if (d.resultado === 'inconsistente') totalInconsistentes++;
+      });
+
+      matriz.push({ nome: h.nome, ext: ext || '—', matricula: matricula || '—', dias });
+
+      const classificacao = classificarPadraoFaltas(dias.map(d => d.resultado));
+      if (classificacao) {
+        padroesFalta.push({
+          nome: h.nome,
+          ext: ext || '—',
+          matricula: matricula || '—',
+          classificacao,
+          totalFaltas: dias.filter(d => d.resultado === 'falta').length,
+          totalDias: dias.length
+        });
+      }
     });
 
-    divergencias.sort((a, b) => b.data.localeCompare(a.data) || a.nome.localeCompare(b.nome));
-    rpDivergencias = divergencias;
+    matriz.sort((a, b) => a.nome.localeCompare(b.nome));
+    rpMatriz = matriz;
+
+    const ordemClassificacao = { desistente: 0, analisar: 1, verificar: 2 };
+    padroesFalta.sort((a, b) => ordemClassificacao[a.classificacao] - ordemClassificacao[b.classificacao] || a.nome.localeCompare(b.nome));
+    rpPadroesFalta = padroesFalta;
 
     // ── Não identificados ──
-    rpNaoIdLms = Array.from(mapaLms.keys())
+    rpNaoIdLms = Array.from(mapaLmsF.keys())
       .filter(ext => !extsUsados.has(ext))
-      .map(ext => ({ ext, dias: Array.from(mapaLms.get(ext)).sort() }));
+      .map(ext => ({ ext, dias: Array.from(mapaLmsF.get(ext)).sort() }));
 
-    rpNaoIdKn = Array.from(mapaKn.keys())
+    rpNaoIdKn = Array.from(mapaKnF.keys())
       .filter(m => !matriculasUsadas.has(m))
-      .map(m => ({ matricula: m, nome: nomesKn.get(m) || '—', dias: Array.from(mapaKn.get(m)).sort() }));
+      .map(m => ({ matricula: m, nome: nomesKn.get(m) || '—', dias: Array.from(mapaKnF.get(m)).sort() }));
 
     rpSemNenhumaBatida = semNenhumaBatida.sort((a, b) => a.nome.localeCompare(b.nome));
 
-    document.getElementById('rp-stat-divergencias').textContent = rpDivergencias.length;
+    document.getElementById('rp-stat-inconsistentes').textContent = totalInconsistentes;
+    document.getElementById('rp-stat-faltas').textContent = totalFaltas;
     document.getElementById('rp-stat-comparados').textContent = comparados;
     document.getElementById('rp-stat-nao-id-lms').textContent = rpNaoIdLms.length;
     document.getElementById('rp-stat-nao-id-kn').textContent = rpNaoIdKn.length;
     document.getElementById('rp-stat-sem-batida').textContent = rpSemNenhumaBatida.length;
 
     document.getElementById('rp-resultado').style.display = 'block';
-    renderDivergenciasRevisaoPonto();
+    renderMatrizRevisaoPonto();
+    renderPadroesFaltaRevisaoPonto();
     renderNaoIdentificadosRevisaoPonto();
 
-    toast(`Comparação concluída: ${rpDivergencias.length} divergência(s) encontrada(s).`, 'success');
+    toast(`Comparação concluída: ${comparados} colaborador(es), ${colunasDias.length} dia(s) analisados.`, 'success');
   } catch (error) {
     console.error(error);
     toast('Erro ao processar a comparação: ' + (error.message || error), 'error');
@@ -8035,39 +8176,84 @@ function processarRevisaoPonto() {
   }
 }
 
-function renderDivergenciasRevisaoPonto() {
+function renderMatrizRevisaoPonto() {
+  const thead = document.getElementById('rp-matrix-thead');
+  const tbody = document.getElementById('rp-matrix-tbody');
+  if (!thead || !tbody) return;
+
+  const linhaData = ['<tr><th class="rp-matrix-col-nome" rowspan="2">Colaborador</th><th class="rp-matrix-col-ext" rowspan="2">EXT</th><th class="rp-matrix-col-mat" rowspan="2">Matrícula 3PL</th>'];
+  const linhaSub = ['<tr>'];
+  rpDatasColunas.forEach(data => {
+    const dataFmt = data.split('-').reverse().join('/');
+    linhaData.push(`<th class="rp-matrix-dia-header" colspan="3">${dataFmt}</th>`);
+    linhaSub.push('<th class="rp-matrix-dia-header">LMS</th><th>K+N</th><th>Result.</th>');
+  });
+  linhaData.push('</tr>');
+  linhaSub.push('</tr>');
+  thead.innerHTML = linhaData.join('') + linhaSub.join('');
+
   const busca = lower(document.getElementById('rp-busca')?.value || '');
-  const lista = rpDivergencias.filter(d => {
+  const lista = rpMatriz.filter(m => {
     if (!busca) return true;
-    return lower(d.nome).includes(busca) || lower(d.ext).includes(busca) || lower(d.matricula).includes(busca);
+    return lower(m.nome).includes(busca) || lower(m.ext).includes(busca) || lower(m.matricula).includes(busca);
   });
 
   const countEl = document.getElementById('rp-count');
-  if (countEl) countEl.textContent = `${lista.length} divergência${lista.length !== 1 ? 's' : ''}`;
-
-  const tbody = document.getElementById('tbody-rp-divergencias');
-  if (!tbody) return;
+  if (countEl) countEl.textContent = `${lista.length} colaborador${lista.length !== 1 ? 'es' : ''}`;
 
   if (!lista.length) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🕵️</div><p>${rpDivergencias.length ? 'Nenhum resultado para a busca' : 'Nenhuma divergência encontrada'}</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="${3 + rpDatasColunas.length * 3}"><div class="empty-state"><div class="empty-icon">🕵️</div><p>${rpMatriz.length ? 'Nenhum resultado para a busca' : 'Nenhum colaborador comparado'}</p></div></td></tr>`;
     return;
   }
 
-  const badgeSim = '<span class="badge badge-green">Sim</span>';
-  const badgeNao = '<span class="badge badge-red">Não</span>';
+  const rotuloResultado = { ok: 'Ok', inconsistente: 'Inconsistente', falta: 'Falta' };
 
-  tbody.innerHTML = lista.map(d => {
-    const dataFmt = d.data.split('-').reverse().join('/');
+  tbody.innerHTML = lista.map(m => {
+    const celulasDias = m.dias.map(d => {
+      return `<td class="rp-matrix-dia-header">${d.bateuLms ? '✅' : '—'}</td><td>${d.bateuKn ? '✅' : '—'}</td><td><span class="rp-matrix-badge rp-matrix-${d.resultado}">${rotuloResultado[d.resultado]}</span></td>`;
+    }).join('');
     return `<tr>
-      <td><strong>${escapeHtml(d.nome)}</strong></td>
-      <td style="font-family:monospace;font-size:12px">${escapeHtml(d.ext)}</td>
-      <td style="font-family:monospace;font-size:12px">${escapeHtml(d.matricula)}</td>
-      <td>${dataFmt}</td>
-      <td>${d.bateuLms ? badgeSim : badgeNao}</td>
-      <td>${d.bateuKn ? badgeSim : badgeNao}</td>
+      <td class="rp-matrix-col-nome"><strong>${escapeHtml(m.nome)}</strong></td>
+      <td class="rp-matrix-col-ext">${escapeHtml(m.ext)}</td>
+      <td class="rp-matrix-col-mat">${escapeHtml(m.matricula)}</td>
+      ${celulasDias}
     </tr>`;
   }).join('');
 }
+
+function renderPadroesFaltaRevisaoPonto() {
+  const busca = lower(document.getElementById('rp-busca-padroes')?.value || '');
+  const lista = rpPadroesFalta.filter(p => {
+    if (!busca) return true;
+    return lower(p.nome).includes(busca) || lower(p.ext).includes(busca) || lower(p.matricula).includes(busca);
+  });
+
+  const countEl = document.getElementById('rp-padroes-count');
+  if (countEl) countEl.textContent = `${lista.length} colaborador${lista.length !== 1 ? 'es' : ''}`;
+
+  const tbody = document.getElementById('tbody-rp-padroes');
+  if (!tbody) return;
+
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><p>${rpPadroesFalta.length ? 'Nenhum resultado para a busca' : 'Nenhum padrão de falta identificado'}</p></div></td></tr>`;
+    return;
+  }
+
+  const badgePorClassificacao = {
+    desistente: '<span class="badge badge-red">Desistente</span>',
+    analisar: '<span class="badge badge-orange">Analisar</span>',
+    verificar: '<span class="badge badge-blue">Verificar</span>'
+  };
+
+  tbody.innerHTML = lista.map(p => `<tr>
+    <td><strong>${escapeHtml(p.nome)}</strong></td>
+    <td style="font-family:monospace;font-size:12px">${escapeHtml(p.ext)}</td>
+    <td style="font-family:monospace;font-size:12px">${escapeHtml(p.matricula)}</td>
+    <td>${badgePorClassificacao[p.classificacao] || p.classificacao}</td>
+    <td>${p.totalFaltas} de ${p.totalDias} dia${p.totalDias !== 1 ? 's' : ''}</td>
+  </tr>`).join('');
+}
+
 
 function setRevisaoPontoNaoIdTab(tab, btnEl) {
   document.querySelectorAll('.rp-naoid-subtab-btn').forEach(b => b.classList.remove('active'));
@@ -8111,13 +8297,17 @@ function renderNaoIdentificadosRevisaoPonto() {
   }
 }
 
-function exportarDivergenciasRevisaoPontoCSV() {
-  if (!rpDivergencias.length) { toast('Nenhuma divergência para exportar.', 'error'); return; }
+function exportarMatrizRevisaoPontoCSV() {
+  if (!rpMatriz.length) { toast('Nenhum dado para exportar.', 'error'); return; }
 
-  const cabecalho = ['Colaborador', 'EXT', 'Matrícula 3PL', 'Data', 'Bateu LMS', 'Bateu K+N'];
-  const corpo = rpDivergencias.map(d => {
-    const dataFmt = d.data.split('-').reverse().join('/');
-    return [d.nome, d.ext, d.matricula, dataFmt, d.bateuLms ? 'Sim' : 'Não', d.bateuKn ? 'Sim' : 'Não'].map(csvEscape).join(',');
+  const rotuloResultado = { ok: 'Ok', inconsistente: 'Inconsistente', falta: 'Falta' };
+  const cabecalho = ['Colaborador', 'EXT', 'Matrícula 3PL', 'Data', 'Bateu LMS', 'Bateu K+N', 'Resultado'];
+  const corpo = [];
+  rpMatriz.forEach(m => {
+    m.dias.forEach(d => {
+      const dataFmt = d.data.split('-').reverse().join('/');
+      corpo.push([m.nome, m.ext, m.matricula, dataFmt, d.bateuLms ? 'Sim' : 'Não', d.bateuKn ? 'Sim' : 'Não', rotuloResultado[d.resultado]].map(csvEscape).join(','));
+    });
   });
 
   const csv = '\uFEFF' + [cabecalho.join(','), ...corpo].join('\n');
@@ -8125,13 +8315,13 @@ function exportarDivergenciasRevisaoPontoCSV() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `revisao_ponto_divergencias_${hojeIsoLocal()}.csv`;
+  a.download = `revisao_ponto_${hojeIsoLocal()}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 
-  toast(`Exportado ${rpDivergencias.length} divergência(s).`, 'success');
+  toast(`Exportado ${rpMatriz.length} colaborador(es) × ${rpDatasColunas.length} dia(s).`, 'success');
 }
 
 // ════════════════════════════════════════
