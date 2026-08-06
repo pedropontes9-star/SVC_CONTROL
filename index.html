@@ -7951,14 +7951,25 @@ function processarRevisaoPonto() {
     });
 
     // ── Cruza com o Headcount ──
-    // Só entram na comparação quem realmente deveria bater LMS: Auxiliares de
-    // Operações Logísticas, exceto os do turno de Consolidação (que não batem LMS).
     const extsUsados = new Set();
     const matriculasUsadas = new Set();
     const divergencias = [];
     const semNenhumaBatida = [];
     let comparados = 0;
 
+    // Passo 1: marca como "identificado" qualquer EXT/Matrícula que bate com QUALQUER
+    // colaborador do Headcount, independente da função — isso só serve pra saber se a
+    // pessoa está cadastrada, não se ela deve ser comparada (indiretos batem K+N mesmo
+    // não batendo LMS, e precisam ser reconhecidos aqui pra não caírem em "não identificado").
+    heads.forEach(h => {
+      const ext = normalizeExt(h.ext);
+      const matricula = normalizarMatricula(h.matriculaTpl);
+      if (ext && mapaLms.has(ext)) extsUsados.add(ext);
+      if (matricula && mapaKn.has(matricula)) matriculasUsadas.add(matricula);
+    });
+
+    // Passo 2: a comparação de divergência em si (dia a dia) só vale pra quem realmente
+    // deveria bater LMS: Auxiliares de Operações Logísticas, exceto os do turno de Consolidação.
     heads.filter(colaboradorElegivelParaLms).forEach(h => {
       const ext = normalizeExt(h.ext);
       const matricula = normalizarMatricula(h.matriculaTpl);
@@ -7970,8 +7981,6 @@ function processarRevisaoPonto() {
       }
 
       comparados++;
-      if (temExt) extsUsados.add(ext);
-      if (temMatricula) matriculasUsadas.add(matricula);
 
       const datasLms = temExt ? mapaLms.get(ext) : new Set();
       const datasKn = temMatricula ? mapaKn.get(matricula) : new Set();
