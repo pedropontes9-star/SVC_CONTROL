@@ -1557,6 +1557,31 @@
       </div>
     </div>
 
+    <p class="section-label">Possíveis desistências — quem sumiu há mais tempo</p>
+    <div class="card" style="margin-bottom:20px">
+      <div class="search-bar">
+        <div class="search-input-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Buscar por nome, EXT ou matrícula..." id="rp-busca-padroes" oninput="renderPadroesFaltaRevisaoPonto()">
+        </div>
+        <span class="count-badge" id="rp-padroes-count">0 colaboradores</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Colaborador</th><th>EXT</th><th>Matrícula 3PL</th><th>Turno</th><th>Gestor</th><th>Classificação</th><th>Última presença</th><th>Dias sem aparecer</th></tr></thead>
+          <tbody id="tbody-rp-padroes">
+            <tr><td colspan="8"><div class="empty-state"><p>Nenhum padrão de falta identificado</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--text-muted);flex-wrap:wrap">
+        <span><span class="badge badge-red">Desistente</span> só teve falta no período inteiro</span>
+        <span><span class="badge badge-orange">Analisar</span> mais de 2 faltas seguidas</span>
+        <span><span class="badge badge-blue">Verificar</span> faltas intercaladas</span>
+        <span>Ordenado por dias sem aparecer (mais sumido primeiro) — "Dias sem aparecer" conta até a última data do período filtrado</span>
+      </div>
+    </div>
+
     <p class="section-label">Batidas por dia</p>
     <div class="card" style="margin-bottom:20px">
       <div class="search-bar">
@@ -1581,30 +1606,6 @@
         <span><span class="badge badge-red">Falta</span> não bateu nenhum</span>
         <span><span class="badge badge-gray">Folga</span> dia de folga, sem batida (esperado)</span>
         <span><span class="badge badge-blue">Folga trabalhada</span> era folga, mas bateu ponto</span>
-      </div>
-    </div>
-
-    <p class="section-label">Padrões de falta no período</p>
-    <div class="card" style="margin-bottom:20px">
-      <div class="search-bar">
-        <div class="search-input-wrap">
-          <span class="search-icon">🔍</span>
-          <input type="text" placeholder="Buscar por nome, EXT ou matrícula..." id="rp-busca-padroes" oninput="renderPadroesFaltaRevisaoPonto()">
-        </div>
-        <span class="count-badge" id="rp-padroes-count">0 colaboradores</span>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Colaborador</th><th>EXT</th><th>Matrícula 3PL</th><th>Classificação</th><th>Faltas no período</th></tr></thead>
-          <tbody id="tbody-rp-padroes">
-            <tr><td colspan="5"><div class="empty-state"><p>Nenhum padrão de falta identificado</p></div></td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div style="display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--text-muted);flex-wrap:wrap">
-        <span><span class="badge badge-red">Desistente</span> só teve falta no período inteiro</span>
-        <span><span class="badge badge-orange">Analisar</span> mais de 2 faltas seguidas</span>
-        <span><span class="badge badge-blue">Verificar</span> faltas intercaladas</span>
       </div>
     </div>
 
@@ -8159,13 +8160,25 @@ function processarRevisaoPonto() {
       const diasUteis = dias.filter(d => d.resultado !== 'folga' && d.resultado !== 'folga_trabalhada');
       const classificacao = classificarPadraoFaltas(diasUteis.map(d => d.resultado));
       if (classificacao) {
+        // Última vez que a pessoa apareceu em QUALQUER sistema (mesmo que num dia de folga trabalhada).
+        const diasComPresenca = dias.filter(d => d.bateuLms || d.bateuKn);
+        const ultimaPresenca = diasComPresenca.length ? diasComPresenca[diasComPresenca.length - 1].data : null;
+        const dataFimPeriodo = colunasDias[colunasDias.length - 1];
+        const diasSemAparecer = ultimaPresenca
+          ? Math.round((isoParaDataLocal(dataFimPeriodo) - isoParaDataLocal(ultimaPresenca)) / 86400000)
+          : colunasDias.length; // nunca apareceu no período inteiro
+
         padroesFalta.push({
           nome: h.nome,
           ext: ext || '—',
           matricula: matricula || '—',
+          gestor: h.gestor || '—',
+          turno: turnoColaborador ? turnoColaborador.nome : '—',
           classificacao,
           totalFaltas: diasUteis.filter(d => d.resultado === 'falta').length,
-          totalDias: diasUteis.length
+          totalDias: diasUteis.length,
+          ultimaPresenca,
+          diasSemAparecer
         });
       }
     });
@@ -8174,7 +8187,7 @@ function processarRevisaoPonto() {
     rpMatriz = matriz;
 
     const ordemClassificacao = { desistente: 0, analisar: 1, verificar: 2 };
-    padroesFalta.sort((a, b) => ordemClassificacao[a.classificacao] - ordemClassificacao[b.classificacao] || a.nome.localeCompare(b.nome));
+    padroesFalta.sort((a, b) => b.diasSemAparecer - a.diasSemAparecer || ordemClassificacao[a.classificacao] - ordemClassificacao[b.classificacao] || a.nome.localeCompare(b.nome));
     rpPadroesFalta = padroesFalta;
 
     // ── Não identificados ──
@@ -8300,7 +8313,7 @@ function renderPadroesFaltaRevisaoPonto() {
   if (!tbody) return;
 
   if (!lista.length) {
-    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><p>${rpPadroesFalta.length ? 'Nenhum resultado para a busca' : 'Nenhum padrão de falta identificado'}</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><p>${rpPadroesFalta.length ? 'Nenhum resultado para a busca' : 'Nenhum padrão de falta identificado'}</p></div></td></tr>`;
     return;
   }
 
@@ -8310,13 +8323,21 @@ function renderPadroesFaltaRevisaoPonto() {
     verificar: '<span class="badge badge-blue">Verificar</span>'
   };
 
-  tbody.innerHTML = lista.map(p => `<tr>
+  tbody.innerHTML = lista.map(p => {
+    const ultimaPresencaFmt = p.ultimaPresenca ? p.ultimaPresenca.split('-').reverse().join('/') : 'Nunca no período';
+    const diasSemAparecerFmt = p.diasSemAparecer === 0 ? 'Hoje' : `${p.diasSemAparecer} dia${p.diasSemAparecer !== 1 ? 's' : ''}`;
+    const destaqueSumico = p.diasSemAparecer >= 5 ? ' style="color:var(--danger-text);font-weight:700"' : '';
+    return `<tr>
     <td><strong>${escapeHtml(p.nome)}</strong></td>
     <td style="font-family:monospace;font-size:12px">${escapeHtml(p.ext)}</td>
     <td style="font-family:monospace;font-size:12px">${escapeHtml(p.matricula)}</td>
+    <td style="font-size:12px">${escapeHtml(p.turno)}</td>
+    <td style="font-size:12px">${escapeHtml(p.gestor)}</td>
     <td>${badgePorClassificacao[p.classificacao] || p.classificacao}</td>
-    <td>${p.totalFaltas} de ${p.totalDias} dia${p.totalDias !== 1 ? 's' : ''}</td>
-  </tr>`).join('');
+    <td>${ultimaPresencaFmt}</td>
+    <td${destaqueSumico}>${diasSemAparecerFmt}</td>
+  </tr>`;
+  }).join('');
 }
 
 
@@ -10712,4 +10733,3 @@ window.addEventListener('DOMContentLoaded', async function() {
 
 </body>
 </html>
-  
