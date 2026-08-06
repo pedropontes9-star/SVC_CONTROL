@@ -75,7 +75,7 @@
   .sidebar-user-info span { display:block; font-size: 11px; color: var(--text-muted); margin-top: 2px; }
   .sidebar .btn-logout { width: 100%; justify-content: center; padding: 8px 10px; }
 
-  .page { display: none; padding: 24px; max-width: 1280px; margin: 0 auto; }
+  .page { display: none; padding: 24px 32px; max-width: 1900px; margin: 0 auto; }
   .page.active { display: block; }
 
   .section-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
@@ -443,6 +443,8 @@
   .rp-matrix-ok { background: var(--success-fill); color: var(--success-text); }
   .rp-matrix-inconsistente { background: #fff3e0; color: #e65100; }
   .rp-matrix-falta { background: var(--danger-fill); color: var(--danger-text); }
+  .rp-matrix-folga { background: #f0f0f0; color: var(--text-muted); }
+  .rp-matrix-folga_trabalhada { background: #e8f0fe; color: var(--meli-blue); }
 
 
   .yms-kpi-valor { font-size: 26px; font-weight: 800; line-height: 1.1; }
@@ -1514,6 +1516,11 @@
         <div class="stat-sub">não bateu em nenhum sistema</div>
       </div>
       <div class="stat-card">
+        <div class="stat-label">Folgas trabalhadas</div>
+        <div class="stat-value" id="rp-stat-folga-trabalhada">0</div>
+        <div class="stat-sub">bateu ponto no dia de folga</div>
+      </div>
+      <div class="stat-card">
         <div class="stat-label">Colaboradores comparados</div>
         <div class="stat-value" id="rp-stat-comparados">0</div>
         <div class="stat-sub">Auxiliar Op. Logísticas, exceto Consolidação</div>
@@ -1572,6 +1579,8 @@
         <span><span class="badge badge-green">Ok</span> bateu os dois sistemas</span>
         <span><span class="badge badge-orange">Inconsistente</span> bateu só um sistema</span>
         <span><span class="badge badge-red">Falta</span> não bateu nenhum</span>
+        <span><span class="badge badge-gray">Folga</span> dia de folga, sem batida (esperado)</span>
+        <span><span class="badge badge-blue">Folga trabalhada</span> era folga, mas bateu ponto</span>
       </div>
     </div>
 
@@ -3439,8 +3448,18 @@ function calcFolgaSemana(head, turno, dataRef) {
   return null;
 }
 
-// ════════════════════════════════════════
-//  ESTADO LOCAL (Sincronizado com Supabase)
+const DIAS_SEMANA_PT = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+
+// Checa se uma data específica cai num dia de folga do colaborador, dado seu turno/grupo.
+function diaEhFolgaParaColaborador(head, turno, dataObj) {
+  if (!turno || !dataObj) return false;
+  const label = calcFolgaSemana(head, turno, dataObj);
+  if (!label) return false;
+  const nomeDia = DIAS_SEMANA_PT[dataObj.getDay()];
+  return label.includes(nomeDia);
+}
+
+
 // ════════════════════════════════════════
 let turnos = [];
 let heads  = [];
@@ -8093,7 +8112,7 @@ function processarRevisaoPonto() {
     const matriz = [];
     const semNenhumaBatida = [];
     const padroesFalta = [];
-    let comparados = 0, totalFaltas = 0, totalInconsistentes = 0;
+    let comparados = 0, totalFaltas = 0, totalInconsistentes = 0, totalFolgasTrabalhadas = 0;
 
     heads.filter(colaboradorElegivelParaLms).forEach(h => {
       const ext = normalizeExt(h.ext);
@@ -8107,32 +8126,46 @@ function processarRevisaoPonto() {
       }
       comparados++;
 
+      const turnoColaborador = turnos.find(t => t.id === h.turnoId);
+
       const dias = colunasDias.map(data => {
         const bateuLms = datasLms.has(data);
         const bateuKn = datasKn.has(data);
+        const dataObj = isoParaDataLocal(data);
+        const folga = diaEhFolgaParaColaborador(h, turnoColaborador, dataObj);
+
         let resultado;
-        if (bateuLms && bateuKn) resultado = 'ok';
-        else if (!bateuLms && !bateuKn) resultado = 'falta';
-        else resultado = 'inconsistente';
-        return { data, bateuLms, bateuKn, resultado };
+        if (folga) {
+          resultado = (bateuLms || bateuKn) ? 'folga_trabalhada' : 'folga';
+        } else if (bateuLms && bateuKn) {
+          resultado = 'ok';
+        } else if (!bateuLms && !bateuKn) {
+          resultado = 'falta';
+        } else {
+          resultado = 'inconsistente';
+        }
+        return { data, bateuLms, bateuKn, resultado, folga };
       });
 
       dias.forEach(d => {
         if (d.resultado === 'falta') totalFaltas++;
         if (d.resultado === 'inconsistente') totalInconsistentes++;
+        if (d.resultado === 'folga_trabalhada') totalFolgasTrabalhadas++;
       });
 
       matriz.push({ nome: h.nome, ext: ext || '—', matricula: matricula || '—', dias });
 
-      const classificacao = classificarPadraoFaltas(dias.map(d => d.resultado));
+      // Padrão de falta só considera dias que realmente eram de trabalho (exclui folgas).
+      const diasUteis = dias.filter(d => d.resultado !== 'folga' && d.resultado !== 'folga_trabalhada');
+      const classificacao = classificarPadraoFaltas(diasUteis.map(d => d.resultado));
       if (classificacao) {
         padroesFalta.push({
           nome: h.nome,
           ext: ext || '—',
           matricula: matricula || '—',
           classificacao,
-          totalFaltas: dias.filter(d => d.resultado === 'falta').length,
-          totalDias: dias.length
+          totalFaltas: diasUteis.filter(d => d.resultado === 'falta').length,
+          totalDias: diasUteis.length
         });
       }
     });
@@ -8156,6 +8189,7 @@ function processarRevisaoPonto() {
     rpSemNenhumaBatida = semNenhumaBatida.sort((a, b) => a.nome.localeCompare(b.nome));
 
     document.getElementById('rp-stat-inconsistentes').textContent = totalInconsistentes;
+    document.getElementById('rp-stat-folga-trabalhada').textContent = totalFolgasTrabalhadas;
     document.getElementById('rp-stat-faltas').textContent = totalFaltas;
     document.getElementById('rp-stat-comparados').textContent = comparados;
     document.getElementById('rp-stat-nao-id-lms').textContent = rpNaoIdLms.length;
@@ -8206,7 +8240,7 @@ function renderMatrizRevisaoPonto() {
     return;
   }
 
-  const rotuloResultado = { ok: 'Ok', inconsistente: 'Inconsistente', falta: 'Falta' };
+  const rotuloResultado = { ok: 'Ok', inconsistente: 'Inconsistente', falta: 'Falta', folga: 'Folga', folga_trabalhada: 'Folga trabalhada' };
 
   tbody.innerHTML = lista.map(m => {
     const celulasDias = m.dias.map(d => {
@@ -8300,7 +8334,7 @@ function renderNaoIdentificadosRevisaoPonto() {
 function exportarMatrizRevisaoPontoCSV() {
   if (!rpMatriz.length) { toast('Nenhum dado para exportar.', 'error'); return; }
 
-  const rotuloResultado = { ok: 'Ok', inconsistente: 'Inconsistente', falta: 'Falta' };
+  const rotuloResultado = { ok: 'Ok', inconsistente: 'Inconsistente', falta: 'Falta', folga: 'Folga', folga_trabalhada: 'Folga trabalhada' };
   const cabecalho = ['Colaborador', 'EXT', 'Matrícula 3PL', 'Data', 'Bateu LMS', 'Bateu K+N', 'Resultado'];
   const corpo = [];
   rpMatriz.forEach(m => {
