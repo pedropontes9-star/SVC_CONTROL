@@ -740,6 +740,13 @@
       </div>
 
       <div class="form-group">
+        <label>Função</label>
+        <select id="hc-funcao">
+          <option value="">— Selecionar —</option>
+        </select>
+      </div>
+
+      <div class="form-group">
         <label>Gestor</label>
         <input type="text" id="hc-gestor" placeholder="Nome do gestor" maxlength="100">
       </div>
@@ -814,10 +821,10 @@
     <div class="table-wrap">
       <table>
         <thead><tr>
-          <th>Nome</th><th>Groot ID</th><th>CPF</th><th>Matrícula 3PL</th><th>EXT</th><th>3PL</th><th>Turno</th><th>Grupo</th><th>Folga esta semana</th><th>Gestor</th><th>Status</th><th style="text-align:right">Ações</th>
+          <th>Nome</th><th>Groot ID</th><th>CPF</th><th>Matrícula 3PL</th><th>EXT</th><th>3PL</th><th>Função</th><th>Turno</th><th>Grupo</th><th>Folga esta semana</th><th>Gestor</th><th>Status</th><th style="text-align:right">Ações</th>
         </tr></thead>
         <tbody id="tbody-headcount">
-          <tr><td colspan="12"><div class="empty-state"><div class="empty-icon">👤</div><p>Nenhum colaborador cadastrado</p><span>Preencha o formulário acima para começar</span></div></td></tr>
+          <tr><td colspan="13"><div class="empty-state"><div class="empty-icon">👤</div><p>Nenhum colaborador cadastrado</p><span>Preencha o formulário acima para começar</span></div></td></tr>
         </tbody>
       </table>
     </div>
@@ -2262,7 +2269,7 @@
 
       <div class="form-group">
         <label>Dados para importação</label>
-        <textarea id="hc-import-textarea" class="bulk-import-textarea" placeholder="Nome;Groot ID;EXT;3PL;Turno;Grupo;Gestor;Status;CPF;Matrícula 3PL&#10;João Silva;123456;ext_joao.silva;K+N;T2 14:00;A;Carlos Souza;ativo;000.000.000-00;38396&#10;Maria Santos;789012;maria.santos;Mendes;T1 06:00;Grupo B;Ana Lima;ativo;111.111.111-11;38622"></textarea>
+        <textarea id="hc-import-textarea" class="bulk-import-textarea" placeholder="Nome;Groot ID;EXT;3PL;Turno;Grupo;Gestor;Status;CPF;Matrícula 3PL;Função&#10;João Silva;123456;ext_joao.silva;K+N;T2 14:00;A;Carlos Souza;ativo;000.000.000-00;38396;CONFERENTE&#10;Maria Santos;789012;maria.santos;Mendes;T1 06:00;Grupo B;Ana Lima;ativo;111.111.111-11;38622;ASSISTENTE DE LOGISTICA"></textarea>
         <span class="field-hint">Aceita ponto e vírgula, vírgula ou tabulação. Você pode colar do Excel/Sheets ou carregar um arquivo .csv/.tsv.</span>
       </div>
     </div>
@@ -2286,7 +2293,7 @@
       <table>
         <thead>
           <tr>
-            <th>Linha</th><th>Nome</th><th>Groot ID</th><th>CPF</th><th>Matrícula 3PL</th><th>EXT</th><th>3PL</th><th>Turno</th><th>Grupo</th><th>Status</th><th>Resultado</th>
+            <th>Linha</th><th>Nome</th><th>Groot ID</th><th>CPF</th><th>Matrícula 3PL</th><th>EXT</th><th>3PL</th><th>Função</th><th>Turno</th><th>Grupo</th><th>Status</th><th>Resultado</th>
           </tr>
         </thead>
         <tbody id="tbody-hc-import-preview"></tbody>
@@ -3588,6 +3595,7 @@ async function carregarDadosDoBanco() {
       groot: h.groot_id,
       cpf: h.cpf,
       matriculaTpl: h.matricula_3pl,
+      funcao: h.funcao,
       ext: h.ext,
       tpl: h.tpl,
       turnoId: h.turno_id,
@@ -3621,6 +3629,7 @@ async function carregarDadosDoBanco() {
     if (absFiltroFim && !absFiltroFim.value) absFiltroFim.value = hojeIsoLocal();
 
     atualizarSelectTurnos();
+    popularSelectFuncaoHC();
     renderTurnos();
     renderHeads();
     renderSchedulings();
@@ -5339,6 +5348,7 @@ async function salvarHead() {
   const groot   = document.getElementById('hc-groot').value.trim();
   const cpf     = document.getElementById('hc-cpf').value.trim();
   const matriculaTpl = document.getElementById('hc-matricula-3pl').value.trim();
+  const funcao = document.getElementById('hc-funcao').value;
   const ext     = normalizeExt(document.getElementById('hc-ext').value);
   const tpl     = document.getElementById('hc-3pl').value;
   const gestor  = document.getElementById('hc-gestor').value.trim();
@@ -5375,6 +5385,7 @@ async function salvarHead() {
     groot_id: groot,
     cpf: cpf || null,
     matricula_3pl: matriculaTpl || null,
+    funcao: funcao || null,
     ext: ext || null,
     tpl,
     gestor: gestor || null,
@@ -5408,6 +5419,7 @@ function limparFormHC() {
   ['hc-nome','hc-groot','hc-cpf','hc-matricula-3pl','hc-ext','hc-gestor'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('hc-turno').value  = '';
   document.getElementById('hc-3pl').value    = 'K+N';
+  document.getElementById('hc-funcao').value = '';
   document.getElementById('hc-status').value = 'ativo';
   document.getElementById('hc-grupo-wrap').style.display = 'none';
   document.getElementById('hc-grupo').innerHTML = '<option value="">— Selecionar —</option>';
@@ -5424,6 +5436,7 @@ function editarHead(id) {
   document.getElementById('hc-groot').value  = h.groot || '';
   document.getElementById('hc-cpf').value    = h.cpf || '';
   document.getElementById('hc-matricula-3pl').value = h.matriculaTpl || '';
+  document.getElementById('hc-funcao').value = h.funcao || '';
   document.getElementById('hc-ext').value    = normalizeExt(h.ext);
   document.getElementById('hc-3pl').value    = h.tpl || 'K+N';
   document.getElementById('hc-gestor').value = h.gestor || '';
@@ -8565,7 +8578,7 @@ function renderHeads() {
 
   const tbody = document.getElementById('tbody-headcount');
   if (!lista.length) {
-    tbody.innerHTML = `<tr><td colspan="12"><div class="empty-state"><div class="empty-icon">👤</div><p>${heads.length?'Nenhum resultado para os filtros':'Nenhum colaborador cadastrado'}</p><span>${heads.length?'Tente outros filtros':'Preencha o formulário acima para começar'}</span></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="13"><div class="empty-state"><div class="empty-icon">👤</div><p>${heads.length?'Nenhum resultado para os filtros':'Nenhum colaborador cadastrado'}</p><span>${heads.length?'Tente outros filtros':'Preencha o formulário acima para começar'}</span></div></td></tr>`;
     return;
   }
 
@@ -8579,6 +8592,7 @@ function renderHeads() {
       <td style="font-family:monospace;font-size:12px">${h.matriculaTpl ? escapeHtml(h.matriculaTpl) : '<span style="color:var(--text-hint)">—</span>'}</td>
       <td style="font-family:monospace;font-size:12px">${ext?`<span style="color:var(--text-hint)">ext_</span>${escapeHtml(ext)}`:'<span style="color:var(--text-hint)">—</span>'}</td>
       <td>${tplBadge(h.tpl)}</td>
+      <td style="font-size:12px">${h.funcao ? escapeHtml(h.funcao) : '<span style="color:var(--text-hint)">—</span>'}</td>
       <td>${turnoBadge(h.turnoId)}</td>
       <td style="font-size:12px;color:var(--text-muted)">${grupoHeadDisplay(h)}</td>
       <td>${folgaBadge(h)}</td>
@@ -8631,9 +8645,9 @@ function limparImportacaoHC() {
 function baixarModeloImportacaoHC(tipo = 'csv') {
   const separador = tipo === 'tsv' ? '\t' : ';';
   const linhas = [
-    ['Nome', 'Groot ID', 'EXT', '3PL', 'Turno', 'Grupo', 'Gestor', 'Status', 'CPF', 'Matrícula 3PL'],
-    ['João Silva', '123456', 'ext_joao.silva', 'K+N', 'NOME DO TURNO', 'A', 'Carlos Souza', 'ativo', '000.000.000-00', '38396'],
-    ['Maria Santos', '789012', 'maria.santos', 'Mendes', 'NOME DO TURNO', 'B', 'Ana Lima', 'ativo', '111.111.111-11', '38622']
+    ['Nome', 'Groot ID', 'EXT', '3PL', 'Turno', 'Grupo', 'Gestor', 'Status', 'CPF', 'Matrícula 3PL', 'Função'],
+    ['João Silva', '123456', 'ext_joao.silva', 'K+N', 'NOME DO TURNO', 'A', 'Carlos Souza', 'ativo', '000.000.000-00', '38396', 'CONFERENTE'],
+    ['Maria Santos', '789012', 'maria.santos', 'Mendes', 'NOME DO TURNO', 'B', 'Ana Lima', 'ativo', '111.111.111-11', '38622', 'ASSISTENTE DE LOGISTICA']
   ];
   const conteudo = linhas.map(cols => cols.map(v => {
     const txt = asText(v);
@@ -8777,7 +8791,8 @@ function montarMapaCabecalhoImportacao(headers) {
     gestor: ['gestor', 'gestor direto', 'supervisor', 'coordenador'],
     status: ['status', 'status atual', 'situacao', 'situação'],
     cpf: ['cpf'],
-    matriculaTpl: ['matricula 3pl', 'matrícula 3pl', 'matricula', 'matrícula', 'matricula tpl']
+    matriculaTpl: ['matricula 3pl', 'matrícula 3pl', 'matricula', 'matrícula', 'matricula tpl'],
+    funcao: ['funcao', 'função', 'cargo']
   };
 
   const normalizados = headers.map(normalizarChaveImportacao);
@@ -8803,6 +8818,35 @@ function formatarCPFImportado(valor) {
   const digitos = asText(valor).replace(/\D/g, '');
   if (digitos.length !== 11) return asText(valor).trim(); // deixa como veio; não bloqueia a importação por CPF fora do padrão
   return digitos.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+}
+
+const FUNCOES_HC = [
+  'ANALISTA DE INVENTARIO JR',
+  'ANALISTA DE INVENTARIO PL',
+  'ANALISTA DE PREVENÇÃO E PERDAS',
+  'ASSISTENTE DE LOGISTICA',
+  'AUXILIAR DE OPERAÇÕES LOGÍSTICAS',
+  'CONFERENTE',
+  'COORDENADOR DE SEGURANÇA DO TRABALHO',
+  'COORDENADOR OPERAÇÕES LOGISTICA',
+  'LIDER DE OPERACOES LOGISTICAS',
+  'SUPERVISOR DE OPERAÇÕES LOGÍSTICA'
+];
+
+function popularSelectFuncaoHC() {
+  const sel = document.getElementById('hc-funcao');
+  if (!sel || sel.dataset.populado) return;
+  sel.innerHTML = '<option value="">— Selecionar —</option>' +
+    FUNCOES_HC.map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join('');
+  sel.dataset.populado = '1';
+}
+
+function normalizarFuncaoImportada(valor) {
+  const texto = asText(valor).trim();
+  if (!texto) return '';
+  const chave = normalizarChaveImportacao(texto);
+  const encontrada = FUNCOES_HC.find(f => normalizarChaveImportacao(f) === chave);
+  return encontrada || texto; // se não bater com a lista, mantém como veio (não bloqueia a importação)
 }
 
 function encontrarTurnoPorNomeImportacao(nomeTurno) {
@@ -8851,7 +8895,7 @@ function preValidarImportacaoHC(mostrarToast = true) {
 
   const separador = detectarSeparadorImportacao(linhas[0]);
   let startIdx = 0;
-  let mapa = { nome: 0, groot: 1, ext: 2, tpl: 3, turno: 4, grupo: 5, gestor: 6, status: 7, cpf: 8, matriculaTpl: 9 };
+  let mapa = { nome: 0, groot: 1, ext: 2, tpl: 3, turno: 4, grupo: 5, gestor: 6, status: 7, cpf: 8, matriculaTpl: 9, funcao: 10 };
   const primeiraCols = parseLinhaDelimitada(linhas[0], separador);
 
   if (linhaPareceCabecalhoImportacao(primeiraCols)) {
@@ -8877,6 +8921,7 @@ function preValidarImportacaoHC(mostrarToast = true) {
       statusRaw: obterValorImportado(cols, mapa, 'status', 7),
       cpf: formatarCPFImportado(obterValorImportado(cols, mapa, 'cpf', 8)),
       matriculaTpl: obterValorImportado(cols, mapa, 'matriculaTpl', 9),
+      funcao: normalizarFuncaoImportada(obterValorImportado(cols, mapa, 'funcao', 10)),
       turno: null,
       tpl: '',
       status: '',
@@ -8981,6 +9026,7 @@ function renderPreviewImportacaoHC() {
       <td style="font-family:monospace;font-size:12px">${escapeHtml(item.groot || '—')}</td>
       <td style="font-family:monospace;font-size:12px">${item.cpf ? escapeHtml(item.cpf) : '<span style="color:var(--text-hint)">—</span>'}</td>
       <td style="font-family:monospace;font-size:12px">${item.matriculaTpl ? escapeHtml(item.matriculaTpl) : '<span style="color:var(--text-hint)">—</span>'}</td>
+      <td style="font-size:12px">${item.funcao ? escapeHtml(item.funcao) : '<span style="color:var(--text-hint)">—</span>'}</td>
       <td style="font-family:monospace;font-size:12px">${item.ext ? '<span style="color:var(--text-hint)">ext_</span>' + escapeHtml(item.ext) : '—'}</td>
       <td>${item.tpl ? tplBadge(item.tpl) : '<span class="badge badge-red">Inválido</span>'}</td>
       <td>${item.turno ? turnoBadge(item.turno.id) : escapeHtml(item.turnoRaw || '—')}</td>
@@ -9002,6 +9048,7 @@ function dbDataImportacaoHC(item) {
     groot_id: item.groot,
     cpf: item.cpf || null,
     matricula_3pl: item.matriculaTpl || null,
+    funcao: item.funcao || null,
     ext: item.ext || null,
     tpl: item.tpl,
     gestor: item.gestor || null,
