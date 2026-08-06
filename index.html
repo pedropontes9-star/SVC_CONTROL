@@ -427,6 +427,17 @@
   .insucesso-checklist label { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f2f2f2; }
   .insucesso-checklist label:last-child { border-bottom: none; }
 
+  /* ── Revisão de Ponto — gavetas colapsáveis ── */
+  .rp-drawer { margin-bottom: 20px; }
+  .rp-drawer-toggle { display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; padding: 2px 0 8px; }
+  .rp-drawer-toggle:hover .section-label { color: var(--meli-blue); }
+  .rp-drawer-toggle .section-label { margin-bottom: 0; transition: color .15s; }
+  .rp-drawer-chevron { font-size: 11px; color: var(--text-muted); transition: transform .18s; }
+  .rp-drawer.open .rp-drawer-chevron { transform: rotate(180deg); }
+  .rp-drawer-body { display: none; }
+  .rp-drawer.open .rp-drawer-body { display: block; }
+
+
   /* ── Revisão de Ponto — matriz por dia com colunas fixas ── */
   .rp-matrix-wrap { overflow: auto; max-height: 65vh; border: 1px solid var(--border); border-radius: 6px; }
   .rp-matrix-table { border-collapse: separate; border-spacing: 0; font-size: 12px; white-space: nowrap; }
@@ -1485,22 +1496,30 @@
   <p style="font-size:12px;color:var(--text-muted);margin-bottom:6px">Cruza as batidas do LMS (MELI) com as do relógio de ponto K+N, dia a dia, e mostra onde só um dos dois registrou presença. A comparação é local — os arquivos não são enviados a lugar nenhum, só processados aqui no navegador.</p>
   <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">⚠️ Só entram na comparação colaboradores com Função <strong>Auxiliar de Operações Logísticas</strong> — os demais não batem LMS na operação. Auxiliares do turno de <strong>Consolidação</strong> também ficam de fora, pelo mesmo motivo.</p>
 
-  <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:20px">
-    <div class="card" style="flex:1;min-width:300px">
-      <p class="section-label" style="margin-bottom:10px">1. Base LMS (MELI)</p>
-      <input type="file" id="rp-arquivo-lms" accept=".xlsx,.xls,.csv" onchange="onArquivoRevisaoPonto('lms', this)" style="font-size:13px">
-      <div id="rp-lms-status" style="margin-top:10px;font-size:12px;color:var(--text-muted)">Nenhum arquivo carregado.</div>
+  <div class="card" style="margin-bottom:20px">
+    <p class="section-label" style="margin-bottom:16px">Arquivos</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--meli-blue);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">1. Base LMS (MELI)</div>
+        <div class="monitor-drop-area" id="rp-drop-lms">
+          <input type="file" id="rp-arquivo-lms" accept=".xlsx,.xls,.csv" onchange="onArquivoRevisaoPonto('lms', this)">
+          <p style="font-size:12px"><strong>Clique</strong> ou arraste<br><span style="font-size:10px;color:#999">XLSX · XLS · CSV</span></p>
+        </div>
+        <div id="rp-lms-status" style="margin-top:8px;font-size:12px;color:var(--text-muted);min-height:18px">Nenhum arquivo carregado.</div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#00875A;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">2. Base K+N</div>
+        <div class="monitor-drop-area" id="rp-drop-kn" style="border-color:#00875A44">
+          <input type="file" id="rp-arquivo-kn" accept=".xlsx,.xls,.csv" onchange="onArquivoRevisaoPonto('kn', this)">
+          <p style="font-size:12px"><strong>Clique</strong> ou arraste<br><span style="font-size:10px;color:#999">XLSX · XLS · CSV</span></p>
+        </div>
+        <div id="rp-kn-status" style="margin-top:8px;font-size:12px;color:var(--text-muted);min-height:18px">Nenhum arquivo carregado.</div>
+      </div>
     </div>
-    <div class="card" style="flex:1;min-width:300px">
-      <p class="section-label" style="margin-bottom:10px">2. Base K+N</p>
-      <input type="file" id="rp-arquivo-kn" accept=".xlsx,.xls,.csv" onchange="onArquivoRevisaoPonto('kn', this)" style="font-size:13px">
-      <div id="rp-kn-status" style="margin-top:10px;font-size:12px;color:var(--text-muted)">Nenhum arquivo carregado.</div>
+    <div class="form-actions" style="margin-top:20px;margin-bottom:0">
+      <button class="btn btn-primary" id="btn-processar-revisao-ponto" onclick="processarRevisaoPonto()" disabled>3. Processar Comparação</button>
+      <button class="btn btn-secondary" onclick="limparRevisaoPonto()">Limpar</button>
     </div>
-  </div>
-
-  <div class="form-actions" style="margin-bottom:20px">
-    <button class="btn btn-primary" id="btn-processar-revisao-ponto" onclick="processarRevisaoPonto()" disabled>3. Processar Comparação</button>
-    <button class="btn btn-secondary" onclick="limparRevisaoPonto()">Limpar</button>
   </div>
 
   <div id="rp-resultado" style="display:none">
@@ -1557,84 +1576,112 @@
       </div>
     </div>
 
-    <p class="section-label">Possíveis desistências — quem sumiu há mais tempo</p>
-    <div class="card" style="margin-bottom:20px">
-      <div class="search-bar">
-        <div class="search-input-wrap">
-          <span class="search-icon">🔍</span>
-          <input type="text" placeholder="Buscar por nome, EXT ou matrícula..." id="rp-busca-padroes" oninput="renderPadroesFaltaRevisaoPonto()">
+    <div class="rp-drawer open" id="rp-drawer-desistencias">
+      <div class="rp-drawer-toggle" onclick="toggleRpDrawer(this)">
+        <p class="section-label">Possíveis desistências — quem sumiu há mais tempo</p>
+        <span class="rp-drawer-chevron">▾</span>
+      </div>
+      <div class="rp-drawer-body">
+        <div class="card">
+          <div class="search-bar">
+            <div class="search-input-wrap">
+              <span class="search-icon">🔍</span>
+              <input type="text" placeholder="Buscar por nome, EXT ou matrícula..." id="rp-busca-padroes" oninput="renderPadroesFaltaRevisaoPonto()">
+            </div>
+            <select id="rp-filtro-classificacao" onchange="renderPadroesFaltaRevisaoPonto()" style="min-width:160px">
+              <option value="">Todas as classificações</option>
+              <option value="desistente">Desistente</option>
+              <option value="analisar">Analisar</option>
+              <option value="verificar">Verificar</option>
+            </select>
+            <span class="count-badge" id="rp-padroes-count">0 colaboradores</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Colaborador</th><th>EXT</th><th>Matrícula 3PL</th><th>Turno</th><th>Gestor</th><th>Classificação</th><th>Última presença</th><th>Dias sem aparecer</th></tr></thead>
+              <tbody id="tbody-rp-padroes">
+                <tr><td colspan="8"><div class="empty-state"><p>Nenhum padrão de falta identificado</p></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--text-muted);flex-wrap:wrap">
+            <span><span class="badge badge-red">Desistente</span> só teve falta no período inteiro</span>
+            <span><span class="badge badge-orange">Analisar</span> mais de 2 faltas seguidas</span>
+            <span><span class="badge badge-blue">Verificar</span> faltas intercaladas</span>
+            <span>Ordenado por dias sem aparecer (mais sumido primeiro) — "Dias sem aparecer" conta até a última data do período filtrado</span>
+          </div>
         </div>
-        <span class="count-badge" id="rp-padroes-count">0 colaboradores</span>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Colaborador</th><th>EXT</th><th>Matrícula 3PL</th><th>Turno</th><th>Gestor</th><th>Classificação</th><th>Última presença</th><th>Dias sem aparecer</th></tr></thead>
-          <tbody id="tbody-rp-padroes">
-            <tr><td colspan="8"><div class="empty-state"><p>Nenhum padrão de falta identificado</p></div></td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div style="display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--text-muted);flex-wrap:wrap">
-        <span><span class="badge badge-red">Desistente</span> só teve falta no período inteiro</span>
-        <span><span class="badge badge-orange">Analisar</span> mais de 2 faltas seguidas</span>
-        <span><span class="badge badge-blue">Verificar</span> faltas intercaladas</span>
-        <span>Ordenado por dias sem aparecer (mais sumido primeiro) — "Dias sem aparecer" conta até a última data do período filtrado</span>
       </div>
     </div>
 
-    <p class="section-label">Batidas por dia</p>
-    <div class="card" style="margin-bottom:20px">
-      <div class="search-bar">
-        <div class="search-input-wrap">
-          <span class="search-icon">🔍</span>
-          <input type="text" placeholder="Buscar por nome, EXT ou matrícula..." id="rp-busca" oninput="renderMatrizRevisaoPonto()">
+    <div class="rp-drawer" id="rp-drawer-matriz">
+      <div class="rp-drawer-toggle" onclick="toggleRpDrawer(this)">
+        <p class="section-label">Batidas por dia</p>
+        <span class="rp-drawer-chevron">▾</span>
+      </div>
+      <div class="rp-drawer-body">
+        <div class="card">
+          <div class="search-bar">
+            <div class="search-input-wrap">
+              <span class="search-icon">🔍</span>
+              <input type="text" placeholder="Buscar por nome, EXT ou matrícula..." id="rp-busca" oninput="renderMatrizRevisaoPonto()">
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="exportarMatrizRevisaoPontoCSV()" style="height:34px;display:inline-flex;align-items:center;gap:6px;">
+              <span>⬇️ Exportar CSV</span>
+            </button>
+            <span class="count-badge" id="rp-count">0 colaboradores</span>
+          </div>
+          <div class="rp-matrix-wrap" id="rp-matrix-wrap">
+            <table class="rp-matrix-table" id="rp-matrix-table">
+              <thead id="rp-matrix-thead"></thead>
+              <tbody id="rp-matrix-tbody"></tbody>
+            </table>
+          </div>
+          <div style="display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--text-muted);flex-wrap:wrap">
+            <span><span class="badge badge-green">Ok</span> bateu os dois sistemas</span>
+            <span><span class="badge badge-orange">Inconsistente</span> bateu só um sistema</span>
+            <span><span class="badge badge-red">Falta</span> não bateu nenhum</span>
+            <span><span class="badge badge-gray">Folga</span> dia de folga, sem batida (esperado)</span>
+            <span><span class="badge badge-blue">Folga trabalhada</span> era folga, mas bateu ponto</span>
+          </div>
         </div>
-        <button class="btn btn-secondary btn-sm" onclick="exportarMatrizRevisaoPontoCSV()" style="height:34px;display:inline-flex;align-items:center;gap:6px;">
-          <span>⬇️ Exportar CSV</span>
-        </button>
-        <span class="count-badge" id="rp-count">0 colaboradores</span>
-      </div>
-      <div class="rp-matrix-wrap" id="rp-matrix-wrap">
-        <table class="rp-matrix-table" id="rp-matrix-table">
-          <thead id="rp-matrix-thead"></thead>
-          <tbody id="rp-matrix-tbody"></tbody>
-        </table>
-      </div>
-      <div style="display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--text-muted);flex-wrap:wrap">
-        <span><span class="badge badge-green">Ok</span> bateu os dois sistemas</span>
-        <span><span class="badge badge-orange">Inconsistente</span> bateu só um sistema</span>
-        <span><span class="badge badge-red">Falta</span> não bateu nenhum</span>
-        <span><span class="badge badge-gray">Folga</span> dia de folga, sem batida (esperado)</span>
-        <span><span class="badge badge-blue">Folga trabalhada</span> era folga, mas bateu ponto</span>
       </div>
     </div>
 
-    <div class="monitor-section-header">
-      <span class="monitor-section-title">Não identificados / Sem batida</span>
-      <div class="monitor-section-toggle">
-        <button class="monitor-toggle-btn rp-naoid-subtab-btn active" onclick="setRevisaoPontoNaoIdTab('lms', this)">LMS</button>
-        <button class="monitor-toggle-btn rp-naoid-subtab-btn" onclick="setRevisaoPontoNaoIdTab('kn', this)">K+N</button>
-        <button class="monitor-toggle-btn rp-naoid-subtab-btn" onclick="setRevisaoPontoNaoIdTab('sem-batida', this)">Sem batida</button>
+    <div class="rp-drawer" id="rp-drawer-naoid">
+      <div class="rp-drawer-toggle" onclick="toggleRpDrawer(this)">
+        <p class="section-label">Não identificados / Sem batida</p>
+        <span class="rp-drawer-chevron">▾</span>
       </div>
-    </div>
-    <div class="card">
-      <div id="rp-naoid-lms" class="table-wrap">
-        <table>
-          <thead><tr><th>EXT</th><th>Dias com batida no período</th></tr></thead>
-          <tbody id="tbody-rp-naoid-lms"></tbody>
-        </table>
-      </div>
-      <div id="rp-naoid-kn" class="table-wrap" style="display:none">
-        <table>
-          <thead><tr><th>Matrícula</th><th>Nome (conforme K+N)</th><th>Dias com batida no período</th></tr></thead>
-          <tbody id="tbody-rp-naoid-kn"></tbody>
-        </table>
-      </div>
-      <div id="rp-naoid-sem-batida" class="table-wrap" style="display:none">
-        <table>
-          <thead><tr><th>Colaborador</th><th>EXT</th><th>Matrícula 3PL</th></tr></thead>
-          <tbody id="tbody-rp-sem-batida"></tbody>
-        </table>
+      <div class="rp-drawer-body">
+        <div class="monitor-section-header">
+          <span class="monitor-section-title">Visualização</span>
+          <div class="monitor-section-toggle">
+            <button class="monitor-toggle-btn rp-naoid-subtab-btn active" onclick="setRevisaoPontoNaoIdTab('lms', this)">LMS</button>
+            <button class="monitor-toggle-btn rp-naoid-subtab-btn" onclick="setRevisaoPontoNaoIdTab('kn', this)">K+N</button>
+            <button class="monitor-toggle-btn rp-naoid-subtab-btn" onclick="setRevisaoPontoNaoIdTab('sem-batida', this)">Sem batida</button>
+          </div>
+        </div>
+        <div class="card">
+          <div id="rp-naoid-lms" class="table-wrap">
+            <table>
+              <thead><tr><th>EXT</th><th>Dias com batida no período</th></tr></thead>
+              <tbody id="tbody-rp-naoid-lms"></tbody>
+            </table>
+          </div>
+          <div id="rp-naoid-kn" class="table-wrap" style="display:none">
+            <table>
+              <thead><tr><th>Matrícula</th><th>Nome (conforme K+N)</th><th>Dias com batida no período</th></tr></thead>
+              <tbody id="tbody-rp-naoid-kn"></tbody>
+            </table>
+          </div>
+          <div id="rp-naoid-sem-batida" class="table-wrap" style="display:none">
+            <table>
+              <thead><tr><th>Colaborador</th><th>EXT</th><th>Matrícula 3PL</th></tr></thead>
+              <tbody id="tbody-rp-sem-batida"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -8301,9 +8348,11 @@ function ajustarStickyMatrizRevisaoPonto() {
 
 function renderPadroesFaltaRevisaoPonto() {
   const busca = lower(document.getElementById('rp-busca-padroes')?.value || '');
+  const filtroClassificacao = document.getElementById('rp-filtro-classificacao')?.value || '';
   const lista = rpPadroesFalta.filter(p => {
-    if (!busca) return true;
-    return lower(p.nome).includes(busca) || lower(p.ext).includes(busca) || lower(p.matricula).includes(busca);
+    const bateBusca = !busca || lower(p.nome).includes(busca) || lower(p.ext).includes(busca) || lower(p.matricula).includes(busca);
+    const bateClassificacao = !filtroClassificacao || p.classificacao === filtroClassificacao;
+    return bateBusca && bateClassificacao;
   });
 
   const countEl = document.getElementById('rp-padroes-count');
@@ -8340,6 +8389,17 @@ function renderPadroesFaltaRevisaoPonto() {
   }).join('');
 }
 
+
+function toggleRpDrawer(headerEl) {
+  const drawer = headerEl.closest('.rp-drawer');
+  if (!drawer) return;
+  drawer.classList.toggle('open');
+  // A matriz mede larguras reais via JS pra fixar as colunas; se a gaveta estava fechada
+  // (display:none), a medição dava zero. Recalcula agora que ela ficou visível.
+  if (drawer.id === 'rp-drawer-matriz' && drawer.classList.contains('open')) {
+    ajustarStickyMatrizRevisaoPonto();
+  }
+}
 
 function setRevisaoPontoNaoIdTab(tab, btnEl) {
   document.querySelectorAll('.rp-naoid-subtab-btn').forEach(b => b.classList.remove('active'));
