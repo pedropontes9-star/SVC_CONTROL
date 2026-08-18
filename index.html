@@ -1594,6 +1594,9 @@
               <option value="analisar">Analisar</option>
               <option value="verificar">Verificar</option>
             </select>
+            <button class="btn btn-secondary btn-sm" onclick="exportarRelatorioFaltasRevisaoPontoCSV()" style="height:34px;display:inline-flex;align-items:center;gap:6px;">
+              <span>⬇️ Exportar Relatório de Faltas</span>
+            </button>
             <span class="count-badge" id="rp-padroes-count">0 colaboradores</span>
           </div>
           <div class="table-wrap">
@@ -8201,7 +8204,17 @@ function processarRevisaoPonto() {
         if (d.resultado === 'folga_trabalhada') totalFolgasTrabalhadas++;
       });
 
-      matriz.push({ nome: h.nome, ext: ext || '—', matricula: matricula || '—', dias });
+      matriz.push({
+        nome: h.nome,
+        ext: ext || '—',
+        matricula: matricula || '—',
+        cpf: h.cpf || '—',
+        groot: h.groot || '—',
+        turno: turnoColaborador ? turnoColaborador.nome : '—',
+        funcao: h.funcao || '—',
+        gestor: h.gestor || '—',
+        dias
+      });
 
       // Padrão de falta só considera dias que realmente eram de trabalho (exclui folgas).
       const diasUteis = dias.filter(d => d.resultado !== 'folga' && d.resultado !== 'folga_trabalhada');
@@ -8447,12 +8460,12 @@ function exportarMatrizRevisaoPontoCSV() {
   if (!rpMatriz.length) { toast('Nenhum dado para exportar.', 'error'); return; }
 
   const rotuloResultado = { ok: 'Ok', inconsistente: 'Inconsistente', falta: 'Falta', folga: 'Folga', folga_trabalhada: 'Folga trabalhada' };
-  const cabecalho = ['Colaborador', 'EXT', 'Matrícula 3PL', 'Data', 'Bateu LMS', 'Bateu K+N', 'Resultado'];
+  const cabecalho = ['Data', 'Colaborador', 'CPF', 'Matrícula 3PL', 'Groot ID', 'EXT', 'Turno', 'Função', 'Gestor', 'Bateu LMS', 'Bateu K+N', 'Resultado'];
   const corpo = [];
   rpMatriz.forEach(m => {
     m.dias.forEach(d => {
       const dataFmt = d.data.split('-').reverse().join('/');
-      corpo.push([m.nome, m.ext, m.matricula, dataFmt, d.bateuLms ? 'Sim' : 'Não', d.bateuKn ? 'Sim' : 'Não', rotuloResultado[d.resultado]].map(csvEscape).join(','));
+      corpo.push([dataFmt, m.nome, m.cpf, m.matricula, m.groot, m.ext, m.turno, m.funcao, m.gestor, d.bateuLms ? 'Sim' : 'Não', d.bateuKn ? 'Sim' : 'Não', rotuloResultado[d.resultado]].map(csvEscape).join(','));
     });
   });
 
@@ -8468,6 +8481,44 @@ function exportarMatrizRevisaoPontoCSV() {
   URL.revokeObjectURL(url);
 
   toast(`Exportado ${rpMatriz.length} colaborador(es) × ${rpDatasColunas.length} dia(s).`, 'success');
+}
+
+function exportarRelatorioFaltasRevisaoPontoCSV() {
+  if (!rpMatriz.length) { toast('Processe a comparação antes de exportar.', 'error'); return; }
+
+  const linhas = [];
+  rpMatriz.forEach(m => {
+    m.dias.forEach(d => {
+      if (d.resultado !== 'falta') return;
+      const dataFmt = d.data.split('-').reverse().join('/');
+      linhas.push([dataFmt, m.nome, m.cpf, m.matricula, m.groot, m.ext, m.turno, m.funcao, m.gestor]);
+    });
+  });
+
+  if (!linhas.length) { toast('Nenhuma falta encontrada no período analisado.', 'error'); return; }
+
+  // Ordena por data e depois por nome, pra ficar fácil de ler o relatório
+  linhas.sort((a, b) => {
+    const dataA = a[0].split('/').reverse().join('-');
+    const dataB = b[0].split('/').reverse().join('-');
+    return dataA.localeCompare(dataB) || a[1].localeCompare(b[1]);
+  });
+
+  const cabecalho = ['Data', 'Nome', 'CPF', 'Matrícula 3PL', 'Groot ID', 'EXT', 'Turno', 'Função', 'Gestor'];
+  const corpo = linhas.map(l => l.map(csvEscape).join(','));
+
+  const csv = '\uFEFF' + [cabecalho.join(','), ...corpo].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `relatorio_faltas_${hojeIsoLocal()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  toast(`Relatório de faltas exportado: ${linhas.length} registro(s).`, 'success');
 }
 
 // ════════════════════════════════════════
