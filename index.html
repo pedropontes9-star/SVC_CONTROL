@@ -2724,7 +2724,7 @@ limparQueryVaziaDaUrl();
 // Opcional: cole aqui a URL do Web App do Google Apps Script, caso a aba Anomalias deva ler direto do Sheets.
 // Se ficar vazio, o sistema usa a tabela Supabase `marcacoes_auto`, que pode ser abastecida pelo Apps Script.
 const GOOGLE_SHEETS_API_URL = '';
-const ANOMALIAS_AUTO_REFRESH_MS = 60000;
+const ANOMALIAS_AUTO_REFRESH_MS = 600000; // 10 min — só um fallback de segurança; o Realtime (com debounce) já cobre a atualização "ao vivo"
 
 // ════════════════════════════════════════
 //  HELPERS GERAIS — segurança, normalização e datas
@@ -4227,10 +4227,18 @@ async function buscarAnomaliasDoSupabase() {
   let todos = [];
   let from = 0;
 
+  // A fonte (BigQuery → Sheets → Supabase) só cobre os últimos 45 dias; qualquer
+  // coisa mais antiga já não é mais atualizada pelo script, então baixá-la de novo
+  // a cada carregamento é desperdício puro. 60 dias dá uma folga de segurança.
+  const dataCorte = new Date();
+  dataCorte.setDate(dataCorte.getDate() - 60);
+  const dataCorteIso = dataLocalParaIso(dataCorte);
+
   while (true) {
     const { data, error } = await db
       .from('marcacoes_auto')
       .select('*')
+      .gte('data_marcacao_iso', dataCorteIso)
       .range(from, from + PAGINA - 1);
 
     if (error) throw error;
@@ -4292,6 +4300,12 @@ function iniciarAutoRefreshAnomalias() {
   }, ANOMALIAS_AUTO_REFRESH_MS);
 }
 
+// A sincronização do Sheets faz até dezenas de DELETE/INSERT separados numa única
+// rodada — sem isso, cada um deles dispararia uma recarga da tabela inteira.
+// O debounce junta tudo isso numa recarga só, alguns segundos depois da última mudança.
+let anomaliasRealtimeDebounceTimer = null;
+const ANOMALIAS_REALTIME_DEBOUNCE_MS = 8000;
+
 function assinarRealtimeAnomalias() {
   if (asText(GOOGLE_SHEETS_API_URL).trim()) return;
   if (!db.channel || anomaliasRealtimeChannel) return;
@@ -4300,7 +4314,10 @@ function assinarRealtimeAnomalias() {
     anomaliasRealtimeChannel = db
       .channel('svc_marcacoes_auto_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'marcacoes_auto' }, () => {
-        carregarAnomalias({ silencioso: true, renderizar: true });
+        if (anomaliasRealtimeDebounceTimer) clearTimeout(anomaliasRealtimeDebounceTimer);
+        anomaliasRealtimeDebounceTimer = setTimeout(() => {
+          carregarAnomalias({ silencioso: true, renderizar: true });
+        }, ANOMALIAS_REALTIME_DEBOUNCE_MS);
       })
       .subscribe();
   } catch (error) {
@@ -7921,7 +7938,7 @@ async function atualizarYmsAgora() {
 function iniciarAutoAtualizacaoYms() {
   pararAutoAtualizacaoYms();
   atualizarYmsAgora();
-  ymsIntervaloAutoAtualizacao = setInterval(atualizarYmsAgora, 30000);
+  ymsIntervaloAutoAtualizacao = setInterval(atualizarYmsAgora, 90000); // 90s — ainda parece "ao vivo" num painel, com bem menos tráfego que 30s
 }
 
 function pararAutoAtualizacaoYms() {
