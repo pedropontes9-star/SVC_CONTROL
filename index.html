@@ -9761,6 +9761,7 @@ function imprimirCrachasLms() {
 //  MONITOR — CICLOS
 // ════════════════════════════════════════
 let monitorFileAM = null, monitorFilePM = null, monitorAllData = [], monitorChartInstance = null;
+let monitorSnapshotCacheId = null; // evita rebaixar os dados de um snapshot já aberto na mesma sessão
 let monitorActiveCiclos = new Set();
 let monitorCardMode = 'promessa'; // 'promessa' | 'nodo' | 'endereco'
 let monitorChartDim = 'Facility_Origem';
@@ -10232,7 +10233,7 @@ function monitorToggleGroup(gi) {
 }
 
 function monitorResetDash() {
-  monitorFileAM = null; monitorFilePM = null; monitorAllData = [];
+  monitorFileAM = null; monitorFilePM = null; monitorAllData = []; monitorSnapshotCacheId = null;
   monitorActiveCiclos = new Set(); monitorCurrentSnapshotId = null;
   if (monitorChartInstance) { monitorChartInstance.destroy(); monitorChartInstance = null; }
   document.getElementById('monitor-file-am').innerHTML = '';
@@ -10338,7 +10339,7 @@ async function monitorSalvarSnapshotAtual() {
     if (errSnap) throw errSnap;
 
     monitorCurrentSnapshotId = snap.id;
-
+    monitorSnapshotCacheId = snap.id; // já está em memória, evita rebaixar se reabrir na sequência
     const linhas = monitorAllData.map(r => ({
       snapshot_id: snap.id,
       hu: String(r['HU']||'').trim(),
@@ -10424,6 +10425,18 @@ async function monitorCarregarHistorico() {
 
 async function monitorAbrirSnapshot(snapshotId) {
   try {
+    // Se esse snapshot já foi aberto nessa sessão, não busca tudo de novo — só reabre a visão.
+    if (monitorSnapshotCacheId === snapshotId && monitorAllData.length) {
+      const { data: snapCache, error: errSnapCache } = await db.from('monitor_snapshots').select('criado_em').eq('id', snapshotId).single();
+      if (!errSnapCache && snapCache) {
+        const dataFmtCache = new Date(snapCache.criado_em).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+        monitorMontarFiltrosEAbrirDashboard(dataFmtCache);
+        const statusElCache = document.getElementById('monitor-save-status');
+        if (statusElCache) { statusElCache.textContent = '📜 Snapshot do histórico (somente leitura)'; statusElCache.className = 'sync-status'; }
+        return;
+      }
+    }
+
     toast('Carregando snapshot...', '');
     const { data: snap, error: errSnap } = await db.from('monitor_snapshots').select('*').eq('id', snapshotId).single();
     if (errSnap) throw errSnap;
@@ -10433,7 +10446,7 @@ async function monitorAbrirSnapshot(snapshotId) {
     const pageSize = 1000;
     while (true) {
       const { data: pageData, error: errLinhas } = await db.from('monitor_hu_rows')
-        .select('*')
+        .select('hu, turno, ciclo, facility_origem, tipo_nodo, tipo_endereco, tipo_unidad, info_dit')
         .eq('snapshot_id', snapshotId)
         .range(from, from + pageSize - 1);
       if (errLinhas) throw errLinhas;
@@ -10452,6 +10465,7 @@ async function monitorAbrirSnapshot(snapshotId) {
       _turno: l.turno,
       _cicloLabel: l.ciclo
     }));
+    monitorSnapshotCacheId = snapshotId;
 
     monitorCurrentSnapshotId = snap.id;
     monitorFileAM = null; monitorFilePM = null;
