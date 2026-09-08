@@ -678,6 +678,7 @@
           <option value="5x2_fds">5x2 — Folga sábado e domingo</option>
           <option value="5x2_qqi">5x2 especial — Qua/Qui + Domingo rotativo por grupo</option>
           <option value="1000_efgh">10:00 — Sex/Sáb + Domingo rotativo (grupos E/F/G/H)</option>
+          <option value="5x2_rotativo_abcd">5x2 Rotativo A/B/C/D — ciclo de 4 semanas, giro entre os grupos</option>
           <option value="consolidacao">Consolidação (Mista - Grupos A/B/C)</option>
           <option value="diarista">Diarista (sem grupo/sem folga fixa)</option>
         </select>
@@ -3337,6 +3338,13 @@ const ESCALAS = {
     ordem: ['E','F','G','H'],
     ciclo: null
   },
+  '5x2_rotativo_abcd': {
+    label: '5x2 Rotativo',
+    grupos: ['A','B','C','D'],
+    descricao: 'Ciclo de 4 semanas, com giro entre os grupos A/B/C/D, independente do horário. Cada grupo passa pelas 4 combinações de folga: Quinta+Sexta, Terça+Quarta, Segunda+Domingo e Sábado+Domingo. Referência: semana de 07/09/2026 a 13/09/2026, com o Grupo C na combinação Segunda+Domingo.',
+    refDate: new Date(2026, 8, 7), // segunda 07/set/2026 — grupo C folga Segunda + Domingo nessa semana
+    ciclo: null
+  },
   consolidacao: {
     label: 'Consolid.',
     grupos: ['A','B','C'],
@@ -3496,6 +3504,19 @@ function calcFolgaSemana(head, turno, dataRef) {
     if (!grupo || !ESCALAS['1000_efgh'].grupos.includes(grupo)) return null;
     const grupoSemana4 = grupoSemanaQuatroEscala('1000_efgh', data);
     return grupo === grupoSemana4 ? 'Sexta + Domingo' : 'Sexta + Sábado';
+  }
+
+  if (escala === '5x2_rotativo_abcd') {
+    if (!grupo || !ESCALAS['5x2_rotativo_abcd'].grupos.includes(grupo)) return null;
+    // Ciclo fixo de 4 combinações de folga, girando entre os grupos a cada semana.
+    const PADRAO_FOLGA_5X2_ROTATIVO = ['Quinta + Sexta', 'Terça + Quarta', 'Segunda + Domingo', 'Sábado + Domingo'];
+    // Posição de cada grupo no ciclo na semana de referência (07/09/2026 a 13/09/2026).
+    const IDX_BASE_GRUPO_5X2_ROTATIVO = { A: 0, B: 3, C: 2, D: 1 };
+    const refSemana = inicioSemanaSegunda(ESCALAS['5x2_rotativo_abcd'].refDate);
+    const semanaAlvo = inicioSemanaSegunda(data);
+    const semanas = diffSemanas(refSemana, semanaAlvo);
+    const idx = (((IDX_BASE_GRUPO_5X2_ROTATIVO[grupo] + semanas) % 4) + 4) % 4;
+    return PADRAO_FOLGA_5X2_ROTATIVO[idx];
   }
 
   if (escala === 'consolidacao') {
@@ -3929,6 +3950,7 @@ const ESCALA_DESCRICOES = {
   '5x2_fds': '📋 Sem grupo · folga fixa Sábado e Domingo',
   '5x2_qqi': '📋 Grupos A/B/C/D · folga padrão Quarta + Quinta · semana 4: Quarta + Domingo para o grupo da vez',
   '1000_efgh': '📋 10:00 · Grupos E/F/G/H · 1ª, 2ª e 3ª semana: Sexta + Sábado · 4ª semana: Sexta + Domingo',
+  '5x2_rotativo_abcd': '📋 Grupos A/B/C/D · ciclo de 4 semanas · giro entre Quinta+Sexta, Terça+Quarta, Segunda+Domingo e Sábado+Domingo',
   consolidacao: '📋 Grupos A/B/C · A/B revezam semanalmente · C: semana 1 Sábado, semana 2 Sábado + Domingo, semanas 3 e 4 Sábado',
   diarista: '📋 Sem grupo e sem padrão de folga · usado para Scheduling avulso de diaristas · sempre conta como trabalhado no dia lançado'
 };
@@ -4045,7 +4067,7 @@ function escalaBadge(escala) {
   if (!escala) return '<span class="badge badge-gray">—</span>';
   const e = ESCALAS[escala];
   const label = e ? e.label : escala;
-  const cores = { espanhola:'badge-purple', '0430':'badge-orange', '6x1_dom':'badge-blue', '5x2_fds':'badge-green', '5x2_qqi':'badge-blue', '1000_efgh':'badge-orange', consolidacao:'badge-purple' };
+  const cores = { espanhola:'badge-purple', '0430':'badge-orange', '6x1_dom':'badge-blue', '5x2_fds':'badge-green', '5x2_qqi':'badge-blue', '1000_efgh':'badge-orange', '5x2_rotativo_abcd':'badge-green', consolidacao:'badge-purple' };
   return `<span class="badge ${cores[escala] || 'badge-gray'}">${escapeHtml(label)}</span>`;
 }
 
@@ -5519,6 +5541,7 @@ function onHcTurnoChange() {
     '0430':    'A/B: folga Sáb · C/D: folga Seg · E: folga Dom sem rodízio',
     '5x2_qqi': 'A/B/C/D em ciclo semanal. Na semana de 22/06/2026 a 28/06/2026, o Grupo C folga Quarta e Domingo.',
     '1000_efgh': 'E/F/G/H em ciclo semanal. Na semana de 29/06/2026 a 05/07/2026, o Grupo H folga Sexta e Domingo.',
+    '5x2_rotativo_abcd': 'A/B/C/D em ciclo de 4 semanas. Na semana de 07/09/2026 a 13/09/2026, o Grupo C folga Segunda e Domingo.',
     consolidacao: 'A/B revezam entre Domingo e Sábado + Domingo. C: semana atual é semana 1; folga Sábado, depois Sábado + Domingo na semana 2.'
   };
   hint.textContent = hints[turno.escala] || '';
@@ -10614,6 +10637,7 @@ function onSchedTurnoChange() {
     '0430':    'A/B: folga Sáb · C/D: folga Seg · E: folga Dom sem rodízio',
     '5x2_qqi': 'A/B/C/D em ciclo semanal. Na semana de 22/06/2026 a 28/06/2026, o Grupo C folga Quarta e Domingo.',
     '1000_efgh': 'E/F/G/H em ciclo semanal. Na semana de 29/06/2026 a 05/07/2026, o Grupo H folga Sexta e Domingo.',
+    '5x2_rotativo_abcd': 'A/B/C/D em ciclo de 4 semanas. Na semana de 07/09/2026 a 13/09/2026, o Grupo C folga Segunda e Domingo.',
     consolidacao: 'A/B revezam entre Domingo e Sábado + Domingo. C: semana atual é semana 1; folga Sábado, depois Sábado + Domingo na semana 2.'
   };
   hint.textContent = hints[turno.escala] || '';
