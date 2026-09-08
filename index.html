@@ -1140,6 +1140,13 @@
         <span class="search-icon">🔍</span>
         <input type="text" placeholder="Buscar por transportadora, motorista ou nº do pacote..." id="busca-insucesso" oninput="filtrarInsucessosDoInicio()">
       </div>
+      <select id="insucesso-periodo-select" onchange="onMudarPeriodoInsucesso(this.value)" title="Período carregado — quanto maior, mais lento e mais dado consumido" style="min-width:160px">
+        <option value="30" selected>Período: últimos 30 dias</option>
+        <option value="60">Período: últimos 60 dias</option>
+        <option value="90">Período: últimos 90 dias</option>
+        <option value="180">Período: últimos 180 dias</option>
+        <option value="todos">Período: tudo (pode ficar lento)</option>
+      </select>
       <button class="btn btn-secondary btn-sm" onclick="abrirModalExportarInsucesso()" style="height:34px;display:inline-flex;align-items:center;gap:6px;">
         <span>⬇️ Exportar CSV</span>
       </button>
@@ -1151,6 +1158,8 @@
       </button>
       <span class="count-badge" id="insucesso-count">0 registros</span>
     </div>
+    <p style="font-size:11px;color:var(--text-muted);margin:6px 0 0">Por padrão a tela carrega só os últimos 30 dias, pra abrir mais rápido. Amplie o período no seletor acima se precisar ver ou exportar algo mais antigo.</p>
+
     <div class="table-wrap">
       <table>
         <thead>
@@ -1244,6 +1253,13 @@
         <span class="search-icon">🔍</span>
         <input type="text" placeholder="Buscar por transportadora, motorista ou nº do pacote..." id="busca-insucesso-xpt" oninput="filtrarInsucessosXptDoInicio()">
       </div>
+      <select id="insucesso-xpt-periodo-select" onchange="onMudarPeriodoInsucessoXpt(this.value)" title="Período carregado — quanto maior, mais lento e mais dado consumido" style="min-width:160px">
+        <option value="30" selected>Período: últimos 30 dias</option>
+        <option value="60">Período: últimos 60 dias</option>
+        <option value="90">Período: últimos 90 dias</option>
+        <option value="180">Período: últimos 180 dias</option>
+        <option value="todos">Período: tudo (pode ficar lento)</option>
+      </select>
       <button class="btn btn-secondary btn-sm" onclick="abrirModalExportarInsucessoXpt()" style="height:34px;display:inline-flex;align-items:center;gap:6px;">
         <span>⬇️ Exportar CSV</span>
       </button>
@@ -1255,6 +1271,7 @@
       </button>
       <span class="count-badge" id="insucesso-xpt-count">0 registros</span>
     </div>
+    <p style="font-size:11px;color:var(--text-muted);margin:6px 0 0">Por padrão a tela carrega só os últimos 30 dias, pra abrir mais rápido. Amplie o período no seletor acima se precisar ver ou exportar algo mais antigo (o Dashboard também respeita esse limite).</p>
     <div class="table-wrap">
       <table>
         <thead>
@@ -1297,6 +1314,7 @@
               </div>
               <button class="btn btn-secondary btn-sm" onclick="aplicarPresetDashboardXpt(7)">Últimos 7 dias</button>
               <button class="btn btn-secondary btn-sm" onclick="aplicarPresetDashboardXpt(30)">Últimos 30 dias</button>
+              <span id="insucesso-xpt-dash-aviso-periodo" style="font-size:11px;color:var(--danger-text);display:none"></span>
             </div>
           </div>
         </div>
@@ -6208,18 +6226,29 @@ function renderAbsenteismo() {
 // ════════════════════════════════════════
 //  INSUCESSO / DEVOLUÇÃO — pacotes (uma linha por pacote no banco)
 // ════════════════════════════════════════
-async function carregarInsucessos() {
+let insucessoPeriodoAtual = 30; // dias; null = tudo. Controlado pelo seletor de período na tela.
+
+async function carregarInsucessos(diasAtras = insucessoPeriodoAtual) {
+  insucessoPeriodoAtual = diasAtras;
   try {
     const TAMANHO_PAGINA = 1000;
     let todasLinhas = [];
     let inicio = 0;
 
+    let dataCorteIso = null;
+    if (diasAtras) {
+      const dataCorte = new Date();
+      dataCorte.setDate(dataCorte.getDate() - diasAtras);
+      dataCorteIso = dataLocalParaIso(dataCorte);
+    }
+
     // O Supabase limita a 1000 linhas por chamada; busca em blocos até não sobrar mais nada.
     while (true) {
-      const { data, error } = await db.from('insucessos')
+      let query = db.from('insucessos')
         .select('*')
-        .order('criado_em', { ascending: false })
-        .range(inicio, inicio + TAMANHO_PAGINA - 1);
+        .order('criado_em', { ascending: false });
+      if (dataCorteIso) query = query.gte('data_registro', dataCorteIso);
+      const { data, error } = await query.range(inicio, inicio + TAMANHO_PAGINA - 1);
 
       if (error) {
         if (error.code === '42P01' || /does not exist/i.test(error.message || '')) {
@@ -6252,6 +6281,18 @@ async function carregarInsucessos() {
     console.error(error);
     toast('Erro ao buscar registros de insucesso/devolução: ' + (error.message || error), 'error');
   }
+}
+
+async function onMudarPeriodoInsucesso(valor) {
+  const dias = valor === 'todos' ? null : Number(valor);
+  const btn = document.getElementById('insucesso-periodo-select');
+  if (btn) btn.disabled = true;
+  toast('Carregando período selecionado...', '');
+  await carregarInsucessos(dias);
+  insucessoPaginaAtual = 1;
+  renderInsucessos();
+  if (btn) btn.disabled = false;
+  toast('Período atualizado.', 'success');
 }
 
 function parsePacotesInsucesso(texto) {
@@ -6726,6 +6767,15 @@ function gerarExportacaoInsucessoCSV() {
   if (!dataIni || !dataFim) { toast('Informe o período (data inicial e final).', 'error'); return; }
   if (dataIni > dataFim) { toast('A data inicial não pode ser depois da data final.', 'error'); return; }
 
+  if (insucessoPeriodoAtual) {
+    const inicioCarregado = new Date();
+    inicioCarregado.setDate(inicioCarregado.getDate() - insucessoPeriodoAtual);
+    if (dataIni < dataLocalParaIso(inicioCarregado)) {
+      toast(`Só há dados carregados dos últimos ${insucessoPeriodoAtual} dias. Amplie o período no seletor "Período carregado" acima da tabela antes de exportar um intervalo maior.`, 'error');
+      return;
+    }
+  }
+
   const linhas = insucessos
     .filter(i => i.dataRegistro >= dataIni && i.dataRegistro <= dataFim)
     .sort((a, b) => new Date(a.criadoEm) - new Date(b.criadoEm));
@@ -6757,17 +6807,28 @@ function gerarExportacaoInsucessoCSV() {
 // ════════════════════════════════════════
 //  INSUCESSO / DEVOLUÇÃO - XPT — mesma lógica do SVC, tabela e DOM próprios
 // ════════════════════════════════════════
-async function carregarInsucessosXpt() {
+let insucessoXptPeriodoAtual = 30; // dias; null = tudo. Controlado pelo seletor de período na tela.
+
+async function carregarInsucessosXpt(diasAtras = insucessoXptPeriodoAtual) {
+  insucessoXptPeriodoAtual = diasAtras;
   try {
     const TAMANHO_PAGINA = 1000;
     let todasLinhas = [];
     let inicio = 0;
 
+    let dataCorteIso = null;
+    if (diasAtras) {
+      const dataCorte = new Date();
+      dataCorte.setDate(dataCorte.getDate() - diasAtras);
+      dataCorteIso = dataLocalParaIso(dataCorte);
+    }
+
     while (true) {
-      const { data, error } = await db.from('insucessos_xpt')
+      let query = db.from('insucessos_xpt')
         .select('*')
-        .order('criado_em', { ascending: false })
-        .range(inicio, inicio + TAMANHO_PAGINA - 1);
+        .order('criado_em', { ascending: false });
+      if (dataCorteIso) query = query.gte('data_registro', dataCorteIso);
+      const { data, error } = await query.range(inicio, inicio + TAMANHO_PAGINA - 1);
 
       if (error) {
         if (error.code === '42P01' || /does not exist/i.test(error.message || '')) {
@@ -6802,6 +6863,18 @@ async function carregarInsucessosXpt() {
     console.error(error);
     toast('Erro ao buscar registros de insucesso/devolução (XPT): ' + (error.message || error), 'error');
   }
+}
+
+async function onMudarPeriodoInsucessoXpt(valor) {
+  const dias = valor === 'todos' ? null : Number(valor);
+  const sel = document.getElementById('insucesso-xpt-periodo-select');
+  if (sel) sel.disabled = true;
+  toast('Carregando período selecionado...', '');
+  await carregarInsucessosXpt(dias);
+  insucessoPaginaAtualXpt = 1;
+  renderInsucessosXpt();
+  if (sel) sel.disabled = false;
+  toast('Período atualizado.', 'success');
 }
 
 function atualizarTituloModalInsucessoXpt(etapa) {
@@ -7192,6 +7265,18 @@ function renderDashboardXpt() {
   const dataIni = document.getElementById('insucesso-xpt-dash-data-ini')?.value || '';
   const dataFim = document.getElementById('insucesso-xpt-dash-data-fim')?.value || '';
 
+  const avisoEl = document.getElementById('insucesso-xpt-dash-aviso-periodo');
+  if (avisoEl) {
+    let mostrarAviso = false;
+    if (insucessoXptPeriodoAtual && dataIni) {
+      const inicioCarregado = new Date();
+      inicioCarregado.setDate(inicioCarregado.getDate() - insucessoXptPeriodoAtual);
+      if (dataIni < dataLocalParaIso(inicioCarregado)) mostrarAviso = true;
+    }
+    avisoEl.style.display = mostrarAviso ? '' : 'none';
+    avisoEl.textContent = mostrarAviso ? `⚠️ Só há dados carregados dos últimos ${insucessoXptPeriodoAtual} dias — amplie o período carregado na aba Lançamentos.` : '';
+  }
+
   const lista = insucessosXpt.filter(i => {
     if (dataIni && i.dataRegistro < dataIni) return false;
     if (dataFim && i.dataRegistro > dataFim) return false;
@@ -7281,6 +7366,15 @@ function gerarExportacaoInsucessoXptCSV() {
 
   if (!dataIni || !dataFim) { toast('Informe o período (data inicial e final).', 'error'); return; }
   if (dataIni > dataFim) { toast('A data inicial não pode ser depois da data final.', 'error'); return; }
+
+  if (insucessoXptPeriodoAtual) {
+    const inicioCarregado = new Date();
+    inicioCarregado.setDate(inicioCarregado.getDate() - insucessoXptPeriodoAtual);
+    if (dataIni < dataLocalParaIso(inicioCarregado)) {
+      toast(`Só há dados carregados dos últimos ${insucessoXptPeriodoAtual} dias. Amplie o período no seletor "Período carregado" acima da tabela antes de exportar um intervalo maior.`, 'error');
+      return;
+    }
+  }
 
   const linhas = insucessosXpt
     .filter(i => i.dataRegistro >= dataIni && i.dataRegistro <= dataFim)
