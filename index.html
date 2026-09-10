@@ -427,6 +427,17 @@
   .insucesso-checklist label { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f2f2f2; }
   .insucesso-checklist label:last-child { border-bottom: none; }
 
+  /* ── Scheduling — busca de colaborador (autocomplete) e chips ── */
+  .autocomplete-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 4px 14px rgba(0,0,0,.12); max-height: 260px; overflow-y: auto; z-index: 20; margin-top: 2px; }
+  .autocomplete-item { padding: 8px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #f2f2f2; }
+  .autocomplete-item:last-child { border-bottom: none; }
+  .autocomplete-item:hover { background: #f5f7fa; }
+  .autocomplete-item-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+  .autocomplete-empty { padding: 10px 12px; font-size: 12px; color: var(--text-hint); }
+  .sched-colab-chip { display: inline-flex; align-items: center; gap: 6px; background: #e8f0fe; color: var(--meli-blue); border-radius: 14px; padding: 4px 6px 4px 12px; font-size: 12px; font-weight: 600; }
+  .sched-colab-chip button { background: none; border: none; color: var(--meli-blue); cursor: pointer; font-size: 14px; line-height: 1; padding: 2px 4px; border-radius: 50%; }
+  .sched-colab-chip button:hover { background: rgba(0,0,0,.08); }
+
   /* ── Revisão de Ponto — gavetas colapsáveis ── */
   .rp-drawer { margin-bottom: 20px; }
   .rp-drawer-toggle { display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; padding: 2px 0 8px; }
@@ -1748,8 +1759,9 @@
       </div>
 
       <div class="form-group">
-        <label>Nº de Heads</label>
+        <label>Nº de Heads (manual)</label>
         <input type="number" id="sched-heads" placeholder="Ex: 15" min="1" max="999">
+        <span class="form-hint" id="sched-heads-hint">Usado só se nenhum colaborador for vinculado abaixo</span>
       </div>
 
       <div class="form-group">
@@ -1765,6 +1777,16 @@
       <div class="form-group" style="grid-column:span 2">
         <label>Observação (opcional)</label>
         <input type="text" id="sched-obs" placeholder="Ex: Reforço feriado, ajuste sazonal..." maxlength="200">
+      </div>
+
+      <div class="form-group" style="grid-column:span 2">
+        <label>Colaboradores vinculados <span id="sched-colab-count" style="font-weight:400;color:var(--text-muted)">(0 selecionados)</span></label>
+        <div style="position:relative">
+          <input type="text" id="sched-busca-colaborador" placeholder="Buscar por nome, CPF, matrícula 3PL, EXT ou Groot ID..." oninput="buscarColaboradorParaScheduling()" autocomplete="off">
+          <div id="sched-colaborador-resultados" class="autocomplete-dropdown" style="display:none"></div>
+        </div>
+        <span class="form-hint">Preencha Data Início/Fim antes de vincular, pra checagem de conflito funcionar corretamente.</span>
+        <div id="sched-colaboradores-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px"></div>
       </div>
 
     </div>
@@ -3555,6 +3577,8 @@ let turnos = [];
 let heads  = [];
 let anomalias = [];
 let schedulings = [];
+let schedulingColaboradores = []; // [{id, schedulingId, colaboradorId}] — vínculo N:N
+let schedColabSelecionadosForm = []; // ids dos colaboradores selecionados no formulário atual (antes de salvar)
 let editingTurnoId = null;
 let editingHcId = null;
 let editingSchedId = null;
@@ -3802,6 +3826,18 @@ async function carregarDadosDoBanco() {
       dataFim: s.data_fim,
       obs: s.obs || ''
     }));
+
+    try {
+      const dataSchedColab = await buscarTodasLinhas(() => db.from('scheduling_colaboradores').select('*'));
+      schedulingColaboradores = (dataSchedColab || []).map(l => ({ id: l.id, schedulingId: l.scheduling_id, colaboradorId: l.colaborador_id }));
+    } catch (errSchedColab) {
+      if (errSchedColab.code === '42P01' || /does not exist/i.test(errSchedColab.message || '')) {
+        schedulingColaboradores = [];
+        console.warn('Tabela "scheduling_colaboradores" ainda não existe no Supabase.');
+      } else {
+        throw errSchedColab;
+      }
+    }
 
     const filtroInicio = document.getElementById('filtro-data-inicio');
     const filtroFim = document.getElementById('filtro-data-fim');
@@ -10644,16 +10680,138 @@ function onSchedTurnoChange() {
   wrap.style.display = 'flex';
 }
 
+// Acha, num colaborador, se algum dos campos buscáveis bate com o termo.
+function colaboradorBateBuscaScheduling(h, termo) {
+  return lower(h.nome).includes(termo)
+    || lower(h.cpf).includes(termo)
+    || lower(h.matriculaTpl).includes(termo)
+    || lower(normalizeExt(h.ext)).includes(termo)
+    || lower(h.groot).includes(termo);
+}
+
+// Verifica se um colaborador já está vinculado a OUTRO scheduling cujo período
+// se sobrepõe ao [dataIni, dataFim] informado. Ignora o próprio scheduling em edição.
+function conflitoDeAgendaColaborador(colaboradorId, dataIni, dataFim, ignorarSchedulingId) {
+  const vinculos = schedulingColaboradores.filter(v => v.colaboradorId === colaboradorId && v.schedulingId !== ignorarSchedulingId);
+  for (const v of vinculos) {
+    const s = schedulings.find(x => x.id === v.schedulingId);
+    if (!s || !s.dataInicio || !s.dataFim) continue;
+    const sobrepoe = dataIni <= s.dataFim && s.dataInicio <= dataFim;
+    if (sobrepoe) return s;
+  }
+  return null;
+}
+
+function buscarColaboradorParaScheduling() {
+  const input = document.getElementById('sched-busca-colaborador');
+  const dropdown = document.getElementById('sched-colaborador-resultados');
+  const termo = lower(input.value.trim());
+
+  if (!termo) { dropdown.style.display = 'none'; dropdown.innerHTML = ''; return; }
+
+  const resultados = heads
+    .filter(h => h.status === 'ativo')
+    .filter(h => !schedColabSelecionadosForm.includes(h.id))
+    .filter(h => colaboradorBateBuscaScheduling(h, termo))
+    .slice(0, 8);
+
+  if (!resultados.length) {
+    dropdown.innerHTML = '<div class="autocomplete-empty">Nenhum colaborador ativo encontrado com esse termo.</div>';
+    dropdown.style.display = '';
+    return;
+  }
+
+  dropdown.innerHTML = resultados.map(h => `
+    <div class="autocomplete-item" onclick="adicionarColaboradorAoScheduling('${safeId(h.id)}')">
+      <div><strong>${escapeHtml(h.nome)}</strong></div>
+      <div class="autocomplete-item-sub">EXT: ${escapeHtml(normalizeExt(h.ext) || '—')} · Matrícula: ${escapeHtml(h.matriculaTpl || '—')} · CPF: ${escapeHtml(h.cpf || '—')} · Groot: ${escapeHtml(h.groot || '—')}</div>
+    </div>
+  `).join('');
+  dropdown.style.display = '';
+}
+
+function adicionarColaboradorAoScheduling(headId) {
+  const dataIni = document.getElementById('sched-data-inicio').value;
+  const dataFim = document.getElementById('sched-data-fim').value;
+  if (!dataIni || !dataFim) {
+    toast('Preencha Data Início e Data Fim antes de vincular colaboradores.', 'error');
+    return;
+  }
+  if (dataFim < dataIni) {
+    toast('Data de fim não pode ser anterior ao início.', 'error');
+    return;
+  }
+
+  const h = heads.find(x => x.id === headId);
+  if (!h) return;
+
+  const conflito = conflitoDeAgendaColaborador(headId, dataIni, dataFim, editingSchedId);
+  if (conflito) {
+    toast(`${h.nome} já está vinculado ao Scheduling "${conflito.numero}" (${conflito.dataInicio.split('-').reverse().join('/')} a ${conflito.dataFim.split('-').reverse().join('/')}), período que se sobrepõe. Remova de lá primeiro ou ajuste as datas.`, 'error');
+    return;
+  }
+
+  schedColabSelecionadosForm.push(headId);
+  document.getElementById('sched-busca-colaborador').value = '';
+  document.getElementById('sched-colaborador-resultados').style.display = 'none';
+  renderColaboradoresSelecionadosScheduling();
+}
+
+function removerColaboradorDoScheduling(headId) {
+  schedColabSelecionadosForm = schedColabSelecionadosForm.filter(id => id !== headId);
+  renderColaboradoresSelecionadosScheduling();
+}
+
+document.addEventListener('click', e => {
+  const dropdown = document.getElementById('sched-colaborador-resultados');
+  const input = document.getElementById('sched-busca-colaborador');
+  if (!dropdown || !input) return;
+  if (e.target !== input && !dropdown.contains(e.target)) dropdown.style.display = 'none';
+});
+
+function renderColaboradoresSelecionadosScheduling() {
+  const wrap = document.getElementById('sched-colaboradores-chips');
+  const countEl = document.getElementById('sched-colab-count');
+  const headsManualInput = document.getElementById('sched-heads');
+  const headsHint = document.getElementById('sched-heads-hint');
+
+  if (countEl) countEl.textContent = `(${schedColabSelecionadosForm.length} selecionado${schedColabSelecionadosForm.length !== 1 ? 's' : ''})`;
+
+  if (wrap) {
+    wrap.innerHTML = schedColabSelecionadosForm.map(id => {
+      const h = heads.find(x => x.id === id);
+      if (!h) return '';
+      return `<span class="sched-colab-chip">${escapeHtml(h.nome)}<button type="button" onclick="removerColaboradorDoScheduling('${safeId(id)}')" title="Remover">✕</button></span>`;
+    }).join('');
+  }
+
+  // Quando há gente vinculada, o número manual deixa de ser usado — trava o campo pra deixar isso claro.
+  const temVinculo = schedColabSelecionadosForm.length > 0;
+  if (headsManualInput) {
+    headsManualInput.disabled = temVinculo;
+    if (temVinculo) headsManualInput.value = schedColabSelecionadosForm.length;
+  }
+  if (headsHint) {
+    headsHint.textContent = temVinculo
+      ? 'Contagem automática, calculada pelos colaboradores vinculados abaixo.'
+      : 'Usado só se nenhum colaborador for vinculado abaixo';
+  }
+}
+
 async function salvarScheduling() {
   if (!pode('criar_sched') && !pode('editar_sched')) { toast('Seu perfil não permite salvar schedulings.', 'error'); return; }
   const numero   = document.getElementById('sched-numero').value.trim();
   const turnoId  = document.getElementById('sched-turno').value;
-  const headsVal = parseInt(document.getElementById('sched-heads').value, 10);
+  const headsManualVal = parseInt(document.getElementById('sched-heads').value, 10);
   const dataIni  = document.getElementById('sched-data-inicio').value;
   const dataFim  = document.getElementById('sched-data-fim').value;
   const obs      = document.getElementById('sched-obs').value.trim();
   const grupoRaw = document.getElementById('sched-grupo')?.value || '';
   const grupo    = normalizarGrupoFolga(grupoRaw);
+
+  // Se tem gente vinculada, a contagem vem daí; senão, usa o número digitado à mão.
+  const temColaboradoresVinculados = schedColabSelecionadosForm.length > 0;
+  const headsVal = temColaboradoresVinculados ? schedColabSelecionadosForm.length : headsManualVal;
 
   if (!numero)          { toast('Informe o número do scheduling.', 'error'); return; }
   if (!turnoId)         { toast('Selecione o turno.', 'error'); return; }
@@ -10661,7 +10819,7 @@ async function salvarScheduling() {
   const turno = turnos.find(t => t.id === turnoId);
   if (turnoPossuiGrupos(turno) && !grupo) { toast('Selecione o grupo para esta escala.', 'error'); return; }
 
-  if (!headsVal || headsVal < 1) { toast('Informe o número de heads (mínimo 1).', 'error'); return; }
+  if (!headsVal || headsVal < 1) { toast('Informe o número de heads (mínimo 1) ou vincule ao menos um colaborador.', 'error'); return; }
   if (!dataIni)         { toast('Informe a data de início.', 'error'); return; }
   if (!dataFim)         { toast('Informe a data de fim.', 'error'); return; }
   if (dataFim < dataIni) { toast('Data de fim não pode ser anterior ao início.', 'error'); return; }
@@ -10679,13 +10837,29 @@ async function salvarScheduling() {
       data_fim: dataFim,
       obs: obs || null
     };
-    let error;
+    let error, schedulingIdSalvo;
     if (editingSchedId) {
       ({ error } = await db.from('schedulings').update(dbData).eq('id', editingSchedId));
+      schedulingIdSalvo = editingSchedId;
     } else {
-      ({ error } = await db.from('schedulings').insert([dbData]));
+      const resultado = await db.from('schedulings').insert([dbData]).select().single();
+      error = resultado.error;
+      schedulingIdSalvo = resultado.data?.id;
     }
     if (error) throw error;
+
+    // Sincroniza o vínculo de colaboradores: apaga o que tinha e recria com a seleção atual
+    // (se a seleção estiver vazia, simplesmente some o vínculo — volta a valer o número manual).
+    if (schedulingIdSalvo) {
+      const { error: errDel } = await db.from('scheduling_colaboradores').delete().eq('scheduling_id', schedulingIdSalvo);
+      if (errDel) throw errDel;
+      if (temColaboradoresVinculados) {
+        const linhas = schedColabSelecionadosForm.map(colaboradorId => ({ scheduling_id: schedulingIdSalvo, colaborador_id: colaboradorId }));
+        const { error: errIns } = await db.from('scheduling_colaboradores').insert(linhas);
+        if (errIns) throw errIns;
+      }
+    }
+
     toast(editingSchedId ? 'Scheduling atualizado!' : 'Scheduling cadastrado!', 'success');
     cancelarEdicaoSched();
     await carregarDadosDoBanco();
@@ -10708,6 +10882,15 @@ function limparFormSched() {
   if (wrap) wrap.style.display = 'none';
   if (sel)  { sel.innerHTML = '<option value="">— Selecionar —</option>'; sel.value = ''; }
   if (hint) hint.textContent = '';
+  // Reset colaboradores vinculados
+  schedColabSelecionadosForm = [];
+  const headsManualInput = document.getElementById('sched-heads');
+  if (headsManualInput) headsManualInput.disabled = false;
+  const buscaColab = document.getElementById('sched-busca-colaborador');
+  if (buscaColab) buscaColab.value = '';
+  const dropdown = document.getElementById('sched-colaborador-resultados');
+  if (dropdown) dropdown.style.display = 'none';
+  renderColaboradoresSelecionadosScheduling();
 }
 
 function cancelarEdicaoSched() {
@@ -10732,6 +10915,11 @@ function editarScheduling(id) {
   document.getElementById('sched-data-inicio').value = s.dataInicio || '';
   document.getElementById('sched-data-fim').value = s.dataFim || '';
   document.getElementById('sched-obs').value = s.obs || '';
+
+  // Popula os colaboradores já vinculados a esse scheduling, se houver.
+  schedColabSelecionadosForm = schedulingColaboradores.filter(v => v.schedulingId === id).map(v => v.colaboradorId);
+  renderColaboradoresSelecionadosScheduling();
+
   document.getElementById('sched-form-label').textContent = 'Editar Scheduling';
   document.getElementById('btn-salvar-sched').textContent = 'Atualizar Scheduling';
   document.getElementById('page-scheduling').scrollIntoView({ behavior: 'smooth' });
