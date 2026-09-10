@@ -1781,11 +1781,16 @@
 
       <div class="form-group" style="grid-column:span 2">
         <label>Colaboradores vinculados <span id="sched-colab-count" style="font-weight:400;color:var(--text-muted)">(0 selecionados)</span></label>
-        <div style="position:relative">
-          <input type="text" id="sched-busca-colaborador" placeholder="Buscar por nome, CPF, matrícula 3PL, EXT ou Groot ID..." oninput="buscarColaboradorParaScheduling()" autocomplete="off">
-          <div id="sched-colaborador-resultados" class="autocomplete-dropdown" style="display:none"></div>
+        <input type="text" id="sched-busca-colaborador" placeholder="Buscar por nome, CPF, matrícula 3PL, EXT ou Groot ID..." oninput="renderChecklistColaboradoresScheduling()" autocomplete="off">
+        <span class="form-hint">Preencha Data Início/Fim antes de vincular, pra checagem de conflito funcionar corretamente. Marque quantos quiser e clique em "Adicionar Selecionados".</span>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:8px 0 4px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;font-weight:600">
+            <input type="checkbox" id="sched-colab-marcar-todos" onchange="alternarMarcarTodosScheduling(this.checked)">
+            Selecionar todos os listados
+          </label>
+          <button type="button" class="btn btn-primary btn-sm" onclick="adicionarSelecionadosAoScheduling()">➕ Adicionar Selecionados</button>
         </div>
-        <span class="form-hint">Preencha Data Início/Fim antes de vincular, pra checagem de conflito funcionar corretamente.</span>
+        <div id="sched-colaborador-checklist" class="insucesso-checklist" style="max-height:240px"></div>
         <div id="sched-colaboradores-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px"></div>
       </div>
 
@@ -3579,6 +3584,7 @@ let anomalias = [];
 let schedulings = [];
 let schedulingColaboradores = []; // [{id, schedulingId, colaboradorId}] — vínculo N:N
 let schedColabSelecionadosForm = []; // ids dos colaboradores selecionados no formulário atual (antes de salvar)
+let schedColabChecklistMarcados = new Set(); // ids marcados no checklist, antes de clicar "Adicionar Selecionados"
 let editingTurnoId = null;
 let editingHcId = null;
 let editingSchedId = null;
@@ -10702,72 +10708,87 @@ function conflitoDeAgendaColaborador(colaboradorId, dataIni, dataFim, ignorarSch
   return null;
 }
 
-function buscarColaboradorParaScheduling() {
-  const input = document.getElementById('sched-busca-colaborador');
-  const dropdown = document.getElementById('sched-colaborador-resultados');
-  const termo = lower(input.value.trim());
+function renderChecklistColaboradoresScheduling() {
+  const termo = lower(document.getElementById('sched-busca-colaborador').value.trim());
+  const container = document.getElementById('sched-colaborador-checklist');
+  if (!container) return;
 
-  if (!termo) { dropdown.style.display = 'none'; dropdown.innerHTML = ''; return; }
-
-  const resultados = heads
+  const candidatos = heads
     .filter(h => h.status === 'ativo')
     .filter(h => !schedColabSelecionadosForm.includes(h.id))
-    .filter(h => colaboradorBateBuscaScheduling(h, termo))
-    .slice(0, 8);
+    .filter(h => !termo || colaboradorBateBuscaScheduling(h, termo))
+    .sort((a, b) => a.nome.localeCompare(b.nome))
+    .slice(0, 200); // trava de segurança pra não travar a tela com listas gigantes
 
-  if (!resultados.length) {
-    dropdown.innerHTML = '<div class="autocomplete-empty">Nenhum colaborador ativo encontrado com esse termo.</div>';
-    dropdown.style.display = '';
+  if (!candidatos.length) {
+    container.innerHTML = '<p style="font-size:12px;color:var(--text-hint);padding:8px">Nenhum colaborador ativo disponível com esse termo.</p>';
     return;
   }
 
-  dropdown.innerHTML = resultados.map(h => `
-    <div class="autocomplete-item" onclick="adicionarColaboradorAoScheduling('${safeId(h.id)}')">
-      <div><strong>${escapeHtml(h.nome)}</strong></div>
-      <div class="autocomplete-item-sub">EXT: ${escapeHtml(normalizeExt(h.ext) || '—')} · Matrícula: ${escapeHtml(h.matriculaTpl || '—')} · CPF: ${escapeHtml(h.cpf || '—')} · Groot: ${escapeHtml(h.groot || '—')}</div>
-    </div>
+  container.innerHTML = candidatos.map(h => `
+    <label style="justify-content:space-between">
+      <span style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" class="chk-sched-colab" data-id="${safeId(h.id)}" ${schedColabChecklistMarcados.has(h.id) ? 'checked' : ''} onchange="onMarcarColaboradorChecklistScheduling('${safeId(h.id)}', this.checked)">
+        <span>${escapeHtml(h.nome)} <span style="color:var(--text-hint);font-size:11px">(EXT ${escapeHtml(normalizeExt(h.ext) || '—')} · Mat. ${escapeHtml(h.matriculaTpl || '—')})</span></span>
+      </span>
+    </label>
   `).join('');
-  dropdown.style.display = '';
 }
 
-function adicionarColaboradorAoScheduling(headId) {
+function onMarcarColaboradorChecklistScheduling(headId, marcado) {
+  if (marcado) schedColabChecklistMarcados.add(headId);
+  else schedColabChecklistMarcados.delete(headId);
+}
+
+function alternarMarcarTodosScheduling(marcarTudo) {
+  document.querySelectorAll('.chk-sched-colab').forEach(chk => {
+    chk.checked = marcarTudo;
+    if (marcarTudo) schedColabChecklistMarcados.add(chk.dataset.id);
+    else schedColabChecklistMarcados.delete(chk.dataset.id);
+  });
+}
+
+function adicionarSelecionadosAoScheduling() {
   const dataIni = document.getElementById('sched-data-inicio').value;
   const dataFim = document.getElementById('sched-data-fim').value;
-  if (!dataIni || !dataFim) {
-    toast('Preencha Data Início e Data Fim antes de vincular colaboradores.', 'error');
-    return;
-  }
-  if (dataFim < dataIni) {
-    toast('Data de fim não pode ser anterior ao início.', 'error');
-    return;
-  }
+  if (!dataIni || !dataFim) { toast('Preencha Data Início e Data Fim antes de vincular colaboradores.', 'error'); return; }
+  if (dataFim < dataIni) { toast('Data de fim não pode ser anterior ao início.', 'error'); return; }
+  if (!schedColabChecklistMarcados.size) { toast('Marque ao menos um colaborador na lista abaixo.', 'error'); return; }
 
-  const h = heads.find(x => x.id === headId);
-  if (!h) return;
+  const adicionados = [];
+  const conflitantes = [];
 
-  const conflito = conflitoDeAgendaColaborador(headId, dataIni, dataFim, editingSchedId);
-  if (conflito) {
-    toast(`${h.nome} já está vinculado ao Scheduling "${conflito.numero}" (${conflito.dataInicio.split('-').reverse().join('/')} a ${conflito.dataFim.split('-').reverse().join('/')}), período que se sobrepõe. Remova de lá primeiro ou ajuste as datas.`, 'error');
-    return;
-  }
+  schedColabChecklistMarcados.forEach(headId => {
+    const h = heads.find(x => x.id === headId);
+    if (!h) return;
+    const conflito = conflitoDeAgendaColaborador(headId, dataIni, dataFim, editingSchedId);
+    if (conflito) {
+      conflitantes.push(`${h.nome} (conflita com "${conflito.numero}")`);
+    } else {
+      schedColabSelecionadosForm.push(headId);
+      adicionados.push(h.nome);
+    }
+  });
 
-  schedColabSelecionadosForm.push(headId);
-  document.getElementById('sched-busca-colaborador').value = '';
-  document.getElementById('sched-colaborador-resultados').style.display = 'none';
+  schedColabChecklistMarcados.clear();
+  const marcarTodosChk = document.getElementById('sched-colab-marcar-todos');
+  if (marcarTodosChk) marcarTodosChk.checked = false;
+
+  renderChecklistColaboradoresScheduling();
   renderColaboradoresSelecionadosScheduling();
+
+  if (adicionados.length) toast(`${adicionados.length} colaborador(es) adicionado(s).`, 'success');
+  if (conflitantes.length) {
+    const lista = conflitantes.slice(0, 3).join(', ') + (conflitantes.length > 3 ? `, e mais ${conflitantes.length - 3}` : '');
+    toast(`${conflitantes.length} ignorado(s) por conflito de agenda: ${lista}`, 'error');
+  }
 }
 
 function removerColaboradorDoScheduling(headId) {
   schedColabSelecionadosForm = schedColabSelecionadosForm.filter(id => id !== headId);
   renderColaboradoresSelecionadosScheduling();
+  renderChecklistColaboradoresScheduling(); // a pessoa removida volta a aparecer como disponível
 }
-
-document.addEventListener('click', e => {
-  const dropdown = document.getElementById('sched-colaborador-resultados');
-  const input = document.getElementById('sched-busca-colaborador');
-  if (!dropdown || !input) return;
-  if (e.target !== input && !dropdown.contains(e.target)) dropdown.style.display = 'none';
-});
 
 function renderColaboradoresSelecionadosScheduling() {
   const wrap = document.getElementById('sched-colaboradores-chips');
@@ -10884,13 +10905,15 @@ function limparFormSched() {
   if (hint) hint.textContent = '';
   // Reset colaboradores vinculados
   schedColabSelecionadosForm = [];
+  schedColabChecklistMarcados.clear();
   const headsManualInput = document.getElementById('sched-heads');
   if (headsManualInput) headsManualInput.disabled = false;
   const buscaColab = document.getElementById('sched-busca-colaborador');
   if (buscaColab) buscaColab.value = '';
-  const dropdown = document.getElementById('sched-colaborador-resultados');
-  if (dropdown) dropdown.style.display = 'none';
+  const marcarTodosChk = document.getElementById('sched-colab-marcar-todos');
+  if (marcarTodosChk) marcarTodosChk.checked = false;
   renderColaboradoresSelecionadosScheduling();
+  renderChecklistColaboradoresScheduling();
 }
 
 function cancelarEdicaoSched() {
@@ -10918,7 +10941,10 @@ function editarScheduling(id) {
 
   // Popula os colaboradores já vinculados a esse scheduling, se houver.
   schedColabSelecionadosForm = schedulingColaboradores.filter(v => v.schedulingId === id).map(v => v.colaboradorId);
+  schedColabChecklistMarcados.clear();
+  document.getElementById('sched-busca-colaborador').value = '';
   renderColaboradoresSelecionadosScheduling();
+  renderChecklistColaboradoresScheduling();
 
   document.getElementById('sched-form-label').textContent = 'Editar Scheduling';
   document.getElementById('btn-salvar-sched').textContent = 'Atualizar Scheduling';
@@ -11181,3 +11207,4 @@ window.addEventListener('DOMContentLoaded', async function() {
 
 </body>
 </html>
+  
