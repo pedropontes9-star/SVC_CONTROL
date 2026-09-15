@@ -439,6 +439,10 @@
   .sched-colab-chip button:hover { background: rgba(0,0,0,.08); }
 
   /* ── Fechamento Diário — visual ── */
+  .fd-subtab-bar { display: inline-flex; gap: 6px; padding: 5px; background: #fff; border: 1.5px solid #2D327733; border-radius: 30px; margin-bottom: 18px; box-shadow: 0 2px 8px rgba(45,50,119,.08); }
+  .fd-subtab-pill { padding: 9px 20px; border-radius: 24px; border: none; background: transparent; color: #2D3277; cursor: pointer; font-weight: 700; font-size: 13px; transition: all .18s ease; font-family: inherit; }
+  .fd-subtab-pill:hover { background: #2D32770f; }
+  .fd-subtab-pill.active { background: linear-gradient(135deg, #2D3277, #3483FA); color: #fff; box-shadow: 0 4px 12px rgba(52,131,250,.35); }
   .fd-header-card { border-radius: 16px; padding: 18px 22px; background: linear-gradient(135deg, #1a2b6d 0%, #2D3277 55%, #3483FA 100%); color: #fff; box-shadow: 0 8px 24px rgba(45,50,119,.25); margin-bottom: 20px; }
   .fd-header-card .fd-header-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .75; margin-bottom: 4px; }
   .fd-header-card .fd-header-title { font-size: 22px; font-weight: 800; line-height: 1.1; }
@@ -1766,15 +1770,9 @@
      FECHAMENTO DIÁRIO
 ════════════════════════════════════════ -->
 <div id="page-fechamento-diario" class="page">
-  <p class="section-label">Fechamento Diário</p>
-  <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Lançamento do fechamento dos ciclos de processamento (CHP, AM, PM, SD) e do fechamento consolidado do dia.</p>
-
-  <div class="monitor-section-header">
-    <span class="monitor-section-title">Visualização</span>
-    <div class="monitor-section-toggle">
-      <button class="monitor-toggle-btn fd-subtab-btn active" onclick="setFechamentoDiarioSubTab('ciclo', this)">Visão de Ciclo</button>
-      <button class="monitor-toggle-btn fd-subtab-btn" onclick="setFechamentoDiarioSubTab('dia', this)">Fechamento do Dia</button>
-    </div>
+  <div class="fd-subtab-bar">
+    <button class="fd-subtab-pill fd-subtab-btn active" onclick="setFechamentoDiarioSubTab('ciclo', this)">📋 Visão de Ciclo</button>
+    <button class="fd-subtab-pill fd-subtab-btn" onclick="setFechamentoDiarioSubTab('dia', this)">📅 Fechamento do Dia</button>
   </div>
 
   <!-- ── VISÃO DE CICLO ── -->
