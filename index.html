@@ -482,6 +482,19 @@
   .fd-comp-delta.pos { background: #e8f5e9; color: #1b5e20; }
   .fd-comp-delta.neg { background: #ffebee; color: #b71c1c; }
   .fd-comp-delta.neutro { background: #f0f0f0; color: var(--text-muted); }
+  .fd-dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+  .fd-dash-tile { border-radius: 16px; padding: 16px 18px; background: #fff; box-shadow: var(--shadow); border: 1.5px solid rgba(45,50,119,.06); position: relative; overflow: hidden; }
+  .fd-dash-tile.ok { background: linear-gradient(160deg, #f0faf4, #fff); border-color: #9ad2ab; }
+  .fd-dash-tile.baixo { background: linear-gradient(160deg, #fff5f5, #fff); border-color: #f3a9a9; }
+  .fd-dash-tile .fd-stat-big { font-size: 30px; }
+  .fd-dash-ciclos { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .fd-dash-ciclo { border-radius: 16px; padding: 14px 16px; background: #fff; box-shadow: var(--shadow); border: 1.5px solid rgba(45,50,119,.06); }
+  .fd-dash-ciclo.vazio { opacity: .55; border-style: dashed; }
+  .fd-dash-ciclo-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-weight: 800; color: var(--meli-blue); }
+  .fd-dash-mini { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; border-bottom: 1px dashed #eef0f4; }
+  .fd-dash-mini:last-child { border-bottom: none; }
+  .fd-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .fd-dot.ok { background: #2e7d32; } .fd-dot.baixo { background: #c62828; } .fd-dot.neutro { background: #c4c8ce; }
 
   /* ── Revisão de Ponto — gavetas colapsáveis ── */
   .rp-drawer { margin-bottom: 20px; }
@@ -1839,6 +1852,7 @@
   <div class="fd-subtab-bar">
     <button class="fd-subtab-pill fd-subtab-btn active" onclick="setFechamentoDiarioSubTab('ciclo', this)">📋 Visão de Ciclo</button>
     <button class="fd-subtab-pill fd-subtab-btn" onclick="setFechamentoDiarioSubTab('dia', this)">📅 Fechamento do Dia</button>
+    <button class="fd-subtab-pill fd-subtab-btn" onclick="setFechamentoDiarioSubTab('dash', this)">📈 Dashboard</button>
   </div>
 
   <!-- ── VISÃO DE CICLO ── -->
@@ -1942,6 +1956,42 @@
           <thead><tr><th>Indicador</th><th>Calculada</th><th>Definitiva</th><th>Diferença</th></tr></thead>
           <tbody id="tbody-fd-comparacao"></tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DASHBOARD ── -->
+  <div id="fd-tab-dash" style="display:none">
+    <div class="fd-header-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px">
+        <div>
+          <div class="fd-header-label">Dashboard do dia</div>
+          <div class="fd-header-title" id="fd-dash-titulo">Resumo</div>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap">
+          <div>
+            <div class="fd-header-label">Data</div>
+            <input type="date" id="fd-dash-data" onchange="renderDashboardFechamento()">
+          </div>
+          <div style="padding-bottom:4px"><span id="fd-dash-fonte-badge" class="badge badge-gray">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="fd-dash-resumo" class="fd-dash-grid" style="margin-bottom:22px"></div>
+
+    <p class="section-label">Por ciclo</p>
+    <div id="fd-dash-ciclos" class="fd-dash-ciclos" style="margin-bottom:22px"></div>
+
+    <p class="section-label">Tendência — últimos 7 dias</p>
+    <div style="display:flex;gap:20px;flex-wrap:wrap">
+      <div class="card" style="flex:1;min-width:340px;padding:18px 20px">
+        <div class="fd-kpi-label" style="margin-bottom:10px">Indicadores (%)</div>
+        <div style="position:relative;height:240px"><canvas id="fd-dash-chart-indicadores"></canvas></div>
+      </div>
+      <div class="card" style="flex:1;min-width:340px;padding:18px 20px">
+        <div class="fd-kpi-label" style="margin-bottom:10px">Volume projetado x atendido</div>
+        <div style="position:relative;height:240px"><canvas id="fd-dash-chart-volume"></canvas></div>
       </div>
     </div>
   </div>
@@ -9031,6 +9081,8 @@ function inicializarTelaFechamentoDiario() {
 
   if (inputCiclo && !inputCiclo.value) inputCiclo.value = hojeIsoLocal();
   if (inputDia && !inputDia.value) inputDia.value = hojeIsoLocal();
+  const inputDash = document.getElementById('fd-dash-data');
+  if (inputDash && !inputDash.value) inputDash.value = hojeIsoLocal();
   if (histIni && !histIni.value) {
     const seteDiasAtras = new Date(); seteDiasAtras.setDate(seteDiasAtras.getDate() - 6);
     histIni.value = dataLocalParaIso(seteDiasAtras);
@@ -9050,8 +9102,10 @@ function setFechamentoDiarioSubTab(tab, btnEl) {
   if (btnEl) btnEl.classList.add('active');
   document.getElementById('fd-tab-ciclo').style.display = tab === 'ciclo' ? '' : 'none';
   document.getElementById('fd-tab-dia').style.display = tab === 'dia' ? '' : 'none';
+  document.getElementById('fd-tab-dash').style.display = tab === 'dash' ? '' : 'none';
   // Sempre que entrar na aba do dia, recalcula a Calculada com os ciclos mais recentes.
   if (tab === 'dia') onFdDiaDataChange();
+  if (tab === 'dash') renderDashboardFechamento();
 }
 
 // ── Visão de Ciclo ──
@@ -9263,6 +9317,7 @@ async function salvarFechamentoCiclo() {
     renderHistoricoFechamentoCiclos();
     onFdCicloDataChange(); // recarrega e ajusta o rótulo do botão (Salvar → Atualizar)
     onFdDiaDataChange();   // mantém a Calculada do dia sempre em dia, sem precisar salvar o dia
+    atualizarDashboardSeVisivel();
   } catch (error) {
     console.error(error);
     toast('Erro ao salvar ciclo: ' + (error.message || error), 'error');
@@ -9524,6 +9579,7 @@ async function salvarFechamentoDia() {
     toast('Dia fechado com o resultado definitivo!', 'success');
     await carregarFechamentosDiarios();
     onFdDiaDataChange();
+    atualizarDashboardSeVisivel();
   } catch (error) {
     console.error(error);
     toast('Erro ao salvar fechamento do dia: ' + (error.message || error), 'error');
@@ -9559,6 +9615,166 @@ function exportarFechamentoDiarioCSV() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
   toast(`Exportado ${lista.length} dia(s).`, 'success');
+}
+
+// ── Dashboard ──
+// Resultado "oficial" do dia: usa o Definitivo quando existe (campo a campo),
+// senão cai pro Calculado (média/soma dos ciclos). Volume vem sempre dos ciclos.
+let fdDashChartIndicadores = null;
+let fdDashChartVolume = null;
+
+function atualizarDashboardSeVisivel() {
+  const tab = document.getElementById('fd-tab-dash');
+  if (tab && tab.style.display !== 'none') renderDashboardFechamento();
+}
+
+function obterResultadoDoDia(data) {
+  const calc = calcularFechamentoDiaCalculado(data);
+  const r = fechamentosDiarios.find(x => x.data === data);
+  const temDefinitivo = !!r && (r.fagDefinitivo !== null || r.ootDefinitivo !== null || r.tmecDefinitivo !== null);
+  return {
+    data,
+    fonte: temDefinitivo ? 'definitivo' : (calc.quantosCiclos ? 'calculado' : null),
+    fag: temDefinitivo ? (r.fagDefinitivo ?? calc.fag) : calc.fag,
+    oot: temDefinitivo ? (r.ootDefinitivo ?? calc.oot) : calc.oot,
+    tmec: temDefinitivo ? (r.tmecDefinitivo ?? calc.tmec) : calc.tmec,
+    volumeProjetado: calc.volumeProjetado,
+    volumeAtendido: calc.volumeAtendido,
+    quantosCiclos: calc.quantosCiclos
+  };
+}
+
+function renderDashboardFechamento() {
+  const inputData = document.getElementById('fd-dash-data');
+  if (!inputData) return;
+  if (!inputData.value) inputData.value = hojeIsoLocal();
+  const data = inputData.value;
+  const res = obterResultadoDoDia(data);
+
+  const titulo = document.getElementById('fd-dash-titulo');
+  if (titulo) {
+    const dataObj = isoParaDataLocal(data);
+    titulo.textContent = `Resumo de ${data.split('-').reverse().join('/')} · ${DIAS_SEMANA_ABREV_PT[dataObj.getDay()]}`;
+  }
+
+  const badge = document.getElementById('fd-dash-fonte-badge');
+  if (badge) {
+    if (res.fonte === 'definitivo') { badge.textContent = '✅ Resultado definitivo'; badge.className = 'badge badge-green'; }
+    else if (res.fonte === 'calculado') { badge.textContent = '📐 Resultado calculado (dia ainda não fechado)'; badge.className = 'badge badge-orange'; }
+    else { badge.textContent = 'Sem lançamentos'; badge.className = 'badge badge-gray'; }
+  }
+
+  const fmtNum = v => (v === null || v === undefined) ? '<span style="color:#c4c8ce">—</span>' : Number(v).toLocaleString('pt-BR');
+  const d = calcularDispersao(res.volumeProjetado, res.volumeAtendido);
+
+  const tileInd = (label, valor, target) => {
+    const tem = valor !== null && valor !== undefined;
+    const atingiu = tem && valor >= target;
+    const classe = tem ? (atingiu ? 'ok' : 'baixo') : '';
+    return `
+      <div class="fd-dash-tile ${classe}">
+        <div class="fd-kpi-header"><span class="fd-kpi-label">${label}</span><span class="fd-kpi-meta">meta ${target}%</span></div>
+        <div class="fd-stat-big">${tem ? valor + '%' : '<span style="color:#c4c8ce">—</span>'}</div>
+        <div class="fd-progress"><div class="fd-progress-fill ${classe}" style="width:${tem ? Math.max(0, Math.min(100, valor)) : 0}%"></div><div class="fd-progress-meta" style="left:${target}%"></div></div>
+      </div>`;
+  };
+
+  const resumo = document.getElementById('fd-dash-resumo');
+  if (resumo) {
+    resumo.innerHTML = `
+      <div class="fd-dash-tile">
+        <div class="fd-kpi-label">Volume Projetado</div>
+        <div class="fd-stat-big">${fmtNum(res.volumeProjetado)}</div>
+        <div class="fd-kpi-meta">soma dos ${res.quantosCiclos} ciclo(s)</div>
+      </div>
+      <div class="fd-dash-tile">
+        <div class="fd-kpi-label">Volume Atendido</div>
+        <div class="fd-stat-big">${fmtNum(res.volumeAtendido)}</div>
+        <div class="fd-kpi-meta">soma dos ${res.quantosCiclos} ciclo(s)</div>
+      </div>
+      <div class="fd-dash-tile">
+        <div class="fd-kpi-label">Dispersão</div>
+        <div style="margin-top:8px">${gerarDispersaoPillHtml(d)}</div>
+        <div class="fd-kpi-meta" style="margin-top:8px">atendido − projetado</div>
+      </div>
+      ${tileInd('FAG', res.fag, METAS_FECHAMENTO.fag)}
+      ${tileInd('OOT', res.oot, METAS_FECHAMENTO.oot)}
+      ${tileInd('TMEC', res.tmec, METAS_FECHAMENTO.tmec)}
+    `;
+  }
+
+  const ciclosEl = document.getElementById('fd-dash-ciclos');
+  if (ciclosEl) {
+    ciclosEl.innerHTML = CICLOS_FECHAMENTO.map(ciclo => {
+      const c = fechamentoCiclos.find(x => x.data === data && x.ciclo === ciclo);
+      if (!c) {
+        return `<div class="fd-dash-ciclo vazio"><div class="fd-dash-ciclo-head"><span>${ICONES_CICLO_FECHAMENTO[ciclo]} ${ciclo}</span></div><div style="font-size:12px;color:var(--text-hint)">Não lançado</div></div>`;
+      }
+      const dc = calcularDispersao(c.volumeProjetado, c.volumeAtendido);
+      const dot = (v, t) => (v === null || v === undefined) ? 'neutro' : (v >= t ? 'ok' : 'baixo');
+      const val = v => (v === null || v === undefined) ? '—' : v + '%';
+      return `
+        <div class="fd-dash-ciclo">
+          <div class="fd-dash-ciclo-head"><span>${ICONES_CICLO_FECHAMENTO[ciclo]} ${ciclo}</span>${gerarDispersaoPillHtml(dc)}</div>
+          <div class="fd-dash-mini"><span>Projetado</span><strong>${fmtNum(c.volumeProjetado)}</strong></div>
+          <div class="fd-dash-mini"><span>Atendido</span><strong>${fmtNum(c.volumeAtendido)}</strong></div>
+          <div class="fd-dash-mini"><span><span class="fd-dot ${dot(c.fag, METAS_FECHAMENTO.fag)}"></span>FAG</span><strong>${val(c.fag)}</strong></div>
+          <div class="fd-dash-mini"><span><span class="fd-dot ${dot(c.oot, METAS_FECHAMENTO.oot)}"></span>OOT</span><strong>${val(c.oot)}</strong></div>
+          <div class="fd-dash-mini"><span><span class="fd-dot ${dot(c.tmec, METAS_FECHAMENTO.tmec)}"></span>TMEC</span><strong>${val(c.tmec)}</strong></div>
+        </div>`;
+    }).join('');
+  }
+
+  renderGraficosDashboardFechamento(data);
+}
+
+function renderGraficosDashboardFechamento(dataFim) {
+  const dias = [];
+  const fim = isoParaDataLocal(dataFim);
+  for (let i = 6; i >= 0; i--) {
+    const dt = new Date(fim); dt.setDate(dt.getDate() - i);
+    dias.push(dataLocalParaIso(dt));
+  }
+  const resultados = dias.map(obterResultadoDoDia);
+  const labels = dias.map(dia => dia.split('-').slice(1).reverse().join('/'));
+
+  const canvasInd = document.getElementById('fd-dash-chart-indicadores');
+  if (canvasInd && window.Chart) {
+    if (fdDashChartIndicadores) { fdDashChartIndicadores.destroy(); fdDashChartIndicadores = null; }
+    const linha = (label, campo, cor) => ({
+      label, data: resultados.map(r => r[campo]), borderColor: cor, backgroundColor: cor + '22',
+      tension: .35, spanGaps: true, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2.5
+    });
+    fdDashChartIndicadores = new Chart(canvasInd, {
+      type: 'line',
+      data: { labels, datasets: [linha('FAG', 'fag', '#3483FA'), linha('OOT', 'oot', '#00875A'), linha('TMEC', 'tmec', '#FF7A00')] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } },
+        scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%', font: { size: 11 } } }, x: { ticks: { font: { size: 11 } } } }
+      }
+    });
+  }
+
+  const canvasVol = document.getElementById('fd-dash-chart-volume');
+  if (canvasVol && window.Chart) {
+    if (fdDashChartVolume) { fdDashChartVolume.destroy(); fdDashChartVolume = null; }
+    fdDashChartVolume = new Chart(canvasVol, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Projetado', data: resultados.map(r => r.volumeProjetado), backgroundColor: '#2D327799', borderRadius: 8 },
+          { label: 'Atendido', data: resultados.map(r => r.volumeAtendido), backgroundColor: '#3483FA', borderRadius: 8 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } },
+        scales: { y: { beginAtZero: true, ticks: { font: { size: 11 } } }, x: { ticks: { font: { size: 11 } } } }
+      }
+    });
+  }
 }
 
 // ════════════════════════════════════════
