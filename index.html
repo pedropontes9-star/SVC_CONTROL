@@ -8870,8 +8870,6 @@ async function carregarFechamentosDiarios() {
       id: r.id,
       data: r.data,
       status: r.status,
-      volumeProjetadoDefinitivo: r.volume_projetado_definitivo,
-      volumeAtendidoDefinitivo: r.volume_atendido_definitivo,
       fagDefinitivo: r.fag_definitivo,
       ootDefinitivo: r.oot_definitivo,
       tmecDefinitivo: r.tmec_definitivo,
@@ -8917,6 +8915,8 @@ function setFechamentoDiarioSubTab(tab, btnEl) {
   if (btnEl) btnEl.classList.add('active');
   document.getElementById('fd-tab-ciclo').style.display = tab === 'ciclo' ? '' : 'none';
   document.getElementById('fd-tab-dia').style.display = tab === 'dia' ? '' : 'none';
+  // Sempre que entrar na aba do dia, recalcula a Calculada com os ciclos mais recentes.
+  if (tab === 'dia') onFdDiaDataChange();
 }
 
 // ── Visão de Ciclo ──
@@ -9065,6 +9065,7 @@ async function salvarFechamentoCiclo() {
     await carregarFechamentoCiclos();
     renderHistoricoFechamentoCiclos();
     onFdCicloDataChange(); // recarrega e ajusta o rótulo do botão (Salvar → Atualizar)
+    onFdDiaDataChange();   // mantém a Calculada do dia sempre em dia, sem precisar salvar o dia
   } catch (error) {
     console.error(error);
     toast('Erro ao salvar ciclo: ' + (error.message || error), 'error');
@@ -9150,45 +9151,28 @@ function exportarFechamentoCiclosCSV() {
 
 function gerarFormularioFechamentoDiaHtml(prefixo) {
   return `
-    <div class="form-group">
-      <label>Volume Projetado</label>
-      <input type="number" id="${prefixo}-projetado" oninput="atualizarDispersaoDia('${prefixo}')">
-    </div>
-    <div class="form-group">
-      <label>Volume Atendido</label>
-      <input type="number" id="${prefixo}-atendido" oninput="atualizarDispersaoDia('${prefixo}')">
-    </div>
-    <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Dispersão: <strong id="${prefixo}-dispersao">—</strong></div>
     ${gerarBlocoIndicadorHtml(prefixo, 'fag', 'FAG', METAS_FECHAMENTO.fag)}
     ${gerarBlocoIndicadorHtml(prefixo, 'oot', 'OOT', METAS_FECHAMENTO.oot)}
     ${gerarBlocoIndicadorHtml(prefixo, 'tmec', 'TMEC', METAS_FECHAMENTO.tmec)}
   `;
 }
 
-function atualizarDispersaoDia(prefixo) {
-  const projetado = document.getElementById(`${prefixo}-projetado`).value;
-  const atendido = document.getElementById(`${prefixo}-atendido`).value;
-  const el = document.getElementById(`${prefixo}-dispersao`);
-  if (!el) return;
-  const d = calcularDispersao(projetado, atendido);
-  if (!d) { el.textContent = '—'; el.style.color = ''; return; }
-  const sinal = d.diffNum > 0 ? '+' : '';
-  el.textContent = `${sinal}${d.diffNum} (${sinal}${d.diffPct.toFixed(1)}%)`;
-  el.style.color = d.diffNum >= 0 ? 'var(--success-text)' : 'var(--danger-text)';
-}
-
-// Média simples dos ciclos já lançados no dia (só considera os que têm valor em cada campo).
+// Volume: SOMA dos ciclos do dia. FAG/OOT/TMEC: MÉDIA simples dos ciclos que têm valor.
 function calcularFechamentoDiaCalculado(data) {
   const ciclosDoDia = fechamentoCiclos.filter(r => r.data === data);
+  const valoresDe = campo => ciclosDoDia.map(r => r[campo]).filter(v => v !== null && v !== undefined);
+  const soma = campo => {
+    const v = valoresDe(campo);
+    return v.length ? v.reduce((a, b) => a + b, 0) : null;
+  };
   const media = campo => {
-    const valores = ciclosDoDia.map(r => r[campo]).filter(v => v !== null && v !== undefined);
-    if (!valores.length) return null;
-    return Math.round((valores.reduce((a, b) => a + b, 0) / valores.length) * 100) / 100;
+    const v = valoresDe(campo);
+    return v.length ? Math.round((v.reduce((a, b) => a + b, 0) / v.length) * 100) / 100 : null;
   };
   return {
     quantosCiclos: ciclosDoDia.length,
-    volumeProjetado: media('volumeProjetado'),
-    volumeAtendido: media('volumeAtendido'),
+    volumeProjetado: soma('volumeProjetado'),
+    volumeAtendido: soma('volumeAtendido'),
     fag: media('fag'),
     oot: media('oot'),
     tmec: media('tmec')
@@ -9218,8 +9202,8 @@ function renderCalculadaFechamentoDia(data) {
   };
 
   container.innerHTML = `
-    <div class="form-group"><label>Volume Projetado (média)</label><div style="padding:8px 0;font-size:14px">${calc.volumeProjetado ?? '—'}</div></div>
-    <div class="form-group"><label>Volume Atendido (média)</label><div style="padding:8px 0;font-size:14px">${calc.volumeAtendido ?? '—'}</div></div>
+    <div class="form-group"><label>Volume Projetado (soma)</label><div style="padding:8px 0;font-size:14px">${calc.volumeProjetado ?? '—'}</div></div>
+    <div class="form-group"><label>Volume Atendido (soma)</label><div style="padding:8px 0;font-size:14px">${calc.volumeAtendido ?? '—'}</div></div>
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Dispersão: <strong>${dispersaoTxt}</strong></div>
     <div class="form-group"><label>FAG (média)</label><div style="padding:6px 0;font-size:13px">${fmtInd(calc.fag, METAS_FECHAMENTO.fag)}</div></div>
     <div class="form-group"><label>OOT (média)</label><div style="padding:6px 0;font-size:13px">${fmtInd(calc.oot, METAS_FECHAMENTO.oot)}</div></div>
@@ -9235,8 +9219,6 @@ function renderComparacaoFechamentoDia(data) {
   const r = fechamentosDiarios.find(x => x.data === data);
 
   const linhas = [
-    ['Volume Projetado', calc.volumeProjetado, r?.volumeProjetadoDefinitivo],
-    ['Volume Atendido', calc.volumeAtendido, r?.volumeAtendidoDefinitivo],
     ['FAG (%)', calc.fag, r?.fagDefinitivo],
     ['OOT (%)', calc.oot, r?.ootDefinitivo],
     ['TMEC (%)', calc.tmec, r?.tmecDefinitivo]
@@ -9261,7 +9243,9 @@ function renderComparacaoFechamentoDia(data) {
 }
 
 function onFdDiaDataChange() {
-  const data = document.getElementById('fd-dia-data').value;
+  const inputData = document.getElementById('fd-dia-data');
+  if (!inputData || !document.getElementById('fd-dia-definitivo-fag')) return; // tela ainda não inicializada
+  const data = inputData.value;
   const r = fechamentosDiarios.find(x => x.data === data);
 
   const badge = document.getElementById('fd-dia-status-badge');
@@ -9274,15 +9258,12 @@ function onFdDiaDataChange() {
   }
 
   const prefixo = 'fd-dia-definitivo';
-  document.getElementById(`${prefixo}-projetado`).value = r?.volumeProjetadoDefinitivo ?? '';
-  document.getElementById(`${prefixo}-atendido`).value = r?.volumeAtendidoDefinitivo ?? '';
   document.getElementById(`${prefixo}-fag`).value = r?.fagDefinitivo ?? '';
   document.getElementById(`${prefixo}-oot`).value = r?.ootDefinitivo ?? '';
   document.getElementById(`${prefixo}-tmec`).value = r?.tmecDefinitivo ?? '';
   document.getElementById(`${prefixo}-fag-justificativa`).value = r?.justificativaFagDefinitivo ?? '';
   document.getElementById(`${prefixo}-oot-justificativa`).value = r?.justificativaOotDefinitivo ?? '';
   document.getElementById(`${prefixo}-tmec-justificativa`).value = r?.justificativaTmecDefinitivo ?? '';
-  atualizarDispersaoDia(prefixo);
   onIndicadorFechamentoChange(prefixo, 'fag', METAS_FECHAMENTO.fag);
   onIndicadorFechamentoChange(prefixo, 'oot', METAS_FECHAMENTO.oot);
   onIndicadorFechamentoChange(prefixo, 'tmec', METAS_FECHAMENTO.tmec);
@@ -9300,16 +9281,12 @@ async function salvarFechamentoDia() {
   const erro = validarIndicadoresEJustificativas(prefixo);
   if (erro) { toast(erro, 'error'); return; }
 
-  const projetado = document.getElementById(`${prefixo}-projetado`).value;
-  const atendido = document.getElementById(`${prefixo}-atendido`).value;
   const indicadores = coletarIndicadores(prefixo);
   const quemRegistrou = usuarioAtual?.nome || usuarioAtual?.usuario || null;
 
   try {
     const dbData = {
       data,
-      volume_projetado_definitivo: projetado === '' ? null : Number(projetado),
-      volume_atendido_definitivo: atendido === '' ? null : Number(atendido),
       fag_definitivo: indicadores.fag, oot_definitivo: indicadores.oot, tmec_definitivo: indicadores.tmec,
       justificativa_fag_definitivo: indicadores.justificativaFag,
       justificativa_oot_definitivo: indicadores.justificativaOot,
@@ -9333,8 +9310,8 @@ function exportarFechamentoDiarioCSV() {
 
   const cabecalho = [
     'Data', 'Status',
-    'Vol. Projetado (Calculada)', 'Vol. Atendido (Calculada)', 'FAG (Calculada)', 'OOT (Calculada)', 'TMEC (Calculada)',
-    'Vol. Projetado (Definitiva)', 'Vol. Atendido (Definitiva)', 'FAG (Definitiva)', 'OOT (Definitiva)', 'TMEC (Definitiva)'
+    'Vol. Projetado (soma)', 'Vol. Atendido (soma)', 'FAG (Calculada)', 'OOT (Calculada)', 'TMEC (Calculada)',
+    'FAG (Definitiva)', 'OOT (Definitiva)', 'TMEC (Definitiva)'
   ];
   const lista = [...fechamentosDiarios].sort((a, b) => a.data.localeCompare(b.data));
   const corpo = lista.map(r => {
@@ -9342,7 +9319,7 @@ function exportarFechamentoDiarioCSV() {
     return [
       r.data.split('-').reverse().join('/'), r.status,
       calc.volumeProjetado ?? '', calc.volumeAtendido ?? '', calc.fag ?? '', calc.oot ?? '', calc.tmec ?? '',
-      r.volumeProjetadoDefinitivo ?? '', r.volumeAtendidoDefinitivo ?? '', r.fagDefinitivo ?? '', r.ootDefinitivo ?? '', r.tmecDefinitivo ?? ''
+      r.fagDefinitivo ?? '', r.ootDefinitivo ?? '', r.tmecDefinitivo ?? ''
     ].map(csvEscape).join(',');
   });
 
