@@ -605,6 +605,7 @@
         <button class="tab-btn nav-item" id="tab-insucesso-xpt" data-tab="insucesso-xpt" onclick="switchTab('insucesso-xpt',this)"><span class="nav-icon">🚫</span><span>Insucesso/Devolução - XPT</span></button>
         <button class="tab-btn nav-item" id="tab-yms" data-tab="yms" onclick="switchTab('yms',this)"><span class="nav-icon">🚛</span><span>Monitor YMS</span></button>
         <button class="tab-btn nav-item" id="tab-revisao-ponto" data-tab="revisao-ponto" onclick="switchTab('revisao-ponto',this)"><span class="nav-icon">🕵️</span><span>Revisão de Ponto</span></button>
+        <button class="tab-btn nav-item" id="tab-fechamento-diario" data-tab="fechamento-diario" onclick="switchTab('fechamento-diario',this)"><span class="nav-icon">📊</span><span>Fechamento Diário</span></button>
       </div>
     </section>
     <section class="nav-group" data-nav-group="ferramentas">
@@ -1721,9 +1722,100 @@
 </div>
 
 <!-- ════════════════════════════════════════
+     FECHAMENTO DIÁRIO
+════════════════════════════════════════ -->
+<div id="page-fechamento-diario" class="page">
+  <p class="section-label">Fechamento Diário</p>
+  <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Lançamento do fechamento dos ciclos de processamento (CHP, AM, PM, SD) e do fechamento consolidado do dia.</p>
+
+  <div class="monitor-section-header">
+    <span class="monitor-section-title">Visualização</span>
+    <div class="monitor-section-toggle">
+      <button class="monitor-toggle-btn fd-subtab-btn active" onclick="setFechamentoDiarioSubTab('ciclo', this)">Visão de Ciclo</button>
+      <button class="monitor-toggle-btn fd-subtab-btn" onclick="setFechamentoDiarioSubTab('dia', this)">Fechamento do Dia</button>
+    </div>
+  </div>
+
+  <!-- ── VISÃO DE CICLO ── -->
+  <div id="fd-tab-ciclo">
+    <div class="card" style="margin-bottom:20px">
+      <div class="form-group" style="max-width:220px;margin-bottom:0">
+        <label>Data</label>
+        <input type="date" id="fd-ciclo-data" onchange="onFdCicloDataChange()">
+      </div>
+    </div>
+
+    <div id="fd-ciclos-container" style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px"></div>
+
+    <p class="section-label">Histórico de ciclos lançados</p>
+    <div class="card">
+      <div class="search-bar">
+        <div class="form-group" style="margin-bottom:0">
+          <label style="font-size:11px">De</label>
+          <input type="date" id="fd-hist-data-ini" onchange="renderHistoricoFechamentoCiclos()">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label style="font-size:11px">Até</label>
+          <input type="date" id="fd-hist-data-fim" onchange="renderHistoricoFechamentoCiclos()">
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="exportarFechamentoCiclosCSV()" style="height:34px;display:inline-flex;align-items:center;gap:6px;">
+          <span>⬇️ Exportar CSV</span>
+        </button>
+        <span class="count-badge" id="fd-hist-count">0 registros</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Ciclo</th><th>Vol. Projetado</th><th>Vol. Atendido</th><th>Dispersão</th><th>FAG</th><th>OOT</th><th>TMEC</th></tr></thead>
+          <tbody id="tbody-fd-historico">
+            <tr><td colspan="8"><div class="empty-state"><p>Nenhum ciclo lançado ainda</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FECHAMENTO DO DIA ── -->
+  <div id="fd-tab-dia" style="display:none">
+    <div class="card" style="margin-bottom:20px">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div class="form-group" style="max-width:220px;margin-bottom:0">
+          <label>Data</label>
+          <input type="date" id="fd-dia-data" onchange="onFdDiaDataChange()">
+        </div>
+        <div>
+          <span id="fd-dia-status-badge" class="badge badge-gray">Aberto</span>
+          <button class="btn btn-secondary btn-sm" onclick="exportarFechamentoDiarioCSV()" style="margin-left:8px">⬇️ Exportar CSV</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:20px;flex-wrap:wrap">
+      <div class="card" style="flex:1;min-width:340px">
+        <p class="section-label" style="margin-bottom:2px">Resultado Estimado</p>
+        <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Lançado no próprio dia, com base no que já se sabe até o momento.</p>
+        <div id="fd-dia-form-estimado"></div>
+        <div class="form-actions" style="margin-top:10px;margin-bottom:0">
+          <button class="btn btn-primary btn-sm" onclick="salvarFechamentoDia('estimado')">Salvar Estimado</button>
+        </div>
+      </div>
+
+      <div class="card" style="flex:1;min-width:340px">
+        <p class="section-label" style="margin-bottom:2px">Resultado Definitivo</p>
+        <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Lançado no dia seguinte, com os números finais — fecha o dia.</p>
+        <div id="fd-dia-form-definitivo"></div>
+        <div class="form-actions" style="margin-top:10px;margin-bottom:0">
+          <button class="btn btn-primary btn-sm" onclick="salvarFechamentoDia('definitivo')">Salvar e Fechar Dia</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
      SCHEDULING
 ════════════════════════════════════════ -->
 <div id="page-scheduling" class="page">
+
 
   <div class="monitor-section-header">
     <span class="monitor-section-title">Visualização</span>
@@ -2884,7 +2976,7 @@ const EXIGIR_CADASTRO_PERFIL = true; // Com a tabela svc_usuarios configurada, t
 
 // Abas com permissão configurável (visualizar/editar) para os perfis Auditor e Operador.
 // Cada aba mapeia para os "flags" granulares já usados no restante do sistema.
-const ABAS_CONFIGURAVEIS = ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'insucesso-xpt', 'diaristas', 'yms', 'revisao-ponto', 'monitor', 'crachas'];
+const ABAS_CONFIGURAVEIS = ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'insucesso-xpt', 'diaristas', 'yms', 'revisao-ponto', 'fechamento-diario', 'monitor', 'crachas'];
 
 const MAPA_PERMISSOES_ABA = {
   turnos:     { base: [], editar: ['criar_turnos', 'editar_turnos', 'excluir_turnos'] },
@@ -2897,6 +2989,7 @@ const MAPA_PERMISSOES_ABA = {
   diaristas:  { base: [], editar: ['criar_diarista', 'editar_diarista', 'excluir_diarista'] },
   yms:        { base: ['ver_monitor_yms'], editar: ['registrar_yms', 'excluir_yms'] },
   'revisao-ponto': { base: ['ver_revisao_ponto'], editar: [] },
+  'fechamento-diario': { base: [], editar: ['registrar_fechamento', 'excluir_fechamento'] },
   monitor:    { base: [], editar: ['editar_monitor'] },
   crachas:    { base: [], editar: ['gerar_crachas'] }
 };
@@ -2917,6 +3010,7 @@ function perfilVazioDinamico(label) {
     criar_diarista: false, editar_diarista: false, excluir_diarista: false,
     ver_monitor_yms: false, registrar_yms: false, excluir_yms: false,
     ver_revisao_ponto: false,
+    registrar_fechamento: false, excluir_fechamento: false,
     editar_monitor: false,
     criar_usuarios: false, gerenciar_permissoes: false, excluir_usuarios: false
   };
@@ -2961,7 +3055,7 @@ async function carregarPermissoesDinamicasSeNecessario() {
 const PERFIS_ACESSO = {
   admin: {
     label: 'Administrador',
-    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'insucesso-xpt', 'diaristas', 'yms', 'revisao-ponto', 'monitor', 'crachas', 'usuarios'],
+    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'insucesso-xpt', 'diaristas', 'yms', 'revisao-ponto', 'fechamento-diario', 'monitor', 'crachas', 'usuarios'],
     gerar_crachas: true,
     criar_turnos: true, editar_turnos: true, excluir_turnos: true,
     criar_hc: true, editar_hc: true, excluir_hc: true, exportar_hc: true,
@@ -2973,12 +3067,13 @@ const PERFIS_ACESSO = {
     criar_diarista: true, editar_diarista: true, excluir_diarista: true,
     ver_monitor_yms: true, registrar_yms: true, excluir_yms: true,
     ver_revisao_ponto: true,
+    registrar_fechamento: true, excluir_fechamento: true,
     editar_monitor: true,
     criar_usuarios: true, gerenciar_permissoes: true, excluir_usuarios: true
   },
   coordenador: {
     label: 'Coordenador',
-    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'insucesso-xpt', 'diaristas', 'yms', 'revisao-ponto', 'monitor', 'crachas', 'usuarios'],
+    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'insucesso-xpt', 'diaristas', 'yms', 'revisao-ponto', 'fechamento-diario', 'monitor', 'crachas', 'usuarios'],
     gerar_crachas: true,
     criar_turnos: false, editar_turnos: false, excluir_turnos: false,
     criar_hc: true, editar_hc: true, excluir_hc: false, exportar_hc: true,
@@ -2990,6 +3085,7 @@ const PERFIS_ACESSO = {
     criar_diarista: true, editar_diarista: true, excluir_diarista: false,
     ver_monitor_yms: true, registrar_yms: true, excluir_yms: false,
     ver_revisao_ponto: true,
+    registrar_fechamento: true, excluir_fechamento: false,
     editar_monitor: true,
     criar_usuarios: false, gerenciar_permissoes: true, excluir_usuarios: false
   },
@@ -3593,6 +3689,12 @@ let anomalias = [];
 let schedulings = [];
 let schedulingColaboradores = []; // [{id, schedulingId, colaboradorId}] — vínculo N:N
 let schedColabSelecionadosForm = []; // ids dos colaboradores selecionados no formulário atual (antes de salvar)
+
+// Estado do módulo Fechamento Diário
+const CICLOS_FECHAMENTO = ['CHP', 'AM', 'PM', 'SD'];
+const METAS_FECHAMENTO = { fag: 80, oot: 85, tmec: 83 };
+let fechamentoCiclos = [];
+let fechamentosDiarios = [];
 let editingTurnoId = null;
 let editingHcId = null;
 let editingSchedId = null;
@@ -3879,6 +3981,8 @@ async function carregarDadosDoBanco() {
     renderInsucessosXpt();
     await carregarDiaristas();
     renderDiaristas();
+    await carregarFechamentoCiclos();
+    await carregarFechamentosDiarios();
     await carregarHistoricoMedidas();
     aplicarControleAcesso();
   } catch (error) {
@@ -3968,6 +4072,10 @@ function switchTab(tab, btn) {
 
   if (tab === 'diaristas') {
     renderDiaristas();
+  }
+
+  if (tab === 'fechamento-diario') {
+    inicializarTelaFechamentoDiario();
   }
 
   if (tab === 'yms') {
@@ -8703,6 +8811,474 @@ function exportarRelatorioFaltasRevisaoPontoCSV() {
   URL.revokeObjectURL(url);
 
   toast(`Relatório de faltas exportado: ${linhas.length} registro(s).`, 'success');
+}
+
+// ════════════════════════════════════════
+//  FECHAMENTO DIÁRIO — ciclos (CHP/AM/PM/SD) e fechamento do dia (Estimado/Definitivo)
+// ════════════════════════════════════════
+
+async function carregarFechamentoCiclos() {
+  try {
+    const data = await buscarTodasLinhas(() => db.from('fechamento_ciclos').select('*').order('data', { ascending: false }));
+    fechamentoCiclos = (data || []).map(r => ({
+      id: r.id,
+      data: r.data,
+      ciclo: r.ciclo,
+      volumeProjetado: r.volume_projetado,
+      volumeAtendido: r.volume_atendido,
+      fag: r.fag,
+      oot: r.oot,
+      tmec: r.tmec,
+      justificativaFag: r.justificativa_fag,
+      justificativaOot: r.justificativa_oot,
+      justificativaTmec: r.justificativa_tmec,
+      registradoPor: r.registrado_por
+    }));
+  } catch (error) {
+    if (error.code === '42P01' || /does not exist/i.test(error.message || '')) {
+      fechamentoCiclos = [];
+      console.warn('Tabela "fechamento_ciclos" ainda não existe no Supabase.');
+      return;
+    }
+    console.error(error);
+    toast('Erro ao buscar fechamento de ciclos: ' + (error.message || error), 'error');
+  }
+}
+
+async function carregarFechamentosDiarios() {
+  try {
+    const data = await buscarTodasLinhas(() => db.from('fechamento_diario').select('*').order('data', { ascending: false }));
+    fechamentosDiarios = (data || []).map(r => ({
+      id: r.id,
+      data: r.data,
+      status: r.status,
+      volumeProjetadoEstimado: r.volume_projetado_estimado,
+      volumeAtendidoEstimado: r.volume_atendido_estimado,
+      fagEstimado: r.fag_estimado,
+      ootEstimado: r.oot_estimado,
+      tmecEstimado: r.tmec_estimado,
+      justificativaFagEstimado: r.justificativa_fag_estimado,
+      justificativaOotEstimado: r.justificativa_oot_estimado,
+      justificativaTmecEstimado: r.justificativa_tmec_estimado,
+      volumeProjetadoDefinitivo: r.volume_projetado_definitivo,
+      volumeAtendidoDefinitivo: r.volume_atendido_definitivo,
+      fagDefinitivo: r.fag_definitivo,
+      ootDefinitivo: r.oot_definitivo,
+      tmecDefinitivo: r.tmec_definitivo,
+      justificativaFagDefinitivo: r.justificativa_fag_definitivo,
+      justificativaOotDefinitivo: r.justificativa_oot_definitivo,
+      justificativaTmecDefinitivo: r.justificativa_tmec_definitivo
+    }));
+  } catch (error) {
+    if (error.code === '42P01' || /does not exist/i.test(error.message || '')) {
+      fechamentosDiarios = [];
+      console.warn('Tabela "fechamento_diario" ainda não existe no Supabase.');
+      return;
+    }
+    console.error(error);
+    toast('Erro ao buscar fechamento diário: ' + (error.message || error), 'error');
+  }
+}
+
+function inicializarTelaFechamentoDiario() {
+  const inputCiclo = document.getElementById('fd-ciclo-data');
+  const inputDia = document.getElementById('fd-dia-data');
+  const histIni = document.getElementById('fd-hist-data-ini');
+  const histFim = document.getElementById('fd-hist-data-fim');
+
+  if (inputCiclo && !inputCiclo.value) inputCiclo.value = hojeIsoLocal();
+  if (inputDia && !inputDia.value) inputDia.value = hojeIsoLocal();
+  if (histIni && !histIni.value) {
+    const seteDiasAtras = new Date(); seteDiasAtras.setDate(seteDiasAtras.getDate() - 6);
+    histIni.value = dataLocalParaIso(seteDiasAtras);
+  }
+  if (histFim && !histFim.value) histFim.value = hojeIsoLocal();
+
+  renderCardsCiclosFechamento();
+  onFdCicloDataChange();
+  renderHistoricoFechamentoCiclos();
+
+  document.getElementById('fd-dia-form-estimado').innerHTML = gerarFormularioFechamentoDiaHtml('estimado');
+  document.getElementById('fd-dia-form-definitivo').innerHTML = gerarFormularioFechamentoDiaHtml('definitivo');
+  onFdDiaDataChange();
+}
+
+function setFechamentoDiarioSubTab(tab, btnEl) {
+  document.querySelectorAll('.fd-subtab-btn').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+  document.getElementById('fd-tab-ciclo').style.display = tab === 'ciclo' ? '' : 'none';
+  document.getElementById('fd-tab-dia').style.display = tab === 'dia' ? '' : 'none';
+}
+
+// ── Visão de Ciclo ──
+
+function gerarBlocoIndicadorHtml(prefixo, chave, label, target) {
+  return `
+    <div class="form-group">
+      <label>${label} (%) <span style="font-size:10px;color:var(--text-muted)">meta ${target}%</span> <span id="${prefixo}-${chave}-badge"></span></label>
+      <input type="number" id="${prefixo}-${chave}" min="0" max="100" step="0.1" oninput="onIndicadorFechamentoChange('${prefixo}','${chave}',${target})">
+      <div id="${prefixo}-${chave}-justif-wrap" style="display:none;margin-top:6px">
+        <textarea id="${prefixo}-${chave}-justificativa" rows="2" placeholder="Justificativa (obrigatória se não atingir 100%)" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:12px;color:var(--text);resize:vertical"></textarea>
+      </div>
+    </div>`;
+}
+
+function onIndicadorFechamentoChange(prefixo, chave, target) {
+  const input = document.getElementById(`${prefixo}-${chave}`);
+  const badge = document.getElementById(`${prefixo}-${chave}-badge`);
+  const justifWrap = document.getElementById(`${prefixo}-${chave}-justif-wrap`);
+  if (!input) return;
+  const valor = input.value === '' ? null : Number(input.value);
+
+  if (badge) {
+    badge.innerHTML = valor === null ? '' : (valor >= target
+      ? '<span class="badge badge-green">Meta atingida</span>'
+      : '<span class="badge badge-red">Abaixo da meta</span>');
+  }
+  if (justifWrap) justifWrap.style.display = (valor !== null && valor < 100) ? '' : 'none';
+}
+
+function renderCardsCiclosFechamento() {
+  const container = document.getElementById('fd-ciclos-container');
+  if (!container) return;
+  container.innerHTML = CICLOS_FECHAMENTO.map(ciclo => `
+    <div class="card" style="flex:1;min-width:260px">
+      <p class="section-label" style="margin-bottom:10px">${ciclo}</p>
+      <div class="form-group">
+        <label>Volume Projetado</label>
+        <input type="number" id="fd-${ciclo}-projetado" oninput="atualizarDispersaoCiclo('${ciclo}')">
+      </div>
+      <div class="form-group">
+        <label>Volume Atendido</label>
+        <input type="number" id="fd-${ciclo}-atendido" oninput="atualizarDispersaoCiclo('${ciclo}')">
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Dispersão: <strong id="fd-${ciclo}-dispersao">—</strong></div>
+      ${gerarBlocoIndicadorHtml(`fd-${ciclo}`, 'fag', 'FAG', METAS_FECHAMENTO.fag)}
+      ${gerarBlocoIndicadorHtml(`fd-${ciclo}`, 'oot', 'OOT', METAS_FECHAMENTO.oot)}
+      ${gerarBlocoIndicadorHtml(`fd-${ciclo}`, 'tmec', 'TMEC', METAS_FECHAMENTO.tmec)}
+      <div class="form-actions" style="margin-top:10px;margin-bottom:0">
+        <button class="btn btn-primary btn-sm" onclick="salvarFechamentoCiclo('${ciclo}')">Salvar ${ciclo}</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function calcularDispersao(projetado, atendido) {
+  if (projetado === null || projetado === undefined || projetado === '' || Number(projetado) === 0) return null;
+  const p = Number(projetado), a = Number(atendido) || 0;
+  const diffNum = a - p;
+  const diffPct = (diffNum / p) * 100;
+  return { diffNum, diffPct };
+}
+
+function atualizarDispersaoCiclo(ciclo) {
+  const projetado = document.getElementById(`fd-${ciclo}-projetado`).value;
+  const atendido = document.getElementById(`fd-${ciclo}-atendido`).value;
+  const el = document.getElementById(`fd-${ciclo}-dispersao`);
+  if (!el) return;
+  const d = calcularDispersao(projetado, atendido);
+  if (!d) { el.textContent = '—'; el.style.color = ''; return; }
+  const sinal = d.diffNum > 0 ? '+' : '';
+  el.textContent = `${sinal}${d.diffNum} (${sinal}${d.diffPct.toFixed(1)}%)`;
+  el.style.color = d.diffNum >= 0 ? 'var(--success-text)' : 'var(--danger-text)';
+}
+
+function onFdCicloDataChange() {
+  const data = document.getElementById('fd-ciclo-data').value;
+  CICLOS_FECHAMENTO.forEach(ciclo => {
+    const r = fechamentoCiclos.find(x => x.data === data && x.ciclo === ciclo);
+    document.getElementById(`fd-${ciclo}-projetado`).value = r?.volumeProjetado ?? '';
+    document.getElementById(`fd-${ciclo}-atendido`).value = r?.volumeAtendido ?? '';
+    document.getElementById(`fd-${ciclo}-fag`).value = r?.fag ?? '';
+    document.getElementById(`fd-${ciclo}-oot`).value = r?.oot ?? '';
+    document.getElementById(`fd-${ciclo}-tmec`).value = r?.tmec ?? '';
+    document.getElementById(`fd-${ciclo}-fag-justificativa`).value = r?.justificativaFag ?? '';
+    document.getElementById(`fd-${ciclo}-oot-justificativa`).value = r?.justificativaOot ?? '';
+    document.getElementById(`fd-${ciclo}-tmec-justificativa`).value = r?.justificativaTmec ?? '';
+    atualizarDispersaoCiclo(ciclo);
+    onIndicadorFechamentoChange(`fd-${ciclo}`, 'fag', METAS_FECHAMENTO.fag);
+    onIndicadorFechamentoChange(`fd-${ciclo}`, 'oot', METAS_FECHAMENTO.oot);
+    onIndicadorFechamentoChange(`fd-${ciclo}`, 'tmec', METAS_FECHAMENTO.tmec);
+  });
+}
+
+function validarIndicadoresEJustificativas(prefixo) {
+  for (const [chave, label] of [['fag', 'FAG'], ['oot', 'OOT'], ['tmec', 'TMEC']]) {
+    const valorRaw = document.getElementById(`${prefixo}-${chave}`).value;
+    if (valorRaw === '') continue;
+    const valor = Number(valorRaw);
+    if (valor < 0 || valor > 100) return `${label} deve estar entre 0 e 100.`;
+    if (valor < 100) {
+      const justif = document.getElementById(`${prefixo}-${chave}-justificativa`).value.trim();
+      if (!justif) return `Justifique o ${label}, já que não atingiu 100%.`;
+    }
+  }
+  return null;
+}
+
+function coletarIndicadores(prefixo) {
+  const num = id => { const v = document.getElementById(id).value; return v === '' ? null : Number(v); };
+  const txt = id => document.getElementById(id).value.trim() || null;
+  return {
+    fag: num(`${prefixo}-fag`), oot: num(`${prefixo}-oot`), tmec: num(`${prefixo}-tmec`),
+    justificativaFag: txt(`${prefixo}-fag-justificativa`),
+    justificativaOot: txt(`${prefixo}-oot-justificativa`),
+    justificativaTmec: txt(`${prefixo}-tmec-justificativa`)
+  };
+}
+
+async function salvarFechamentoCiclo(ciclo) {
+  if (!pode('registrar_fechamento')) { toast('Seu perfil não permite registrar fechamentos.', 'error'); return; }
+  const data = document.getElementById('fd-ciclo-data').value;
+  if (!data) { toast('Selecione a data.', 'error'); return; }
+
+  const prefixo = `fd-${ciclo}`;
+  const erro = validarIndicadoresEJustificativas(prefixo);
+  if (erro) { toast(erro, 'error'); return; }
+
+  const projetado = document.getElementById(`${prefixo}-projetado`).value;
+  const atendido = document.getElementById(`${prefixo}-atendido`).value;
+  const indicadores = coletarIndicadores(prefixo);
+
+  try {
+    const dbData = {
+      data, ciclo,
+      volume_projetado: projetado === '' ? null : Number(projetado),
+      volume_atendido: atendido === '' ? null : Number(atendido),
+      fag: indicadores.fag, oot: indicadores.oot, tmec: indicadores.tmec,
+      justificativa_fag: indicadores.justificativaFag,
+      justificativa_oot: indicadores.justificativaOot,
+      justificativa_tmec: indicadores.justificativaTmec,
+      registrado_por: usuarioAtual?.nome || usuarioAtual?.usuario || null,
+      atualizado_em: new Date().toISOString()
+    };
+    const { error } = await db.from('fechamento_ciclos').upsert(dbData, { onConflict: 'data,ciclo' });
+    if (error) throw error;
+    toast(`Ciclo ${ciclo} salvo.`, 'success');
+    await carregarFechamentoCiclos();
+    renderHistoricoFechamentoCiclos();
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao salvar ciclo: ' + (error.message || error), 'error');
+  }
+}
+
+function renderHistoricoFechamentoCiclos() {
+  const dataIni = document.getElementById('fd-hist-data-ini')?.value || '';
+  const dataFim = document.getElementById('fd-hist-data-fim')?.value || '';
+  const lista = fechamentoCiclos
+    .filter(r => (!dataIni || r.data >= dataIni) && (!dataFim || r.data <= dataFim))
+    .sort((a, b) => b.data.localeCompare(a.data) || a.ciclo.localeCompare(b.ciclo));
+
+  const countEl = document.getElementById('fd-hist-count');
+  if (countEl) countEl.textContent = `${lista.length} registro${lista.length !== 1 ? 's' : ''}`;
+
+  const tbody = document.getElementById('tbody-fd-historico');
+  if (!tbody) return;
+
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><p>Nenhum ciclo lançado nesse período</p></div></td></tr>`;
+    return;
+  }
+
+  const fmtInd = (valor, target) => {
+    if (valor === null || valor === undefined) return '<span style="color:var(--text-hint)">—</span>';
+    const cor = Number(valor) >= target ? 'badge-green' : 'badge-red';
+    return `<span class="badge ${cor}">${valor}%</span>`;
+  };
+
+  tbody.innerHTML = lista.map(r => {
+    const dataFmt = r.data.split('-').reverse().join('/');
+    const d = calcularDispersao(r.volumeProjetado, r.volumeAtendido);
+    const dispersaoTxt = d ? `${d.diffNum > 0 ? '+' : ''}${d.diffNum} (${d.diffNum > 0 ? '+' : ''}${d.diffPct.toFixed(1)}%)` : '—';
+    return `<tr>
+      <td>${dataFmt}</td>
+      <td><strong>${escapeHtml(r.ciclo)}</strong></td>
+      <td>${r.volumeProjetado ?? '—'}</td>
+      <td>${r.volumeAtendido ?? '—'}</td>
+      <td>${dispersaoTxt}</td>
+      <td>${fmtInd(r.fag, METAS_FECHAMENTO.fag)}</td>
+      <td>${fmtInd(r.oot, METAS_FECHAMENTO.oot)}</td>
+      <td>${fmtInd(r.tmec, METAS_FECHAMENTO.tmec)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function exportarFechamentoCiclosCSV() {
+  const dataIni = document.getElementById('fd-hist-data-ini')?.value || '';
+  const dataFim = document.getElementById('fd-hist-data-fim')?.value || '';
+  const lista = fechamentoCiclos
+    .filter(r => (!dataIni || r.data >= dataIni) && (!dataFim || r.data <= dataFim))
+    .sort((a, b) => a.data.localeCompare(b.data) || a.ciclo.localeCompare(b.ciclo));
+
+  if (!lista.length) { toast('Nenhum registro no período pra exportar.', 'error'); return; }
+
+  const cabecalho = ['Data', 'Ciclo', 'Volume Projetado', 'Volume Atendido', 'Dispersão (nº)', 'Dispersão (%)', 'FAG', 'Justificativa FAG', 'OOT', 'Justificativa OOT', 'TMEC', 'Justificativa TMEC', 'Registrado por'];
+  const corpo = lista.map(r => {
+    const dataFmt = r.data.split('-').reverse().join('/');
+    const d = calcularDispersao(r.volumeProjetado, r.volumeAtendido);
+    return [
+      dataFmt, r.ciclo, r.volumeProjetado ?? '', r.volumeAtendido ?? '',
+      d ? d.diffNum : '', d ? d.diffPct.toFixed(1) : '',
+      r.fag ?? '', r.justificativaFag || '', r.oot ?? '', r.justificativaOot || '', r.tmec ?? '', r.justificativaTmec || '',
+      r.registradoPor || ''
+    ].map(csvEscape).join(',');
+  });
+
+  const csv = '\uFEFF' + [cabecalho.join(','), ...corpo].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `fechamento_ciclos_${dataIni}_a_${dataFim}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast(`Exportado ${lista.length} registro(s).`, 'success');
+}
+
+// ── Fechamento do Dia ──
+
+function gerarFormularioFechamentoDiaHtml(tipo) {
+  const prefixo = `fd-dia-${tipo}`;
+  return `
+    <div class="form-group">
+      <label>Volume Projetado</label>
+      <input type="number" id="${prefixo}-projetado" oninput="atualizarDispersaoDia('${tipo}')">
+    </div>
+    <div class="form-group">
+      <label>Volume Atendido</label>
+      <input type="number" id="${prefixo}-atendido" oninput="atualizarDispersaoDia('${tipo}')">
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Dispersão: <strong id="${prefixo}-dispersao">—</strong></div>
+    ${gerarBlocoIndicadorHtml(prefixo, 'fag', 'FAG', METAS_FECHAMENTO.fag)}
+    ${gerarBlocoIndicadorHtml(prefixo, 'oot', 'OOT', METAS_FECHAMENTO.oot)}
+    ${gerarBlocoIndicadorHtml(prefixo, 'tmec', 'TMEC', METAS_FECHAMENTO.tmec)}
+  `;
+}
+
+function atualizarDispersaoDia(tipo) {
+  const prefixo = `fd-dia-${tipo}`;
+  const projetado = document.getElementById(`${prefixo}-projetado`).value;
+  const atendido = document.getElementById(`${prefixo}-atendido`).value;
+  const el = document.getElementById(`${prefixo}-dispersao`);
+  if (!el) return;
+  const d = calcularDispersao(projetado, atendido);
+  if (!d) { el.textContent = '—'; el.style.color = ''; return; }
+  const sinal = d.diffNum > 0 ? '+' : '';
+  el.textContent = `${sinal}${d.diffNum} (${sinal}${d.diffPct.toFixed(1)}%)`;
+  el.style.color = d.diffNum >= 0 ? 'var(--success-text)' : 'var(--danger-text)';
+}
+
+function onFdDiaDataChange() {
+  const data = document.getElementById('fd-dia-data').value;
+  const r = fechamentosDiarios.find(x => x.data === data);
+
+  const badge = document.getElementById('fd-dia-status-badge');
+  if (badge) {
+    const status = r?.status || 'aberto';
+    const rotulos = { aberto: ['Aberto', 'badge-gray'], estimado: ['Estimado', 'badge-orange'], fechado: ['Fechado', 'badge-green'] };
+    const [texto, classe] = rotulos[status] || rotulos.aberto;
+    badge.textContent = texto;
+    badge.className = `badge ${classe}`;
+  }
+
+  ['estimado', 'definitivo'].forEach(tipo => {
+    const prefixo = `fd-dia-${tipo}`;
+    const sufixo = tipo === 'estimado' ? 'Estimado' : 'Definitivo';
+    document.getElementById(`${prefixo}-projetado`).value = r?.[`volumeProjetado${sufixo}`] ?? '';
+    document.getElementById(`${prefixo}-atendido`).value = r?.[`volumeAtendido${sufixo}`] ?? '';
+    document.getElementById(`${prefixo}-fag`).value = r?.[`fag${sufixo}`] ?? '';
+    document.getElementById(`${prefixo}-oot`).value = r?.[`oot${sufixo}`] ?? '';
+    document.getElementById(`${prefixo}-tmec`).value = r?.[`tmec${sufixo}`] ?? '';
+    document.getElementById(`${prefixo}-fag-justificativa`).value = r?.[`justificativaFag${sufixo}`] ?? '';
+    document.getElementById(`${prefixo}-oot-justificativa`).value = r?.[`justificativaOot${sufixo}`] ?? '';
+    document.getElementById(`${prefixo}-tmec-justificativa`).value = r?.[`justificativaTmec${sufixo}`] ?? '';
+    atualizarDispersaoDia(tipo);
+    onIndicadorFechamentoChange(prefixo, 'fag', METAS_FECHAMENTO.fag);
+    onIndicadorFechamentoChange(prefixo, 'oot', METAS_FECHAMENTO.oot);
+    onIndicadorFechamentoChange(prefixo, 'tmec', METAS_FECHAMENTO.tmec);
+  });
+}
+
+async function salvarFechamentoDia(tipo) {
+  if (!pode('registrar_fechamento')) { toast('Seu perfil não permite registrar fechamentos.', 'error'); return; }
+  const data = document.getElementById('fd-dia-data').value;
+  if (!data) { toast('Selecione a data.', 'error'); return; }
+
+  const prefixo = `fd-dia-${tipo}`;
+  const erro = validarIndicadoresEJustificativas(prefixo);
+  if (erro) { toast(erro, 'error'); return; }
+
+  const projetado = document.getElementById(`${prefixo}-projetado`).value;
+  const atendido = document.getElementById(`${prefixo}-atendido`).value;
+  const indicadores = coletarIndicadores(prefixo);
+  const quemRegistrou = usuarioAtual?.nome || usuarioAtual?.usuario || null;
+  const agora = new Date().toISOString();
+
+  try {
+    const dbData = { data };
+    if (tipo === 'estimado') {
+      Object.assign(dbData, {
+        volume_projetado_estimado: projetado === '' ? null : Number(projetado),
+        volume_atendido_estimado: atendido === '' ? null : Number(atendido),
+        fag_estimado: indicadores.fag, oot_estimado: indicadores.oot, tmec_estimado: indicadores.tmec,
+        justificativa_fag_estimado: indicadores.justificativaFag,
+        justificativa_oot_estimado: indicadores.justificativaOot,
+        justificativa_tmec_estimado: indicadores.justificativaTmec,
+        estimado_por: quemRegistrou, estimado_em: agora,
+        status: 'estimado'
+      });
+    } else {
+      Object.assign(dbData, {
+        volume_projetado_definitivo: projetado === '' ? null : Number(projetado),
+        volume_atendido_definitivo: atendido === '' ? null : Number(atendido),
+        fag_definitivo: indicadores.fag, oot_definitivo: indicadores.oot, tmec_definitivo: indicadores.tmec,
+        justificativa_fag_definitivo: indicadores.justificativaFag,
+        justificativa_oot_definitivo: indicadores.justificativaOot,
+        justificativa_tmec_definitivo: indicadores.justificativaTmec,
+        fechado_por: quemRegistrou, fechado_em: agora,
+        status: 'fechado'
+      });
+    }
+    const { error } = await db.from('fechamento_diario').upsert(dbData, { onConflict: 'data' });
+    if (error) throw error;
+    toast(tipo === 'estimado' ? 'Resultado estimado salvo.' : 'Dia fechado com o resultado definitivo!', 'success');
+    await carregarFechamentosDiarios();
+    onFdDiaDataChange();
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao salvar fechamento do dia: ' + (error.message || error), 'error');
+  }
+}
+
+function exportarFechamentoDiarioCSV() {
+  if (!fechamentosDiarios.length) { toast('Nenhum fechamento diário pra exportar.', 'error'); return; }
+
+  const cabecalho = [
+    'Data', 'Status',
+    'Vol. Projetado (Estimado)', 'Vol. Atendido (Estimado)', 'FAG (Estimado)', 'OOT (Estimado)', 'TMEC (Estimado)',
+    'Vol. Projetado (Definitivo)', 'Vol. Atendido (Definitivo)', 'FAG (Definitivo)', 'OOT (Definitivo)', 'TMEC (Definitivo)'
+  ];
+  const lista = [...fechamentosDiarios].sort((a, b) => a.data.localeCompare(b.data));
+  const corpo = lista.map(r => [
+    r.data.split('-').reverse().join('/'), r.status,
+    r.volumeProjetadoEstimado ?? '', r.volumeAtendidoEstimado ?? '', r.fagEstimado ?? '', r.ootEstimado ?? '', r.tmecEstimado ?? '',
+    r.volumeProjetadoDefinitivo ?? '', r.volumeAtendidoDefinitivo ?? '', r.fagDefinitivo ?? '', r.ootDefinitivo ?? '', r.tmecDefinitivo ?? ''
+  ].map(csvEscape).join(','));
+
+  const csv = '\uFEFF' + [cabecalho.join(','), ...corpo].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `fechamento_diario_${hojeIsoLocal()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast(`Exportado ${lista.length} dia(s).`, 'success');
 }
 
 // ════════════════════════════════════════
