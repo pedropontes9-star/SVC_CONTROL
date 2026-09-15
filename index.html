@@ -1739,13 +1739,24 @@
   <!-- ── VISÃO DE CICLO ── -->
   <div id="fd-tab-ciclo">
     <div class="card" style="margin-bottom:20px">
-      <div class="form-group" style="max-width:220px;margin-bottom:0">
-        <label>Data</label>
-        <input type="date" id="fd-ciclo-data" onchange="onFdCicloDataChange()">
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <div class="form-group" style="max-width:220px;margin-bottom:0">
+          <label>Data</label>
+          <input type="date" id="fd-ciclo-data" onchange="onFdCicloDataChange()">
+        </div>
+        <div class="form-group" style="max-width:220px;margin-bottom:0">
+          <label>Ciclo</label>
+          <select id="fd-ciclo-select" onchange="onFdCicloDataChange()">
+            <option value="CHP">CHP</option>
+            <option value="AM">AM</option>
+            <option value="PM">PM</option>
+            <option value="SD">SD</option>
+          </select>
+        </div>
       </div>
     </div>
 
-    <div id="fd-ciclos-container" style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px"></div>
+    <div id="fd-ciclo-form-container" class="card" style="max-width:480px;margin-bottom:24px"></div>
 
     <p class="section-label">Histórico de ciclos lançados</p>
     <div class="card">
@@ -1791,21 +1802,28 @@
 
     <div style="display:flex;gap:20px;flex-wrap:wrap">
       <div class="card" style="flex:1;min-width:340px">
-        <p class="section-label" style="margin-bottom:2px">Resultado Estimado</p>
-        <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Lançado no próprio dia, com base no que já se sabe até o momento.</p>
-        <div id="fd-dia-form-estimado"></div>
-        <div class="form-actions" style="margin-top:10px;margin-bottom:0">
-          <button class="btn btn-primary btn-sm" onclick="salvarFechamentoDia('estimado')">Salvar Estimado</button>
-        </div>
+        <p class="section-label" style="margin-bottom:2px">Calculada</p>
+        <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Média automática dos ciclos já lançados nesse dia (<span id="fd-dia-calc-qtd">0 de 4</span> ciclos).</p>
+        <div id="fd-dia-calculada"></div>
       </div>
 
       <div class="card" style="flex:1;min-width:340px">
-        <p class="section-label" style="margin-bottom:2px">Resultado Definitivo</p>
-        <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Lançado no dia seguinte, com os números finais — fecha o dia.</p>
+        <p class="section-label" style="margin-bottom:2px">Definitiva</p>
+        <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Lançada no dia seguinte, com os números finais — fecha o dia.</p>
         <div id="fd-dia-form-definitivo"></div>
         <div class="form-actions" style="margin-top:10px;margin-bottom:0">
           <button class="btn btn-primary btn-sm" onclick="salvarFechamentoDia('definitivo')">Salvar e Fechar Dia</button>
         </div>
+      </div>
+    </div>
+
+    <p class="section-label" style="margin-top:24px">Comparação: Calculada x Definitiva</p>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Indicador</th><th>Calculada</th><th>Definitiva</th><th>Diferença</th></tr></thead>
+          <tbody id="tbody-fd-comparacao"></tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -8852,14 +8870,6 @@ async function carregarFechamentosDiarios() {
       id: r.id,
       data: r.data,
       status: r.status,
-      volumeProjetadoEstimado: r.volume_projetado_estimado,
-      volumeAtendidoEstimado: r.volume_atendido_estimado,
-      fagEstimado: r.fag_estimado,
-      ootEstimado: r.oot_estimado,
-      tmecEstimado: r.tmec_estimado,
-      justificativaFagEstimado: r.justificativa_fag_estimado,
-      justificativaOotEstimado: r.justificativa_oot_estimado,
-      justificativaTmecEstimado: r.justificativa_tmec_estimado,
       volumeProjetadoDefinitivo: r.volume_projetado_definitivo,
       volumeAtendidoDefinitivo: r.volume_atendido_definitivo,
       fagDefinitivo: r.fag_definitivo,
@@ -8894,12 +8904,11 @@ function inicializarTelaFechamentoDiario() {
   }
   if (histFim && !histFim.value) histFim.value = hojeIsoLocal();
 
-  renderCardsCiclosFechamento();
+  document.getElementById('fd-ciclo-form-container').innerHTML = gerarFormularioCicloHtml();
   onFdCicloDataChange();
   renderHistoricoFechamentoCiclos();
 
-  document.getElementById('fd-dia-form-estimado').innerHTML = gerarFormularioFechamentoDiaHtml('estimado');
-  document.getElementById('fd-dia-form-definitivo').innerHTML = gerarFormularioFechamentoDiaHtml('definitivo');
+  document.getElementById('fd-dia-form-definitivo').innerHTML = gerarFormularioFechamentoDiaHtml('fd-dia-definitivo');
   onFdDiaDataChange();
 }
 
@@ -8938,29 +8947,23 @@ function onIndicadorFechamentoChange(prefixo, chave, target) {
   if (justifWrap) justifWrap.style.display = (valor !== null && valor < 100) ? '' : 'none';
 }
 
-function renderCardsCiclosFechamento() {
-  const container = document.getElementById('fd-ciclos-container');
-  if (!container) return;
-  container.innerHTML = CICLOS_FECHAMENTO.map(ciclo => `
-    <div class="card" style="flex:1;min-width:260px">
-      <p class="section-label" style="margin-bottom:10px">${ciclo}</p>
-      <div class="form-group">
-        <label>Volume Projetado</label>
-        <input type="number" id="fd-${ciclo}-projetado" oninput="atualizarDispersaoCiclo('${ciclo}')">
-      </div>
-      <div class="form-group">
-        <label>Volume Atendido</label>
-        <input type="number" id="fd-${ciclo}-atendido" oninput="atualizarDispersaoCiclo('${ciclo}')">
-      </div>
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Dispersão: <strong id="fd-${ciclo}-dispersao">—</strong></div>
-      ${gerarBlocoIndicadorHtml(`fd-${ciclo}`, 'fag', 'FAG', METAS_FECHAMENTO.fag)}
-      ${gerarBlocoIndicadorHtml(`fd-${ciclo}`, 'oot', 'OOT', METAS_FECHAMENTO.oot)}
-      ${gerarBlocoIndicadorHtml(`fd-${ciclo}`, 'tmec', 'TMEC', METAS_FECHAMENTO.tmec)}
-      <div class="form-actions" style="margin-top:10px;margin-bottom:0">
-        <button class="btn btn-primary btn-sm" onclick="salvarFechamentoCiclo('${ciclo}')">Salvar ${ciclo}</button>
-      </div>
+function gerarFormularioCicloHtml() {
+  return `
+    <div class="form-group">
+      <label>Volume Projetado</label>
+      <input type="number" id="fd-ciclo-projetado" oninput="atualizarDispersaoCicloUnico()">
     </div>
-  `).join('');
+    <div class="form-group">
+      <label>Volume Atendido</label>
+      <input type="number" id="fd-ciclo-atendido" oninput="atualizarDispersaoCicloUnico()">
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Dispersão: <strong id="fd-ciclo-dispersao">—</strong></div>
+    ${gerarBlocoIndicadorHtml('fd-ciclo', 'fag', 'FAG', METAS_FECHAMENTO.fag)}
+    ${gerarBlocoIndicadorHtml('fd-ciclo', 'oot', 'OOT', METAS_FECHAMENTO.oot)}
+    ${gerarBlocoIndicadorHtml('fd-ciclo', 'tmec', 'TMEC', METAS_FECHAMENTO.tmec)}
+    <div class="form-actions" style="margin-top:10px;margin-bottom:0">
+      <button class="btn btn-primary btn-sm" id="btn-salvar-fd-ciclo" onclick="salvarFechamentoCiclo()">Salvar Ciclo</button>
+    </div>`;
 }
 
 function calcularDispersao(projetado, atendido) {
@@ -8971,10 +8974,10 @@ function calcularDispersao(projetado, atendido) {
   return { diffNum, diffPct };
 }
 
-function atualizarDispersaoCiclo(ciclo) {
-  const projetado = document.getElementById(`fd-${ciclo}-projetado`).value;
-  const atendido = document.getElementById(`fd-${ciclo}-atendido`).value;
-  const el = document.getElementById(`fd-${ciclo}-dispersao`);
+function atualizarDispersaoCicloUnico() {
+  const projetado = document.getElementById('fd-ciclo-projetado').value;
+  const atendido = document.getElementById('fd-ciclo-atendido').value;
+  const el = document.getElementById('fd-ciclo-dispersao');
   if (!el) return;
   const d = calcularDispersao(projetado, atendido);
   if (!d) { el.textContent = '—'; el.style.color = ''; return; }
@@ -8985,21 +8988,24 @@ function atualizarDispersaoCiclo(ciclo) {
 
 function onFdCicloDataChange() {
   const data = document.getElementById('fd-ciclo-data').value;
-  CICLOS_FECHAMENTO.forEach(ciclo => {
-    const r = fechamentoCiclos.find(x => x.data === data && x.ciclo === ciclo);
-    document.getElementById(`fd-${ciclo}-projetado`).value = r?.volumeProjetado ?? '';
-    document.getElementById(`fd-${ciclo}-atendido`).value = r?.volumeAtendido ?? '';
-    document.getElementById(`fd-${ciclo}-fag`).value = r?.fag ?? '';
-    document.getElementById(`fd-${ciclo}-oot`).value = r?.oot ?? '';
-    document.getElementById(`fd-${ciclo}-tmec`).value = r?.tmec ?? '';
-    document.getElementById(`fd-${ciclo}-fag-justificativa`).value = r?.justificativaFag ?? '';
-    document.getElementById(`fd-${ciclo}-oot-justificativa`).value = r?.justificativaOot ?? '';
-    document.getElementById(`fd-${ciclo}-tmec-justificativa`).value = r?.justificativaTmec ?? '';
-    atualizarDispersaoCiclo(ciclo);
-    onIndicadorFechamentoChange(`fd-${ciclo}`, 'fag', METAS_FECHAMENTO.fag);
-    onIndicadorFechamentoChange(`fd-${ciclo}`, 'oot', METAS_FECHAMENTO.oot);
-    onIndicadorFechamentoChange(`fd-${ciclo}`, 'tmec', METAS_FECHAMENTO.tmec);
-  });
+  const ciclo = document.getElementById('fd-ciclo-select').value;
+  const r = fechamentoCiclos.find(x => x.data === data && x.ciclo === ciclo);
+
+  document.getElementById('fd-ciclo-projetado').value = r?.volumeProjetado ?? '';
+  document.getElementById('fd-ciclo-atendido').value = r?.volumeAtendido ?? '';
+  document.getElementById('fd-ciclo-fag').value = r?.fag ?? '';
+  document.getElementById('fd-ciclo-oot').value = r?.oot ?? '';
+  document.getElementById('fd-ciclo-tmec').value = r?.tmec ?? '';
+  document.getElementById('fd-ciclo-fag-justificativa').value = r?.justificativaFag ?? '';
+  document.getElementById('fd-ciclo-oot-justificativa').value = r?.justificativaOot ?? '';
+  document.getElementById('fd-ciclo-tmec-justificativa').value = r?.justificativaTmec ?? '';
+  atualizarDispersaoCicloUnico();
+  onIndicadorFechamentoChange('fd-ciclo', 'fag', METAS_FECHAMENTO.fag);
+  onIndicadorFechamentoChange('fd-ciclo', 'oot', METAS_FECHAMENTO.oot);
+  onIndicadorFechamentoChange('fd-ciclo', 'tmec', METAS_FECHAMENTO.tmec);
+
+  const btn = document.getElementById('btn-salvar-fd-ciclo');
+  if (btn) btn.textContent = r ? `Atualizar ${ciclo}` : `Salvar ${ciclo}`;
 }
 
 function validarIndicadoresEJustificativas(prefixo) {
@@ -9027,12 +9033,13 @@ function coletarIndicadores(prefixo) {
   };
 }
 
-async function salvarFechamentoCiclo(ciclo) {
+async function salvarFechamentoCiclo() {
   if (!pode('registrar_fechamento')) { toast('Seu perfil não permite registrar fechamentos.', 'error'); return; }
   const data = document.getElementById('fd-ciclo-data').value;
+  const ciclo = document.getElementById('fd-ciclo-select').value;
   if (!data) { toast('Selecione a data.', 'error'); return; }
 
-  const prefixo = `fd-${ciclo}`;
+  const prefixo = 'fd-ciclo';
   const erro = validarIndicadoresEJustificativas(prefixo);
   if (erro) { toast(erro, 'error'); return; }
 
@@ -9057,6 +9064,7 @@ async function salvarFechamentoCiclo(ciclo) {
     toast(`Ciclo ${ciclo} salvo.`, 'success');
     await carregarFechamentoCiclos();
     renderHistoricoFechamentoCiclos();
+    onFdCicloDataChange(); // recarrega e ajusta o rótulo do botão (Salvar → Atualizar)
   } catch (error) {
     console.error(error);
     toast('Erro ao salvar ciclo: ' + (error.message || error), 'error');
@@ -9140,16 +9148,15 @@ function exportarFechamentoCiclosCSV() {
 
 // ── Fechamento do Dia ──
 
-function gerarFormularioFechamentoDiaHtml(tipo) {
-  const prefixo = `fd-dia-${tipo}`;
+function gerarFormularioFechamentoDiaHtml(prefixo) {
   return `
     <div class="form-group">
       <label>Volume Projetado</label>
-      <input type="number" id="${prefixo}-projetado" oninput="atualizarDispersaoDia('${tipo}')">
+      <input type="number" id="${prefixo}-projetado" oninput="atualizarDispersaoDia('${prefixo}')">
     </div>
     <div class="form-group">
       <label>Volume Atendido</label>
-      <input type="number" id="${prefixo}-atendido" oninput="atualizarDispersaoDia('${tipo}')">
+      <input type="number" id="${prefixo}-atendido" oninput="atualizarDispersaoDia('${prefixo}')">
     </div>
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Dispersão: <strong id="${prefixo}-dispersao">—</strong></div>
     ${gerarBlocoIndicadorHtml(prefixo, 'fag', 'FAG', METAS_FECHAMENTO.fag)}
@@ -9158,8 +9165,7 @@ function gerarFormularioFechamentoDiaHtml(tipo) {
   `;
 }
 
-function atualizarDispersaoDia(tipo) {
-  const prefixo = `fd-dia-${tipo}`;
+function atualizarDispersaoDia(prefixo) {
   const projetado = document.getElementById(`${prefixo}-projetado`).value;
   const atendido = document.getElementById(`${prefixo}-atendido`).value;
   const el = document.getElementById(`${prefixo}-dispersao`);
@@ -9171,6 +9177,89 @@ function atualizarDispersaoDia(tipo) {
   el.style.color = d.diffNum >= 0 ? 'var(--success-text)' : 'var(--danger-text)';
 }
 
+// Média simples dos ciclos já lançados no dia (só considera os que têm valor em cada campo).
+function calcularFechamentoDiaCalculado(data) {
+  const ciclosDoDia = fechamentoCiclos.filter(r => r.data === data);
+  const media = campo => {
+    const valores = ciclosDoDia.map(r => r[campo]).filter(v => v !== null && v !== undefined);
+    if (!valores.length) return null;
+    return Math.round((valores.reduce((a, b) => a + b, 0) / valores.length) * 100) / 100;
+  };
+  return {
+    quantosCiclos: ciclosDoDia.length,
+    volumeProjetado: media('volumeProjetado'),
+    volumeAtendido: media('volumeAtendido'),
+    fag: media('fag'),
+    oot: media('oot'),
+    tmec: media('tmec')
+  };
+}
+
+function renderCalculadaFechamentoDia(data) {
+  const calc = calcularFechamentoDiaCalculado(data);
+  const qtdEl = document.getElementById('fd-dia-calc-qtd');
+  if (qtdEl) qtdEl.textContent = `${calc.quantosCiclos} de ${CICLOS_FECHAMENTO.length}`;
+
+  const container = document.getElementById('fd-dia-calculada');
+  if (!container) return;
+
+  if (!calc.quantosCiclos) {
+    container.innerHTML = '<p style="font-size:12px;color:var(--text-hint)">Nenhum ciclo lançado ainda nesse dia.</p>';
+    return;
+  }
+
+  const d = calcularDispersao(calc.volumeProjetado, calc.volumeAtendido);
+  const dispersaoTxt = d ? `${d.diffNum > 0 ? '+' : ''}${d.diffNum.toFixed(1)} (${d.diffNum > 0 ? '+' : ''}${d.diffPct.toFixed(1)}%)` : '—';
+
+  const fmtInd = (valor, target) => {
+    if (valor === null) return '<span style="color:var(--text-hint)">—</span>';
+    const cor = valor >= target ? 'badge-green' : 'badge-red';
+    return `${valor}% <span class="badge ${cor}">${valor >= target ? 'Meta atingida' : 'Abaixo da meta'}</span>`;
+  };
+
+  container.innerHTML = `
+    <div class="form-group"><label>Volume Projetado (média)</label><div style="padding:8px 0;font-size:14px">${calc.volumeProjetado ?? '—'}</div></div>
+    <div class="form-group"><label>Volume Atendido (média)</label><div style="padding:8px 0;font-size:14px">${calc.volumeAtendido ?? '—'}</div></div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Dispersão: <strong>${dispersaoTxt}</strong></div>
+    <div class="form-group"><label>FAG (média)</label><div style="padding:6px 0;font-size:13px">${fmtInd(calc.fag, METAS_FECHAMENTO.fag)}</div></div>
+    <div class="form-group"><label>OOT (média)</label><div style="padding:6px 0;font-size:13px">${fmtInd(calc.oot, METAS_FECHAMENTO.oot)}</div></div>
+    <div class="form-group"><label>TMEC (média)</label><div style="padding:6px 0;font-size:13px">${fmtInd(calc.tmec, METAS_FECHAMENTO.tmec)}</div></div>
+  `;
+}
+
+function renderComparacaoFechamentoDia(data) {
+  const tbody = document.getElementById('tbody-fd-comparacao');
+  if (!tbody) return;
+
+  const calc = calcularFechamentoDiaCalculado(data);
+  const r = fechamentosDiarios.find(x => x.data === data);
+
+  const linhas = [
+    ['Volume Projetado', calc.volumeProjetado, r?.volumeProjetadoDefinitivo],
+    ['Volume Atendido', calc.volumeAtendido, r?.volumeAtendidoDefinitivo],
+    ['FAG (%)', calc.fag, r?.fagDefinitivo],
+    ['OOT (%)', calc.oot, r?.ootDefinitivo],
+    ['TMEC (%)', calc.tmec, r?.tmecDefinitivo]
+  ];
+
+  tbody.innerHTML = linhas.map(([label, calculada, definitiva]) => {
+    const c = (calculada === null || calculada === undefined) ? null : Number(calculada);
+    const def = (definitiva === null || definitiva === undefined) ? null : Number(definitiva);
+    let diffTxt = '—', diffCor = '';
+    if (c !== null && def !== null) {
+      const diff = def - c;
+      diffTxt = `${diff > 0 ? '+' : ''}${diff.toFixed(1)}`;
+      diffCor = diff === 0 ? '' : (diff > 0 ? 'var(--success-text)' : 'var(--danger-text)');
+    }
+    return `<tr>
+      <td>${label}</td>
+      <td>${c ?? '—'}</td>
+      <td>${def ?? '—'}</td>
+      <td style="color:${diffCor};font-weight:600">${diffTxt}</td>
+    </tr>`;
+  }).join('');
+}
+
 function onFdDiaDataChange() {
   const data = document.getElementById('fd-dia-data').value;
   const r = fechamentosDiarios.find(x => x.data === data);
@@ -9178,36 +9267,36 @@ function onFdDiaDataChange() {
   const badge = document.getElementById('fd-dia-status-badge');
   if (badge) {
     const status = r?.status || 'aberto';
-    const rotulos = { aberto: ['Aberto', 'badge-gray'], estimado: ['Estimado', 'badge-orange'], fechado: ['Fechado', 'badge-green'] };
+    const rotulos = { aberto: ['Aberto', 'badge-gray'], fechado: ['Fechado', 'badge-green'] };
     const [texto, classe] = rotulos[status] || rotulos.aberto;
     badge.textContent = texto;
     badge.className = `badge ${classe}`;
   }
 
-  ['estimado', 'definitivo'].forEach(tipo => {
-    const prefixo = `fd-dia-${tipo}`;
-    const sufixo = tipo === 'estimado' ? 'Estimado' : 'Definitivo';
-    document.getElementById(`${prefixo}-projetado`).value = r?.[`volumeProjetado${sufixo}`] ?? '';
-    document.getElementById(`${prefixo}-atendido`).value = r?.[`volumeAtendido${sufixo}`] ?? '';
-    document.getElementById(`${prefixo}-fag`).value = r?.[`fag${sufixo}`] ?? '';
-    document.getElementById(`${prefixo}-oot`).value = r?.[`oot${sufixo}`] ?? '';
-    document.getElementById(`${prefixo}-tmec`).value = r?.[`tmec${sufixo}`] ?? '';
-    document.getElementById(`${prefixo}-fag-justificativa`).value = r?.[`justificativaFag${sufixo}`] ?? '';
-    document.getElementById(`${prefixo}-oot-justificativa`).value = r?.[`justificativaOot${sufixo}`] ?? '';
-    document.getElementById(`${prefixo}-tmec-justificativa`).value = r?.[`justificativaTmec${sufixo}`] ?? '';
-    atualizarDispersaoDia(tipo);
-    onIndicadorFechamentoChange(prefixo, 'fag', METAS_FECHAMENTO.fag);
-    onIndicadorFechamentoChange(prefixo, 'oot', METAS_FECHAMENTO.oot);
-    onIndicadorFechamentoChange(prefixo, 'tmec', METAS_FECHAMENTO.tmec);
-  });
+  const prefixo = 'fd-dia-definitivo';
+  document.getElementById(`${prefixo}-projetado`).value = r?.volumeProjetadoDefinitivo ?? '';
+  document.getElementById(`${prefixo}-atendido`).value = r?.volumeAtendidoDefinitivo ?? '';
+  document.getElementById(`${prefixo}-fag`).value = r?.fagDefinitivo ?? '';
+  document.getElementById(`${prefixo}-oot`).value = r?.ootDefinitivo ?? '';
+  document.getElementById(`${prefixo}-tmec`).value = r?.tmecDefinitivo ?? '';
+  document.getElementById(`${prefixo}-fag-justificativa`).value = r?.justificativaFagDefinitivo ?? '';
+  document.getElementById(`${prefixo}-oot-justificativa`).value = r?.justificativaOotDefinitivo ?? '';
+  document.getElementById(`${prefixo}-tmec-justificativa`).value = r?.justificativaTmecDefinitivo ?? '';
+  atualizarDispersaoDia(prefixo);
+  onIndicadorFechamentoChange(prefixo, 'fag', METAS_FECHAMENTO.fag);
+  onIndicadorFechamentoChange(prefixo, 'oot', METAS_FECHAMENTO.oot);
+  onIndicadorFechamentoChange(prefixo, 'tmec', METAS_FECHAMENTO.tmec);
+
+  renderCalculadaFechamentoDia(data);
+  renderComparacaoFechamentoDia(data);
 }
 
-async function salvarFechamentoDia(tipo) {
+async function salvarFechamentoDia() {
   if (!pode('registrar_fechamento')) { toast('Seu perfil não permite registrar fechamentos.', 'error'); return; }
   const data = document.getElementById('fd-dia-data').value;
   if (!data) { toast('Selecione a data.', 'error'); return; }
 
-  const prefixo = `fd-dia-${tipo}`;
+  const prefixo = 'fd-dia-definitivo';
   const erro = validarIndicadoresEJustificativas(prefixo);
   if (erro) { toast(erro, 'error'); return; }
 
@@ -9215,36 +9304,22 @@ async function salvarFechamentoDia(tipo) {
   const atendido = document.getElementById(`${prefixo}-atendido`).value;
   const indicadores = coletarIndicadores(prefixo);
   const quemRegistrou = usuarioAtual?.nome || usuarioAtual?.usuario || null;
-  const agora = new Date().toISOString();
 
   try {
-    const dbData = { data };
-    if (tipo === 'estimado') {
-      Object.assign(dbData, {
-        volume_projetado_estimado: projetado === '' ? null : Number(projetado),
-        volume_atendido_estimado: atendido === '' ? null : Number(atendido),
-        fag_estimado: indicadores.fag, oot_estimado: indicadores.oot, tmec_estimado: indicadores.tmec,
-        justificativa_fag_estimado: indicadores.justificativaFag,
-        justificativa_oot_estimado: indicadores.justificativaOot,
-        justificativa_tmec_estimado: indicadores.justificativaTmec,
-        estimado_por: quemRegistrou, estimado_em: agora,
-        status: 'estimado'
-      });
-    } else {
-      Object.assign(dbData, {
-        volume_projetado_definitivo: projetado === '' ? null : Number(projetado),
-        volume_atendido_definitivo: atendido === '' ? null : Number(atendido),
-        fag_definitivo: indicadores.fag, oot_definitivo: indicadores.oot, tmec_definitivo: indicadores.tmec,
-        justificativa_fag_definitivo: indicadores.justificativaFag,
-        justificativa_oot_definitivo: indicadores.justificativaOot,
-        justificativa_tmec_definitivo: indicadores.justificativaTmec,
-        fechado_por: quemRegistrou, fechado_em: agora,
-        status: 'fechado'
-      });
-    }
+    const dbData = {
+      data,
+      volume_projetado_definitivo: projetado === '' ? null : Number(projetado),
+      volume_atendido_definitivo: atendido === '' ? null : Number(atendido),
+      fag_definitivo: indicadores.fag, oot_definitivo: indicadores.oot, tmec_definitivo: indicadores.tmec,
+      justificativa_fag_definitivo: indicadores.justificativaFag,
+      justificativa_oot_definitivo: indicadores.justificativaOot,
+      justificativa_tmec_definitivo: indicadores.justificativaTmec,
+      fechado_por: quemRegistrou, fechado_em: new Date().toISOString(),
+      status: 'fechado'
+    };
     const { error } = await db.from('fechamento_diario').upsert(dbData, { onConflict: 'data' });
     if (error) throw error;
-    toast(tipo === 'estimado' ? 'Resultado estimado salvo.' : 'Dia fechado com o resultado definitivo!', 'success');
+    toast('Dia fechado com o resultado definitivo!', 'success');
     await carregarFechamentosDiarios();
     onFdDiaDataChange();
   } catch (error) {
@@ -9258,15 +9333,18 @@ function exportarFechamentoDiarioCSV() {
 
   const cabecalho = [
     'Data', 'Status',
-    'Vol. Projetado (Estimado)', 'Vol. Atendido (Estimado)', 'FAG (Estimado)', 'OOT (Estimado)', 'TMEC (Estimado)',
-    'Vol. Projetado (Definitivo)', 'Vol. Atendido (Definitivo)', 'FAG (Definitivo)', 'OOT (Definitivo)', 'TMEC (Definitivo)'
+    'Vol. Projetado (Calculada)', 'Vol. Atendido (Calculada)', 'FAG (Calculada)', 'OOT (Calculada)', 'TMEC (Calculada)',
+    'Vol. Projetado (Definitiva)', 'Vol. Atendido (Definitiva)', 'FAG (Definitiva)', 'OOT (Definitiva)', 'TMEC (Definitiva)'
   ];
   const lista = [...fechamentosDiarios].sort((a, b) => a.data.localeCompare(b.data));
-  const corpo = lista.map(r => [
-    r.data.split('-').reverse().join('/'), r.status,
-    r.volumeProjetadoEstimado ?? '', r.volumeAtendidoEstimado ?? '', r.fagEstimado ?? '', r.ootEstimado ?? '', r.tmecEstimado ?? '',
-    r.volumeProjetadoDefinitivo ?? '', r.volumeAtendidoDefinitivo ?? '', r.fagDefinitivo ?? '', r.ootDefinitivo ?? '', r.tmecDefinitivo ?? ''
-  ].map(csvEscape).join(','));
+  const corpo = lista.map(r => {
+    const calc = calcularFechamentoDiaCalculado(r.data);
+    return [
+      r.data.split('-').reverse().join('/'), r.status,
+      calc.volumeProjetado ?? '', calc.volumeAtendido ?? '', calc.fag ?? '', calc.oot ?? '', calc.tmec ?? '',
+      r.volumeProjetadoDefinitivo ?? '', r.volumeAtendidoDefinitivo ?? '', r.fagDefinitivo ?? '', r.ootDefinitivo ?? '', r.tmecDefinitivo ?? ''
+    ].map(csvEscape).join(',');
+  });
 
   const csv = '\uFEFF' + [cabecalho.join(','), ...corpo].join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
