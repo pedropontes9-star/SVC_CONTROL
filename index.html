@@ -495,6 +495,15 @@
   .fd-dash-mini:last-child { border-bottom: none; }
   .fd-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
   .fd-dot.ok { background: #2e7d32; } .fd-dot.baixo { background: #c62828; } .fd-dot.neutro { background: #c4c8ce; }
+  .fd-dash-justif { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+  .fd-justif-card { border-radius: 16px; padding: 14px 16px; background: #fff; box-shadow: var(--shadow); border: 1.5px solid rgba(45,50,119,.06); border-left: 5px solid var(--meli-action); }
+  .fd-justif-card.definitivo { border-left-color: #00875A; }
+  .fd-justif-head { display: flex; justify-content: space-between; align-items: center; font-weight: 800; color: var(--meli-blue); margin-bottom: 10px; }
+  .fd-justif-item { padding: 8px 10px; border-radius: 10px; background: #f8f9fd; margin-bottom: 8px; }
+  .fd-justif-item:last-child { margin-bottom: 0; }
+  .fd-justif-item-head { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); margin-bottom: 4px; }
+  .fd-justif-texto { font-size: 13px; line-height: 1.45; color: var(--text); white-space: pre-wrap; }
+  .fd-justif-vazio { grid-column: 1 / -1; text-align: center; padding: 28px; color: var(--text-hint); font-size: 13px; background: #fff; border-radius: 16px; border: 1.5px dashed rgba(45,50,119,.15); }
 
   /* ── Revisão de Ponto — gavetas colapsáveis ── */
   .rp-drawer { margin-bottom: 20px; }
@@ -1973,18 +1982,22 @@
             <div class="fd-header-label">Data</div>
             <input type="date" id="fd-dash-data" onchange="renderDashboardFechamento()">
           </div>
-          <div style="padding-bottom:4px"><span id="fd-dash-fonte-badge" class="badge badge-gray">—</span></div>
+          <div style="display:flex;align-items:center;gap:8px;padding-bottom:4px">
+            <span id="fd-dash-fonte-badge" class="badge badge-gray">—</span>
+            <button class="btn btn-secondary btn-sm" onclick="exportarDashboardFechamentoPNG()">🖼️ Exportar Dashboard</button>
+          </div>
         </div>
       </div>
     </div>
 
+    <div id="fd-dash-conteudo">
     <div id="fd-dash-resumo" class="fd-dash-grid" style="margin-bottom:22px"></div>
 
     <p class="section-label">Por ciclo</p>
     <div id="fd-dash-ciclos" class="fd-dash-ciclos" style="margin-bottom:22px"></div>
 
     <p class="section-label">Tendência — últimos 7 dias</p>
-    <div style="display:flex;gap:20px;flex-wrap:wrap">
+    <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:22px">
       <div class="card" style="flex:1;min-width:340px;padding:18px 20px">
         <div class="fd-kpi-label" style="margin-bottom:10px">Indicadores (%)</div>
         <div style="position:relative;height:240px"><canvas id="fd-dash-chart-indicadores"></canvas></div>
@@ -1993,6 +2006,10 @@
         <div class="fd-kpi-label" style="margin-bottom:10px">Volume projetado x atendido</div>
         <div style="position:relative;height:240px"><canvas id="fd-dash-chart-volume"></canvas></div>
       </div>
+    </div>
+
+    <p class="section-label">Justificativas do dia</p>
+    <div id="fd-dash-justificativas" class="fd-dash-justif"></div>
     </div>
   </div>
 </div>
@@ -9726,6 +9743,95 @@ function renderDashboardFechamento() {
   }
 
   renderGraficosDashboardFechamento(data);
+  renderJustificativasDashboardFechamento(data);
+}
+
+function renderJustificativasDashboardFechamento(data) {
+  const el = document.getElementById('fd-dash-justificativas');
+  if (!el) return;
+
+  const indicadores = [
+    { chave: 'fag', label: 'FAG', target: METAS_FECHAMENTO.fag },
+    { chave: 'oot', label: 'OOT', target: METAS_FECHAMENTO.oot },
+    { chave: 'tmec', label: 'TMEC', target: METAS_FECHAMENTO.tmec }
+  ];
+  const badgeValor = (v, target) => {
+    if (v === null || v === undefined) return '';
+    const cor = v >= target ? 'badge-green' : 'badge-red';
+    return `<span class="badge ${cor}">${v}%</span>`;
+  };
+  const cards = [];
+
+  // Justificativas de cada ciclo
+  CICLOS_FECHAMENTO.forEach(ciclo => {
+    const c = fechamentoCiclos.find(x => x.data === data && x.ciclo === ciclo);
+    if (!c) return;
+    const itens = indicadores
+      .map(ind => {
+        const justif = c[`justificativa${ind.label.charAt(0) + ind.label.slice(1).toLowerCase()}`];
+        return justif ? `
+          <div class="fd-justif-item">
+            <div class="fd-justif-item-head"><span>${ind.label}</span>${badgeValor(c[ind.chave], ind.target)}</div>
+            <div class="fd-justif-texto">${escapeHtml(justif)}</div>
+          </div>` : '';
+      })
+      .filter(Boolean);
+    if (!itens.length) return;
+    cards.push(`
+      <div class="fd-justif-card">
+        <div class="fd-justif-head"><span>${ICONES_CICLO_FECHAMENTO[ciclo]} Ciclo ${ciclo}</span><span class="fd-kpi-meta">${itens.length} justificativa(s)</span></div>
+        ${itens.join('')}
+      </div>`);
+  });
+
+  // Justificativas do fechamento definitivo
+  const r = fechamentosDiarios.find(x => x.data === data);
+  if (r) {
+    const itens = indicadores
+      .map(ind => {
+        const justif = r[`justificativa${ind.label.charAt(0) + ind.label.slice(1).toLowerCase()}Definitivo`];
+        return justif ? `
+          <div class="fd-justif-item">
+            <div class="fd-justif-item-head"><span>${ind.label}</span>${badgeValor(r[`${ind.chave}Definitivo`], ind.target)}</div>
+            <div class="fd-justif-texto">${escapeHtml(justif)}</div>
+          </div>` : '';
+      })
+      .filter(Boolean);
+    if (itens.length) {
+      cards.push(`
+        <div class="fd-justif-card definitivo">
+          <div class="fd-justif-head"><span>✅ Fechamento definitivo</span><span class="fd-kpi-meta">${itens.length} justificativa(s)</span></div>
+          ${itens.join('')}
+        </div>`);
+    }
+  }
+
+  el.innerHTML = cards.length
+    ? cards.join('')
+    : '<div class="fd-justif-vazio">Nenhuma justificativa registrada nesse dia — todos os indicadores lançados atingiram 100% ou ainda não foram lançados.</div>';
+}
+
+function exportarDashboardFechamentoPNG() {
+  const el = document.getElementById('fd-tab-dash');
+  if (!el) return;
+  if (typeof html2canvas === 'undefined') {
+    toast('Biblioteca de exportação não carregou. Verifique sua conexão.', 'error');
+    return;
+  }
+  const data = document.getElementById('fd-dash-data')?.value || hojeIsoLocal();
+  toast('Gerando imagem do dashboard...', '');
+  html2canvas(el, { backgroundColor: '#EBEBEB', scale: 2, useCORS: true }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = `dashboard-fechamento-${data}.png`;
+    link.href = canvas.toDataURL('image/png');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast('Dashboard exportado com sucesso!', 'success');
+  }).catch(err => {
+    console.error(err);
+    toast('Erro ao exportar o dashboard: ' + (err.message || err), 'error');
+  });
 }
 
 function renderGraficosDashboardFechamento(dataFim) {
