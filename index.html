@@ -106,6 +106,12 @@
   .search-input-wrap input:focus { border-color: var(--meli-action); }
   .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-hint); pointer-events: none; }
   .search-bar select { padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; font-family: inherit; color: var(--text); background: var(--surface); outline: none; }
+  .insucesso-date-filter { display:flex; align-items:center; gap:6px; padding:4px 6px; border:1px solid var(--border); border-radius:12px; background:#fff; white-space:nowrap; }
+  .insucesso-date-filter span { font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:.04em; }
+  .insucesso-date-filter input[type=date] { height:32px; min-width:132px; padding:5px 8px; border:1px solid #dfe3ec; border-radius:9px; font:600 11px 'Inter',sans-serif; color:var(--text); background:#fff; outline:none; }
+  .insucesso-date-filter input[type=date]:focus { border-color:var(--meli-action); box-shadow:0 0 0 3px rgba(52,131,250,.12); }
+  .insucesso-date-apply { height:32px !important; border-radius:9px !important; padding:0 11px !important; }
+  @media (max-width:900px) { .insucesso-date-filter { width:100%; flex-wrap:wrap; } .insucesso-date-filter input[type=date] { flex:1; min-width:120px; } }
   .count-badge { font-size: 12px; color: var(--text-muted); margin-left: auto; white-space: nowrap; }
   .sync-status { font-size: 11px; color: var(--text-hint); white-space: nowrap; }
   .sync-status.ok { color: var(--success-text); }
@@ -673,9 +679,9 @@
   .dit-title { font-size:30px; line-height:1; font-weight:900; letter-spacing:-.035em; margin:0; }
   .dit-subtitle { margin-top:8px; max-width:740px; color:rgba(255,255,255,.68); font-size:12px; line-height:1.5; }
   .dit-hero-actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
-  .dit-hero-btn { border:1px solid rgba(255,255,255,.22); color:#fff; background:rgba(255,255,255,.08); backdrop-filter:blur(8px); border-radius:12px; padding:9px 13px; font:700 12px 'Inter',sans-serif; cursor:pointer; transition:.15s ease; }
-  .dit-hero-btn:hover { background:rgba(255,255,255,.16); transform:translateY(-1px); }
-  .dit-hero-btn.primary { background:#FFE600; border-color:#FFE600; color:#17245b; box-shadow:0 5px 14px rgba(255,230,0,.25); }
+  .dit-hero-btn { border:1px solid rgba(255,255,255,.20); color:#fff; background:linear-gradient(135deg,#0F5EA8,#003B7A); backdrop-filter:blur(8px); border-radius:12px; padding:9px 13px; font:700 12px 'Inter',sans-serif; cursor:pointer; transition:.15s ease; box-shadow:0 5px 14px rgba(0,59,122,.22); }
+  .dit-hero-btn:hover { filter:brightness(1.06); transform:translateY(-1px); }
+  .dit-hero-btn.primary { background:linear-gradient(135deg,#1A70C2,#003B7A); border-color:rgba(255,255,255,.20); color:#fff; box-shadow:0 5px 14px rgba(0,59,122,.26); }
   .dit-meta-strip { display:flex; gap:8px; flex-wrap:wrap; margin-top:18px; position:relative; z-index:1; }
   .dit-meta-pill { display:inline-flex; align-items:center; gap:7px; padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); font-size:11px; color:rgba(255,255,255,.78); }
   .dit-meta-dot { width:7px; height:7px; border-radius:50%; background:#70e000; box-shadow:0 0 0 3px rgba(112,224,0,.12); }
@@ -702,7 +708,7 @@
   .dit-delta.down { background:#eaf7ef; color:#167a43; }
   .dit-delta.flat { background:#f2f4f7; color:#667085; }
 
-  .dit-insight-ribbon { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:12px; }
+  .dit-insight-ribbon { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:12px; }
   .dit-insight { position:relative; overflow:hidden; border-radius:15px; padding:13px 14px 13px 43px; min-height:70px; background:linear-gradient(145deg,#fff,#f8f9fc); border:1px solid rgba(45,50,119,.08); box-shadow:0 4px 14px rgba(45,50,119,.04); }
   .dit-insight-icon { position:absolute; left:13px; top:13px; width:23px; height:23px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:#eef3ff; font-size:12px; }
   .dit-insight-title { font-size:10px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:#8a91a0; }
@@ -779,7 +785,7 @@
   .dit-kpi-label { font-size: 8px; }
   .dit-kpi-value { margin-top: 5px; font-size: 23px; }
   .dit-kpi-foot { margin-top: 5px; font-size: 8px; }
-  .dit-insight-ribbon { grid-template-columns: repeat(3,1fr); gap: 7px; margin-bottom: 8px; }
+  .dit-insight-ribbon { grid-template-columns: repeat(2,1fr); gap: 7px; margin-bottom: 8px; }
   .dit-insight { min-height: 45px; border-radius: 11px; padding: 8px 10px 8px 34px; }
   .dit-insight-icon { left: 9px; top: 9px; width: 18px; height: 18px; border-radius: 6px; font-size: 9px; }
   .dit-insight-title { font-size: 8px; }
@@ -843,7 +849,7 @@
   .dit-chart-wrap.xs { height:126px; }
   .dit-chart-wrap.md { height:178px; }
   .dit-chart-wrap.prom { height:185px; }
-  .dit-chart-wrap.donut { height:178px; max-width:520px; margin:0 auto; }
+  .dit-chart-wrap.donut { height:228px; max-width:none; margin:0; }
   .dit-rank-card .dit-rank-list { max-height:180px; overflow:auto; padding-right:2px; }
   .dit-stage-focus { display:grid; grid-template-columns:minmax(210px,.8fr) minmax(0,2.2fr); gap:7px; }
   .dit-stage-panel { border-radius:12px; background:linear-gradient(145deg,#003B7A,#0F5EA8); color:#fff; padding:16px; min-height:174px; display:flex; flex-direction:column; justify-content:space-between; }
@@ -855,7 +861,7 @@
   .dit-stage-progress > span { display:block; height:100%; border-radius:inherit; background:#F0C64A; }
   .dit-stage-panel-note { margin-top:10px; font-size:8px; line-height:1.35; color:rgba(255,255,255,.68); }
   .dit-view-note { padding:8px 10px; border-radius:10px; background:#f6f9fc; border:1px solid #e8eef5; color:#667085; font-size:8px; line-height:1.35; margin-bottom:7px; }
-  .dit-empty-detail { height:100%; display:flex; align-items:center; justify-content:center; text-align:center; padding:20px; color:#98a2b3; font-size:9px; line-height:1.4; }
+  .dit-empty-detail { height:100%; display:flex; align-items:center; justify-content:center; text-align:center; padding:24px 20px; color:#7f8aa0; font-size:12px; line-height:1.55; font-weight:600; }
   @media (max-width:1150px) {
     .dit-view-summary { grid-template-columns:1fr 1fr; }
     .dit-focus-span-8,.dit-focus-span-7,.dit-focus-span-6,.dit-focus-span-5,.dit-focus-span-4 { grid-column:span 6; }
@@ -865,6 +871,15 @@
     .dit-focus-span-8,.dit-focus-span-7,.dit-focus-span-6,.dit-focus-span-5,.dit-focus-span-4,.dit-focus-span-12 { grid-column:span 12; }
     .dit-stage-focus { grid-template-columns:1fr; }
   }
+
+  #dit-view-stage .dit-stage-focus { align-items:stretch; }
+  #dit-view-stage .dit-stage-panel { min-height: 250px; }
+  #dit-view-stage .dit-chart-wrap.md { height: 250px; }
+  #dit-view-svc .dit-chart-wrap.md { height: 215px; }
+  #dit-view-last-mile .dit-chart-wrap.prom { height: 215px; }
+  #dit-view-last-mile .dit-chart-wrap.md { height: 185px; }
+  #dit-view-svc .dit-empty-detail strong { font-size: 16px !important; }
+  #dit-view-svc .dit-empty-detail span { font-size: 12px !important; }
 
 </style>
 </head>
@@ -1145,7 +1160,7 @@
         <div class="dit-insight-ribbon">
           <div class="dit-insight"><div class="dit-insight-icon">🎯</div><div class="dit-insight-title">Concentração</div><div class="dit-insight-text" id="dit-insight-1">—</div></div>
           <div class="dit-insight"><div class="dit-insight-icon">⌖</div><div class="dit-insight-title">Origem crítica</div><div class="dit-insight-text" id="dit-insight-2">—</div></div>
-          <div class="dit-insight"><div class="dit-insight-icon">↗</div><div class="dit-insight-title">Movimento</div><div class="dit-insight-text" id="dit-insight-3">—</div></div>
+          
         </div>
         <div class="dit-focus-grid">
           <section class="dit-card dit-focus-span-7">
@@ -1676,13 +1691,13 @@
         <span class="search-icon">🔍</span>
         <input type="text" placeholder="Buscar por transportadora, motorista ou nº do pacote..." id="busca-insucesso" oninput="filtrarInsucessosDoInicio()">
       </div>
-      <select id="insucesso-periodo-select" onchange="onMudarPeriodoInsucesso(this.value)" title="Período carregado — quanto maior, mais lento e mais dado consumido" style="min-width:160px">
-        <option value="30" selected>Período: últimos 30 dias</option>
-        <option value="60">Período: últimos 60 dias</option>
-        <option value="90">Período: últimos 90 dias</option>
-        <option value="180">Período: últimos 180 dias</option>
-        <option value="todos">Período: tudo (pode ficar lento)</option>
-      </select>
+      <div class="insucesso-date-filter" title="Escolha exatamente o período que deseja consultar">
+        <span>De</span>
+        <input type="date" id="insucesso-data-ini" aria-label="Data inicial do Insucesso SVC">
+        <span>Até</span>
+        <input type="date" id="insucesso-data-fim" aria-label="Data final do Insucesso SVC">
+        <button class="btn btn-secondary btn-sm insucesso-date-apply" id="btn-aplicar-periodo-insucesso" type="button" onclick="aplicarPeriodoCustomInsucesso()">📅 Aplicar</button>
+      </div>
       <button class="btn btn-secondary btn-sm" onclick="abrirModalExportarInsucesso()" style="height:34px;display:inline-flex;align-items:center;gap:6px;">
         <span>⬇️ Exportar CSV</span>
       </button>
@@ -1694,7 +1709,7 @@
       </button>
       <span class="count-badge" id="insucesso-count">0 registros</span>
     </div>
-    <p style="font-size:11px;color:var(--text-muted);margin:6px 0 0">Por padrão a tela carrega só os últimos 30 dias, pra abrir mais rápido. Amplie o período no seletor acima se precisar ver ou exportar algo mais antigo.</p>
+    <p id="insucesso-periodo-info" style="font-size:11px;color:var(--text-muted);margin:6px 0 0">Escolha a data inicial e final e clique em <strong>Aplicar</strong>. Para consultar um único dia, use a mesma data nos dois campos.</p>
 
     <div class="table-wrap">
       <table>
@@ -7061,29 +7076,71 @@ function renderAbsenteismo() {
 // ════════════════════════════════════════
 //  INSUCESSO / DEVOLUÇÃO — pacotes (uma linha por pacote no banco)
 // ════════════════════════════════════════
-let insucessoPeriodoAtual = 30; // dias; null = tudo. Controlado pelo seletor de período na tela.
+let insucessoDataInicioAtual = '';
+let insucessoDataFimAtual = '';
 
-async function carregarInsucessos(diasAtras = insucessoPeriodoAtual) {
-  insucessoPeriodoAtual = diasAtras;
+function garantirPeriodoInsucessoPadrao() {
+  const inputIni = document.getElementById('insucesso-data-ini');
+  const inputFim = document.getElementById('insucesso-data-fim');
+  let dataIni = inputIni?.value || insucessoDataInicioAtual;
+  let dataFim = inputFim?.value || insucessoDataFimAtual;
+
+  // Mantém um recorte inicial leve, mas sem presets fixos: o usuário pode trocar livremente.
+  if (!dataFim) dataFim = hojeIsoLocal();
+  if (!dataIni) {
+    const d = new Date(dataFim + 'T12:00:00');
+    d.setDate(d.getDate() - 29);
+    dataIni = dataLocalParaIso(d);
+  }
+
+  if (inputIni && !inputIni.value) inputIni.value = dataIni;
+  if (inputFim && !inputFim.value) inputFim.value = dataFim;
+  return { dataIni, dataFim };
+}
+
+function atualizarInfoPeriodoInsucesso(dataIni, dataFim) {
+  const el = document.getElementById('insucesso-periodo-info');
+  if (!el) return;
+  const fmt = iso => iso ? iso.split('-').reverse().join('/') : '—';
+  const unicoDia = dataIni && dataFim && dataIni === dataFim;
+  el.innerHTML = unicoDia
+    ? `Exibindo somente <strong>${fmt(dataIni)}</strong>. Altere as datas acima para consultar outro período.`
+    : `Período carregado: <strong>${fmt(dataIni)}</strong> até <strong>${fmt(dataFim)}</strong>. A consulta busca somente esse intervalo no banco.`;
+}
+
+async function carregarInsucessos(dataIni = null, dataFim = null) {
+  const periodo = garantirPeriodoInsucessoPadrao();
+  dataIni = dataIni || periodo.dataIni;
+  dataFim = dataFim || periodo.dataFim;
+
+  if (!dataIni || !dataFim) return;
+  if (dataIni > dataFim) throw new Error('A data inicial não pode ser depois da data final.');
+
+  insucessoDataInicioAtual = dataIni;
+  insucessoDataFimAtual = dataFim;
+
+  const inputIni = document.getElementById('insucesso-data-ini');
+  const inputFim = document.getElementById('insucesso-data-fim');
+  if (inputIni) inputIni.value = dataIni;
+  if (inputFim) inputFim.value = dataFim;
+  atualizarInfoPeriodoInsucesso(dataIni, dataFim);
+
   try {
     const TAMANHO_PAGINA = 1000;
     let todasLinhas = [];
     let inicio = 0;
 
-    let dataCorteIso = null;
-    if (diasAtras) {
-      const dataCorte = new Date();
-      dataCorte.setDate(dataCorte.getDate() - diasAtras);
-      dataCorteIso = dataLocalParaIso(dataCorte);
-    }
-
-    // O Supabase limita a 1000 linhas por chamada; busca em blocos até não sobrar mais nada.
+    // O Supabase limita a 1000 linhas por chamada. O filtro de datas é aplicado
+    // diretamente na consulta para não baixar registros fora do período escolhido.
     while (true) {
-      let query = db.from('insucessos')
+      const query = db.from('insucessos')
         .select('*')
-        .order('criado_em', { ascending: false });
-      if (dataCorteIso) query = query.gte('data_registro', dataCorteIso);
-      const { data, error } = await query.range(inicio, inicio + TAMANHO_PAGINA - 1);
+        .gte('data_registro', dataIni)
+        .lte('data_registro', dataFim)
+        .order('criado_em', { ascending: false })
+        .range(inicio, inicio + TAMANHO_PAGINA - 1);
+
+      const { data, error } = await query;
 
       if (error) {
         if (error.code === '42P01' || /does not exist/i.test(error.message || '')) {
@@ -7118,16 +7175,37 @@ async function carregarInsucessos(diasAtras = insucessoPeriodoAtual) {
   }
 }
 
-async function onMudarPeriodoInsucesso(valor) {
-  const dias = valor === 'todos' ? null : Number(valor);
-  const btn = document.getElementById('insucesso-periodo-select');
+async function aplicarPeriodoCustomInsucesso() {
+  const dataIni = document.getElementById('insucesso-data-ini')?.value || '';
+  const dataFim = document.getElementById('insucesso-data-fim')?.value || '';
+  if (!dataIni || !dataFim) {
+    toast('Escolha a data inicial e a data final.', 'error');
+    return;
+  }
+  if (dataIni > dataFim) {
+    toast('A data inicial não pode ser depois da data final.', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btn-aplicar-periodo-insucesso');
+  const ini = document.getElementById('insucesso-data-ini');
+  const fim = document.getElementById('insucesso-data-fim');
   if (btn) btn.disabled = true;
-  toast('Carregando período selecionado...', '');
-  await carregarInsucessos(dias);
-  insucessoPaginaAtual = 1;
-  renderInsucessos();
-  if (btn) btn.disabled = false;
-  toast('Período atualizado.', 'success');
+  if (ini) ini.disabled = true;
+  if (fim) fim.disabled = true;
+
+  try {
+    toast('Carregando período escolhido...', '');
+    await carregarInsucessos(dataIni, dataFim);
+    insucessoPaginaAtual = 1;
+    renderInsucessos();
+    const fmt = iso => iso.split('-').reverse().join('/');
+    toast(dataIni === dataFim ? `Dados de ${fmt(dataIni)} carregados.` : `Período ${fmt(dataIni)} a ${fmt(dataFim)} carregado.`, 'success');
+  } finally {
+    if (btn) btn.disabled = false;
+    if (ini) ini.disabled = false;
+    if (fim) fim.disabled = false;
+  }
 }
 
 function parsePacotesInsucesso(texto) {
@@ -7570,15 +7648,11 @@ function renderChartHoraInsucesso() {
 
 // ── Exportação em CSV ──
 function abrirModalExportarInsucesso() {
-  const hoje = hojeIsoLocal();
-  const seteDiasAtras = new Date();
-  seteDiasAtras.setDate(seteDiasAtras.getDate() - 6);
-  const iniPadrao = seteDiasAtras.toISOString().slice(0, 10);
-
+  const periodo = garantirPeriodoInsucessoPadrao();
   const inputIni = document.getElementById('insucesso-export-data-ini');
   const inputFim = document.getElementById('insucesso-export-data-fim');
-  if (inputIni) inputIni.value = iniPadrao;
-  if (inputFim) inputFim.value = hoje;
+  if (inputIni) inputIni.value = insucessoDataInicioAtual || periodo.dataIni;
+  if (inputFim) inputFim.value = insucessoDataFimAtual || periodo.dataFim;
 
   document.getElementById('modal-exportar-insucesso').classList.add('open');
 }
@@ -7602,13 +7676,10 @@ function gerarExportacaoInsucessoCSV() {
   if (!dataIni || !dataFim) { toast('Informe o período (data inicial e final).', 'error'); return; }
   if (dataIni > dataFim) { toast('A data inicial não pode ser depois da data final.', 'error'); return; }
 
-  if (insucessoPeriodoAtual) {
-    const inicioCarregado = new Date();
-    inicioCarregado.setDate(inicioCarregado.getDate() - insucessoPeriodoAtual);
-    if (dataIni < dataLocalParaIso(inicioCarregado)) {
-      toast(`Só há dados carregados dos últimos ${insucessoPeriodoAtual} dias. Amplie o período no seletor "Período carregado" acima da tabela antes de exportar um intervalo maior.`, 'error');
-      return;
-    }
+  if (insucessoDataInicioAtual && insucessoDataFimAtual && (dataIni < insucessoDataInicioAtual || dataFim > insucessoDataFimAtual)) {
+    const fmt = iso => iso.split('-').reverse().join('/');
+    toast(`A tela está com ${fmt(insucessoDataInicioAtual)} até ${fmt(insucessoDataFimAtual)} carregado. Aplique primeiro o período que deseja exportar na tela principal.`, 'error');
+    return;
   }
 
   const linhas = insucessos
@@ -13086,6 +13157,21 @@ const ditDataLabelsPlugin = {
         } else if (chartType === 'line') {
           ctx.textAlign = 'left';
           ctx.fillText(text, pos.x + 6, pos.y - 10);
+        } else if (chartType === 'doughnut' || chartType === 'pie') {
+          const total = (Array.isArray(dataset.data) ? dataset.data : []).reduce((s,v)=>s+Number(v||0),0);
+          if (!total) return;
+          const pct = numeric / total;
+          if (pct < 0.07) return;
+          const arc = element;
+          const angle = (arc.startAngle + arc.endAngle) / 2;
+          const radius = arc.innerRadius + ((arc.outerRadius - arc.innerRadius) * 0.58);
+          const x = arc.x + Math.cos(angle) * radius;
+          const y = arc.y + Math.sin(angle) * radius;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = dataset.dataLabelColor || options.color || '#fff';
+          ctx.font = dataset.dataLabelFont || options.font || '800 10px Inter, sans-serif';
+          ctx.fillText(text, x, y);
         }
       });
     });
@@ -13232,7 +13318,7 @@ function ditRenderStageFocus(stageKey) {
   const canvas=document.getElementById('dit-chart-stage'); if(!canvas)return;
   const serie=datas.map(data=>{ const rr=rows.filter(r=>r.data===data); return {data,valor:Number(ditL2Row(rr,cfg.categoria)?.valor||0)}; });
   if(serie.length<=1){
-    ditCharts.stage=new Chart(canvas,{type:'bar',data:{labels:[cfg.label],datasets:[{data:[valor],backgroundColor:'#0F5EA8',borderRadius:7,showDataLabels:true}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false}},y:{beginAtZero:true}}})});
+    ditCharts.stage=new Chart(canvas,{type:'bar',data:{labels:[cfg.label],datasets:[{data:[valor],backgroundColor:'#0F5EA8',borderRadius:8,showDataLabels:true,categoryPercentage:.62,barPercentage:.78,maxBarThickness:180}]},options:ditBaseChartOptions({layout:{padding:{top:16,right:16,bottom:8,left:8}},plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:12,weight:'700'}}},y:{beginAtZero:true,ticks:{font:{size:10}}}}})});
   } else {
     ditCharts.stage=new Chart(canvas,{type:'line',data:{labels:serie.map(x=>ditDataBr(x.data).slice(0,5)),datasets:[{label:cfg.label,data:serie.map(x=>x.valor),borderColor:'#003B7A',backgroundColor:'rgba(15,94,168,.08)',fill:true,tension:.3,borderWidth:2,pointRadius:2,showDataLabels:false}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{display:false},ditDataLabels:false},scales:{x:{grid:{display:false}},y:{beginAtZero:true}}})});
   }
@@ -13282,7 +13368,7 @@ function ditRender() {
   document.getElementById('dit-insight-1').textContent = topSvc && svcAtual ? `${topSvc.categoria} concentra ${ditFmtPct(topSvc.valor/svcAtual,1)} do DIT SVC (${ditFmtInt(topSvc.valor)} volumes).` : 'Sem leitura de concentração disponível.';
   document.getElementById('dit-insight-2').textContent = topOrigem ? `${topOrigem.categoria} lidera as origens ofensoras com ${ditFmtInt(topOrigem.valor)} ocorrências${origensTotal?` (${ditFmtPct(topOrigem.valor/origensTotal,1)})`:''}.` : 'Sem origem ofensora registrada.';
   const mov = totalPrev ? ((totalAtual-totalPrev)/Math.abs(totalPrev)) : 0;
-  document.getElementById('dit-insight-3').textContent = totalPrev ? `DIT total ${mov>0?'subiu':mov<0?'caiu':'ficou estável'} ${Math.abs(mov*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}% contra ${ditDataBr(prevDate)}.` : 'Primeiro snapshot disponível no histórico carregado.';
+  const insight3=document.getElementById('dit-insight-3'); if(insight3) insight3.textContent = totalPrev ? `DIT total ${mov>0?'subiu':mov<0?'caiu':'ficou estável'} ${Math.abs(mov*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}% contra ${ditDataBr(prevDate)}.` : 'Primeiro snapshot disponível no histórico carregado.';
 
   const l2Total=ditSoma(rowsAtual,'LT_DELAY_CAUSE_L2');
   const fmRow=ditL2Row(rowsAtual,'First Mile'), lhRow=ditL2Row(rowsAtual,'Line Haul'), svcL2Row=ditL2Row(rowsAtual,'SVC'), lmL2Row=ditL2Row(rowsAtual,'Last Mile');
@@ -13301,7 +13387,7 @@ function ditRender() {
   setTxt('dit-svc-top-name',topSvc?.categoria||'—');
   setTxt('dit-svc-top-meta',topSvc&&svcAtual?`${ditFmtInt(topSvc.valor)} · ${ditFmtPct(topSvc.valor/svcAtual,1)} do SVC`:'—');
   setTxt('dit-svc-falha-total',ditFmtInt(falhaTotal));
-  const quick=document.getElementById('dit-svc-quickread'); if(quick)quick.innerHTML=topSvc&&svcAtual?`<div style="max-width:360px"><strong style="display:block;color:#003B7A;font-size:12px;margin-bottom:6px">${escapeHtml(topSvc.categoria)}</strong><span>${ditFmtInt(topSvc.valor)} volumes representam <strong>${ditFmtPct(topSvc.valor/svcAtual,1)}</strong> do DIT SVC. ${topOrigemObj?`A origem mais ofensora no snapshot é <strong>${escapeHtml(topOrigemObj.categoria)}</strong> com ${ditFmtInt(topOrigemObj.valor)} ocorrências.`:''}</span></div>`:'Sem leitura SVC disponível.';
+  const quick=document.getElementById('dit-svc-quickread'); if(quick)quick.innerHTML=topSvc&&svcAtual?`<div style="max-width:620px"><strong style="display:block;color:#003B7A;font-size:20px;margin-bottom:10px;line-height:1.1">${escapeHtml(topSvc.categoria)}</strong><span style="font-size:13px;line-height:1.6;color:#7f8aa0">${ditFmtInt(topSvc.valor)} volumes representam <strong style="color:#003B7A">${ditFmtPct(topSvc.valor/svcAtual,1)}</strong> do DIT SVC. ${topOrigemObj?`A origem mais ofensora no snapshot é <strong style=\"color:#003B7A\">${escapeHtml(topOrigemObj.categoria)}</strong> com ${ditFmtInt(topOrigemObj.valor)} ocorrências.`:''}</span></div>`:'Sem leitura SVC disponível.';
 
   setTxt('dit-lm-l2-total',ditFmtInt(Number(lmL2Row?.valor||0)));
   setTxt('dit-lm-l2-share',l2Total?`${ditFmtPct(Number(lmL2Row?.valor||0)/l2Total,1)} do DIT total`:'—');
@@ -13351,13 +13437,13 @@ function ditRenderCharts(rows, rowsAtual, datas) {
 
   // SVC: quantidade + % do SVC
   const svc = ditTop(rowsAtual,'DIT SVC 5',8); const svcTotal=svc.reduce((s,x)=>s+x.valor,0); ditDestroyChart('svc');
-  ditCharts.svc = new Chart(document.getElementById('dit-chart-svc'),{type:'bar',data:{labels:svc.map(x=>x.categoria),datasets:[{data:svc.map(x=>x.valor),backgroundColor:svc.map((_,i)=>i===0?'rgba(0,59,122,.94)':`rgba(15,94,168,${Math.max(.28,.76-i*.07)})`),borderRadius:5,showDataLabels:true,dataLabelFormatter:(v)=>ditLabelValorPct(v,svcTotal)}]},options:ditBaseChartOptions({indexAxis:'y',layout:{padding:{right:48}},plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{beginAtZero:true,grid:{color:'rgba(148,163,184,.08)'},ticks:{font:{size:7}}},y:{grid:{display:false},ticks:{font:{size:7,weight:'700'},color:'#475467'}}}})});
+  ditCharts.svc = new Chart(document.getElementById('dit-chart-svc'),{type:'bar',data:{labels:svc.map(x=>x.categoria),datasets:[{data:svc.map(x=>x.valor),backgroundColor:svc.map((_,i)=>i===0?'rgba(0,59,122,.94)':`rgba(15,94,168,${Math.max(.28,.76-i*.07)})`),borderRadius:5,showDataLabels:true,dataLabelFormatter:(v)=>ditLabelValorPct(v,svcTotal),dataLabelFont:'800 11px Inter, sans-serif'}]},options:ditBaseChartOptions({indexAxis:'y',layout:{padding:{right:62}},plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{beginAtZero:true,grid:{color:'rgba(148,163,184,.08)'},ticks:{font:{size:8}}},y:{grid:{display:false},ticks:{font:{size:9,weight:'700'},color:'#475467'}}}})});
 
   // Total donut: legenda já traz quantidade + %
   const total = ditTop(rowsAtual,'LT_DELAY_CAUSE_L2',20); ditDestroyChart('total');
   const top5=total.slice(0,5), outros=total.slice(5).reduce((s,r)=>s+r.valor,0); if(outros>0) top5.push({categoria:'Outros',valor:outros});
   const totalSum=top5.reduce((s,x)=>s+x.valor,0);
-  ditCharts.total = new Chart(document.getElementById('dit-chart-total'),{type:'doughnut',data:{labels:top5.map(x=>x.categoria),datasets:[{data:top5.map(x=>x.valor),backgroundColor:[navy,blue,yellow,blue2,blue3,gray],borderColor:'#fff',borderWidth:2,hoverOffset:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'right',labels:{boxWidth:7,usePointStyle:true,pointStyle:'circle',padding:7,font:{size:7,family:'Inter'},generateLabels(chart){const ds=chart.data.datasets[0];return chart.data.labels.map((label,i)=>({text:`${label} ${ditFmtInt(ds.data[i])} · ${ditFmtPct(ds.data[i]/totalSum,1)}`,fillStyle:ds.backgroundColor[i],strokeStyle:ds.backgroundColor[i],lineWidth:0,index:i}));}}},tooltip:{callbacks:{label:(ctx)=>`${ctx.label}: ${ditFmtInt(ctx.raw)} (${ditFmtPct(ctx.raw/totalSum,1)})`}},ditDataLabels:false}}});
+  ditCharts.total = new Chart(document.getElementById('dit-chart-total'),{type:'doughnut',data:{labels:top5.map(x=>x.categoria),datasets:[{data:top5.map(x=>x.valor),backgroundColor:[navy,blue,yellow,blue2,blue3,gray],borderColor:'#fff',borderWidth:2,hoverOffset:3,showDataLabels:true,dataLabelFormatter:(v)=>ditFmtPct(v/totalSum,1),dataLabelColor:'#ffffff',dataLabelFont:'800 11px Inter, sans-serif'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'63%',layout:{padding:{top:4,right:12,bottom:4,left:8}},plugins:{legend:{position:'right',labels:{boxWidth:9,usePointStyle:true,pointStyle:'circle',padding:10,font:{size:10,family:'Inter',weight:'700'},generateLabels(chart){const ds=chart.data.datasets[0];return chart.data.labels.map((label,i)=>({text:`${label} ${ditFmtInt(ds.data[i])} · ${ditFmtPct(ds.data[i]/totalSum,1)}`,fillStyle:ds.backgroundColor[i],strokeStyle:ds.backgroundColor[i],lineWidth:0,index:i}));}}},tooltip:{callbacks:{label:(ctx)=>`${ctx.label}: ${ditFmtInt(ctx.raw)} (${ditFmtPct(ctx.raw/totalSum,1)})`}},ditDataLabels:{color:'#fff',font:'800 11px Inter, sans-serif'}}}});
 
   // LM: quantidade + %
   const lm = ditTop(rowsAtual,'DIT LM',8); const lmTotal=lm.reduce((s,x)=>s+x.valor,0); ditDestroyChart('lm');
@@ -13377,7 +13463,7 @@ function ditRenderCharts(rows, rowsAtual, datas) {
 
   // Promessas: compacto e sem rótulo em cada barra para evitar ruído.
   const promTodos=ditRowsIndicador(rowsAtual,'Promessas Last Mile').slice().sort((a,b)=>ditParseData(a.categoria)?.localeCompare(ditParseData(b.categoria)) || 0); const prom=promTodos.slice(-16); ditDestroyChart('prom');
-  ditCharts.prom = new Chart(document.getElementById('dit-chart-promessas'),{type:'bar',data:{labels:prom.map(x=>{const d=ditParseData(x.categoria);return d?ditDataBr(d).slice(0,5):x.categoria}),datasets:[{label:'SVC-ID',data:prom.map(x=>x.valor),backgroundColor:'rgba(0,59,122,.86)',borderRadius:3,showDataLabels:false},{label:'LM-ID',data:prom.map(x=>Number(x.auxiliar||0)),backgroundColor:'rgba(240,198,74,.84)',borderRadius:3,showDataLabels:false}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{position:'bottom',labels:{boxWidth:7,usePointStyle:true,pointStyle:'circle',font:{size:7}}},ditDataLabels:false},scales:{x:{stacked:false,grid:{display:false},ticks:{autoSkip:true,maxTicksLimit:10,maxRotation:0,font:{size:7}}},y:{beginAtZero:true,ticks:{font:{size:7}}}}})});
+  ditCharts.prom = new Chart(document.getElementById('dit-chart-promessas'),{type:'bar',data:{labels:prom.map(x=>{const d=ditParseData(x.categoria);return d?ditDataBr(d).slice(0,5):x.categoria}),datasets:[{label:'SVC-ID',data:prom.map(x=>x.valor),backgroundColor:'rgba(0,59,122,.86)',borderRadius:3,showDataLabels:true,dataLabelFormatter:(v)=>v?ditFmtInt(v):'',dataLabelFont:'700 8px Inter, sans-serif'},{label:'LM-ID',data:prom.map(x=>Number(x.auxiliar||0)),backgroundColor:'rgba(240,198,74,.84)',borderRadius:3,showDataLabels:true,dataLabelFormatter:(v)=>v?ditFmtInt(v):'',dataLabelFont:'700 8px Inter, sans-serif',dataLabelColor:'#6b5600'}]},options:ditBaseChartOptions({layout:{padding:{top:16,right:10,bottom:0,left:2}},plugins:{...ditBaseChartOptions().plugins,legend:{position:'bottom',labels:{boxWidth:8,usePointStyle:true,pointStyle:'circle',font:{size:8}}}},scales:{x:{stacked:false,grid:{display:false},ticks:{autoSkip:true,maxTicksLimit:10,maxRotation:0,font:{size:8}}},y:{beginAtZero:true,ticks:{font:{size:8}}}}})});
 }
 
 async function ditRecarregar() {
