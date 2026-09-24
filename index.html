@@ -757,6 +757,72 @@
   @media (max-width:1280px) { .dit-kpi-grid{grid-template-columns:repeat(3,1fr)} .dit-span-8,.dit-span-7,.dit-span-6,.dit-span-5,.dit-span-4{grid-column:span 6} }
   @media (max-width:820px) { .dit-kpi-grid{grid-template-columns:repeat(2,1fr)} .dit-insight-ribbon{grid-template-columns:1fr} .dit-span-8,.dit-span-7,.dit-span-6,.dit-span-5,.dit-span-4,.dit-span-12{grid-column:span 12} .dit-import-summary{grid-template-columns:repeat(2,1fr)} .dit-hero{padding:22px 20px} .dit-title{font-size:25px} }
 
+
+
+  /* DIT v3 — dense / Looker-like */
+  #page-dit { padding: 14px 18px 22px; max-width: 2100px; }
+  .dit-shell { font-size: 12px; }
+  .dit-hero { border-radius: 18px; padding: 18px 22px; margin-bottom: 10px; }
+  .dit-title { font-size: 25px; }
+  .dit-subtitle { margin-top: 5px; font-size: 10px; max-width: 780px; }
+  .dit-meta-strip { margin-top: 11px; gap: 6px; }
+  .dit-meta-pill { padding: 4px 8px; font-size: 9px; }
+  .dit-hero-actions { gap: 6px; }
+  .dit-hero-btn { border-radius: 9px; padding: 7px 10px; font-size: 10px; }
+  .dit-toolbar { padding: 7px 10px; border-radius: 12px; margin-bottom: 9px; }
+  .dit-range-btn { padding: 5px 8px; font-size: 9px; }
+  .dit-date-input { padding: 5px 7px; font-size: 9px; }
+  .dit-refresh-btn { width: 29px; height: 29px; font-size: 13px; }
+  .dit-kpi-grid { gap: 7px; margin-bottom: 8px; }
+  .dit-kpi { min-height: 88px; border-radius: 12px; padding: 10px 11px; }
+  .dit-kpi::after { width: 66px; height: 66px; right: -24px; top: -25px; }
+  .dit-kpi-label { font-size: 8px; }
+  .dit-kpi-value { margin-top: 5px; font-size: 23px; }
+  .dit-kpi-foot { margin-top: 5px; font-size: 8px; }
+  .dit-insight-ribbon { grid-template-columns: repeat(3,1fr); gap: 7px; margin-bottom: 8px; }
+  .dit-insight { min-height: 45px; border-radius: 11px; padding: 8px 10px 8px 34px; }
+  .dit-insight-icon { left: 9px; top: 9px; width: 18px; height: 18px; border-radius: 6px; font-size: 9px; }
+  .dit-insight-title { font-size: 8px; }
+  .dit-insight-text { margin-top: 2px; font-size: 9px; line-height: 1.25; }
+  .dit-bento { gap: 7px; }
+  .dit-card { border-radius: 12px; padding: 9px 10px; }
+  .dit-card-head { margin-bottom: 6px; gap: 8px; }
+  .dit-card-kicker { font-size: 7px; }
+  .dit-card-title { font-size: 11px; }
+  .dit-card-note { font-size: 8px; }
+  .dit-chart-wrap { height: 155px; }
+  .dit-chart-wrap.sm { height: 145px; }
+  .dit-chart-wrap.lg { height: 165px; }
+  .dit-rank-list { gap: 5px; }
+  .dit-rank-row { grid-template-columns: 21px minmax(72px,1fr) 1.7fr auto; gap: 5px; }
+  .dit-rank-pos { width: 19px; height: 19px; border-radius: 6px; font-size: 8px; }
+  .dit-rank-name { font-size: 9px; }
+  .dit-rank-track { height: 5px; }
+  .dit-rank-value { font-size: 9px; }
+  .dit-origin-table-wrap { max-height: 216px; }
+  .dit-origin-table th { font-size: 7px; padding: 6px 7px; }
+  .dit-origin-table td { font-size: 8px; padding: 6px 7px; }
+  .dit-pressure { min-width: 48px; padding: 2px 5px; font-size: 7px; }
+  .dit-heatmap { width:100%; border-collapse:separate; border-spacing:3px; table-layout:fixed; }
+  .dit-heatmap th { font-size:7px; color:#7d8494; text-transform:uppercase; letter-spacing:.05em; padding:4px 5px; text-align:center; }
+  .dit-heatmap th:first-child { text-align:left; width:88px; }
+  .dit-heatmap td { padding:5px 6px; font-size:8px; font-weight:800; text-align:center; border-radius:6px; color:#14324f; }
+  .dit-heatmap td:first-child { text-align:left; background:#f7f9fc !important; color:#24415f; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .dit-heat-0 { background:#f4f7fa; color:#98a2b3 !important; }
+  .dit-heat-1 { background:#e7f0f8; }
+  .dit-heat-2 { background:#c9dced; }
+  .dit-heat-3 { background:#9fc0dc; }
+  .dit-heat-4 { background:#5b8fc3; color:#fff !important; }
+  .dit-heat-5 { background:#0f5ea8; color:#fff !important; }
+  .dit-heat-6 { background:#003b7a; color:#fff !important; box-shadow:inset 0 0 0 1px rgba(255,255,255,.14); }
+  .dit-heat-caption { display:flex; align-items:center; gap:6px; justify-content:flex-end; margin-top:5px; font-size:7px; color:#8b93a5; }
+  .dit-heat-scale { display:inline-flex; gap:2px; }
+  .dit-heat-scale span { width:11px; height:7px; border-radius:2px; display:block; }
+  @media (max-width: 1150px) {
+    .dit-kpi-grid { grid-template-columns:repeat(3,1fr); }
+    .dit-span-4,.dit-span-5,.dit-span-6,.dit-span-7,.dit-span-8 { grid-column:span 6; }
+  }
+
 </style>
 </head>
 <body>
@@ -1021,7 +1087,7 @@
         <div class="dit-kpi" style="--kpi-accent:#F0C64A;--kpi-glow:rgba(240,198,74,.16)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT Last Mile</div><div class="dit-kpi-value" id="dit-kpi-lm">—</div><div class="dit-kpi-foot" id="dit-kpi-lm-foot">—</div></div>
         <div class="dit-kpi" style="--kpi-accent:#5B8FC3"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT -1</div><div class="dit-kpi-value" id="dit-kpi-dm1">—</div><div class="dit-kpi-foot">promessas vencidas / recorte da base</div></div>
         <div class="dit-kpi" style="--kpi-accent:#7AA3CE"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT +1</div><div class="dit-kpi-value" id="dit-kpi-dp1">—</div><div class="dit-kpi-foot">promessas futuras / recorte da base</div></div>
-        <div class="dit-kpi" style="--kpi-accent:#003B7A;--kpi-glow:rgba(0,59,122,.10)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">Causa dominante SVC</div><div class="dit-kpi-value" id="dit-kpi-causa" style="font-size:19px;line-height:1.12;margin-top:12px">—</div><div class="dit-kpi-foot" id="dit-kpi-causa-foot">—</div></div>
+        <div class="dit-kpi" style="--kpi-accent:#003B7A;--kpi-glow:rgba(0,59,122,.10)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">Causa dominante SVC</div><div class="dit-kpi-value" id="dit-kpi-causa" style="font-size:15px;line-height:1.08;margin-top:7px">—</div><div class="dit-kpi-foot" id="dit-kpi-causa-foot">—</div></div>
       </div>
 
       <div class="dit-insight-ribbon">
@@ -1031,49 +1097,49 @@
       </div>
 
       <div class="dit-bento">
-        <section class="dit-card dit-span-8">
+        <section class="dit-card dit-span-6">
           <div class="dit-card-head"><div><div class="dit-card-kicker">Evolução</div><div class="dit-card-title">Pulso do DIT</div></div><div class="dit-card-note">Total · SVC · Last Mile</div></div>
           <div class="dit-chart-wrap lg"><canvas id="dit-chart-trend"></canvas></div>
         </section>
-        <section class="dit-card dit-span-4">
-          <div class="dit-card-head"><div><div class="dit-card-kicker">Agora</div><div class="dit-card-title">Top ofensores SVC</div></div><div class="dit-card-note">snapshot mais recente</div></div>
+        <section class="dit-card dit-span-6">
+          <div class="dit-card-head"><div><div class="dit-card-kicker">Agora</div><div class="dit-card-title">Top ofensores SVC</div></div><div class="dit-card-note">volume · participação</div></div>
           <div class="dit-rank-list" id="dit-rank-svc"></div>
         </section>
 
-        <section class="dit-card dit-span-7">
-          <div class="dit-card-head"><div><div class="dit-card-kicker">Causa raiz</div><div class="dit-card-title">Composição DIT SVC</div></div><div class="dit-card-note">participação por motivo</div></div>
+        <section class="dit-card dit-span-4">
+          <div class="dit-card-head"><div><div class="dit-card-kicker">Causa raiz</div><div class="dit-card-title">Composição DIT SVC</div></div><div class="dit-card-note">vol. · % SVC</div></div>
           <div class="dit-chart-wrap"><canvas id="dit-chart-svc"></canvas></div>
         </section>
-        <section class="dit-card dit-span-5">
-          <div class="dit-card-head"><div><div class="dit-card-kicker">Ecossistema</div><div class="dit-card-title">Quem carrega o DIT total?</div></div><div class="dit-card-note">LT_DELAY_CAUSE_L2</div></div>
+        <section class="dit-card dit-span-4">
+          <div class="dit-card-head"><div><div class="dit-card-kicker">Ecossistema</div><div class="dit-card-title">Quem carrega o DIT total?</div></div><div class="dit-card-note">volume · participação</div></div>
           <div class="dit-chart-wrap"><canvas id="dit-chart-total"></canvas></div>
         </section>
 
-        <section class="dit-card dit-span-6">
-          <div class="dit-card-head"><div><div class="dit-card-kicker">Last Mile</div><div class="dit-card-title">DIT LM por motivo</div></div><div class="dit-card-note">volume absoluto</div></div>
+        <section class="dit-card dit-span-4">
+          <div class="dit-card-head"><div><div class="dit-card-kicker">Last Mile</div><div class="dit-card-title">DIT LM por motivo</div></div><div class="dit-card-note">vol. · % LM</div></div>
           <div class="dit-chart-wrap sm"><canvas id="dit-chart-lm"></canvas></div>
         </section>
-        <section class="dit-card dit-span-6">
-          <div class="dit-card-head"><div><div class="dit-card-kicker">Origem</div><div class="dit-card-title">Top origens ofensoras</div></div><div class="dit-card-note">ranking operacional</div></div>
+        <section class="dit-card dit-span-4">
+          <div class="dit-card-head"><div><div class="dit-card-kicker">Origem</div><div class="dit-card-title">Top origens ofensoras</div></div><div class="dit-card-note">vol. · % origens</div></div>
           <div class="dit-chart-wrap sm"><canvas id="dit-chart-origem"></canvas></div>
         </section>
 
-        <section class="dit-card dit-span-5">
-          <div class="dit-card-head"><div><div class="dit-card-kicker">Não shippado</div><div class="dit-card-title">Falhas na origem</div></div><div class="dit-card-note">volumes por nodo</div></div>
+        <section class="dit-card dit-span-4">
+          <div class="dit-card-head"><div><div class="dit-card-kicker">Não shippado</div><div class="dit-card-title">Falhas na origem</div></div><div class="dit-card-note">vol. · % não shippado</div></div>
           <div class="dit-chart-wrap sm"><canvas id="dit-chart-nao-shippado"></canvas></div>
         </section>
-        <section class="dit-card dit-span-7">
-          <div class="dit-card-head"><div><div class="dit-card-kicker">Promessas</div><div class="dit-card-title">SVC-ID x LM-ID</div></div><div class="dit-card-note">linha do tempo de promessa</div></div>
+        <section class="dit-card dit-span-4">
+          <div class="dit-card-head"><div><div class="dit-card-kicker">Promessas</div><div class="dit-card-title">SVC-ID x LM-ID</div></div><div class="dit-card-note">linha do tempo</div></div>
           <div class="dit-chart-wrap sm"><canvas id="dit-chart-promessas"></canvas></div>
         </section>
 
-        <section class="dit-card dit-span-5">
-          <div class="dit-card-head"><div><div class="dit-card-kicker">Ação</div><div class="dit-card-title">Falha operacional / POC</div></div><div class="dit-card-note">o que precisa acontecer agora</div></div>
+        <section class="dit-card dit-span-4">
+          <div class="dit-card-head"><div><div class="dit-card-kicker">Ação</div><div class="dit-card-title">Falha operacional / POC</div></div><div class="dit-card-note">vol. · participação</div></div>
           <div class="dit-chart-wrap sm"><canvas id="dit-chart-falha"></canvas></div>
         </section>
-        <section class="dit-card dit-span-7">
-          <div class="dit-card-head"><div><div class="dit-card-kicker">Matriz de pressão</div><div class="dit-card-title">Origem ofensora x não shippado</div></div><div class="dit-card-note">priorização por concentração</div></div>
-          <div class="dit-origin-table-wrap"><table class="dit-origin-table"><thead><tr><th>Origem</th><th>Ofensora</th><th>Não shippado</th><th>Share</th><th>Pressão</th></tr></thead><tbody id="dit-origin-tbody"></tbody></table></div>
+        <section class="dit-card dit-span-8">
+          <div class="dit-card-head"><div><div class="dit-card-kicker">Mapa de calor</div><div class="dit-card-title">Pressão por origem</div></div><div class="dit-card-note">intensidade normalizada</div></div>
+          <div id="dit-heatmap-wrap"></div>
         </section>
       </div>
     </div>
@@ -12971,21 +13037,44 @@ function ditRenderRank(containerId, itens, total) {
   </div>`).join('');
 }
 
+function ditHeatClass(value, max) {
+  if (!max || !value) return 'dit-heat-0';
+  const r = value / max;
+  if (r >= .85) return 'dit-heat-6';
+  if (r >= .65) return 'dit-heat-5';
+  if (r >= .45) return 'dit-heat-4';
+  if (r >= .28) return 'dit-heat-3';
+  if (r >= .14) return 'dit-heat-2';
+  return 'dit-heat-1';
+}
+
 function ditRenderMatrizOrigem(rowsAtual) {
-  const tbody = document.getElementById('dit-origin-tbody'); if (!tbody) return;
-  const ofens = ditTop(rowsAtual,'Origem Ofensora',50);
-  const nao = new Map(ditRowsIndicador(rowsAtual,'Não shippado origem').map(r => [ditNorm(r.categoria),Number(r.valor||0)]));
-  const total = ofens.reduce((s,r)=>s+r.valor,0) || 1;
-  const itens = ofens.slice(0,14);
-  if (!itens.length) { tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:#98a0b0;padding:26px">Sem origens para o snapshot.</td></tr>'; return; }
-  tbody.innerHTML = itens.map((r,i) => {
-    const ns = nao.get(ditNorm(r.categoria)) || 0;
-    const share = r.valor/total;
-    const score = share*0.75 + (ns / Math.max(1,r.valor))*0.25;
-    const cls = score >= .16 ? 'high' : score >= .08 ? 'mid' : 'low';
-    const label = cls==='high'?'alta':cls==='mid'?'média':'baixa';
-    return `<tr><td>${escapeHtml(r.categoria)}</td><td>${ditFmtInt(r.valor)}</td><td>${ditFmtInt(ns)}</td><td>${ditFmtPct(share,1)}</td><td><span class="dit-pressure ${cls}">${label}</span></td></tr>`;
-  }).join('');
+  const wrap = document.getElementById('dit-heatmap-wrap'); if (!wrap) return;
+  const ofens = ditTop(rowsAtual,'Origem Ofensora',12);
+  const naoRows = ditTop(rowsAtual,'Não shippado origem',50);
+  const nao = new Map(naoRows.map(r => [ditNorm(r.categoria),Number(r.valor||0)]));
+  const totalOfens = ofens.reduce((s,r)=>s+Number(r.valor||0),0);
+  const maxOfens = Math.max(1,...ofens.map(r=>Number(r.valor||0)));
+  const maxNao = Math.max(1,...ofens.map(r=>Number(nao.get(ditNorm(r.categoria))||0)));
+  const rows = ofens.map(o => {
+    const ns = Number(nao.get(ditNorm(o.categoria))||0);
+    const share = totalOfens ? (Number(o.valor||0)/totalOfens)*100 : 0;
+    const score = ((Number(o.valor||0)/maxOfens)*.72 + (ns/maxNao)*.28)*100;
+    return {origem:o.categoria, ofens:Number(o.valor||0), ns, share, score};
+  });
+  if (!rows.length) { wrap.innerHTML='<div style="padding:18px;text-align:center;color:#98a0b0;font-size:9px">Sem dados para o mapa de calor.</div>'; return; }
+  const maxShare=Math.max(1,...rows.map(r=>r.share)), maxScore=Math.max(1,...rows.map(r=>r.score));
+  wrap.innerHTML = `<table class="dit-heatmap">
+    <thead><tr><th>Origem</th><th>Ofensora</th><th>Não ship.</th><th>Share</th><th>Pressão</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr>
+      <td title="${escapeHtml(r.origem)}">${escapeHtml(r.origem)}</td>
+      <td class="${ditHeatClass(r.ofens,maxOfens)}">${ditFmtInt(r.ofens)}</td>
+      <td class="${ditHeatClass(r.ns,maxNao)}">${ditFmtInt(r.ns)}</td>
+      <td class="${ditHeatClass(r.share,maxShare)}">${r.share.toLocaleString('pt-BR',{maximumFractionDigits:1})}%</td>
+      <td class="${ditHeatClass(r.score,maxScore)}">${Math.round(r.score)}</td>
+    </tr>`).join('')}</tbody>
+  </table>
+  <div class="dit-heat-caption"><span>baixa</span><span class="dit-heat-scale"><span class="dit-heat-1"></span><span class="dit-heat-2"></span><span class="dit-heat-3"></span><span class="dit-heat-4"></span><span class="dit-heat-5"></span><span class="dit-heat-6"></span></span><span>alta pressão</span></div>`;
 }
 
 function ditRender() {
@@ -13039,51 +13128,63 @@ function ditRender() {
   ditRenderCharts(rows, rowsAtual, datas);
 }
 
-function ditRenderCharts(rows, rowsAtual, datas) {
-  const css = getComputedStyle(document.documentElement);
-  const blue = '#0F5EA8', navy='#003B7A', red='#4D7FB3', yellow='#F0C64A', green='#5B8FC3', purple='#89A9CC', gray='#D4DFEA';
 
-  // Pulso do DIT
+function ditLabelValorPct(valor, total) {
+  const v=Number(valor||0), t=Number(total||0);
+  if(!t) return ditFmtInt(v);
+  return `${ditFmtInt(v)} · ${ditFmtPct(v/t,1)}`;
+}
+
+function ditRenderCharts(rows, rowsAtual, datas) {
+  const blue = '#0F5EA8', navy='#003B7A', yellow='#F0C64A', blue2='#5B8FC3', blue3='#9FC0DC', gray='#D4DFEA';
+
+  // Pulso: com 1 snapshot vira comparação direta, com histórico vira linha.
   ditDestroyChart('trend');
   const trendCtx = document.getElementById('dit-chart-trend');
   const series = datas.map(data => {
     const rr=rows.filter(r=>r.data===data);
     return { data, total:ditSoma(rr,'LT_DELAY_CAUSE_L2') || (ditSoma(rr,'DIT SVC 5')+ditSoma(rr,'DIT LM')), svc:ditSoma(rr,'DIT SVC 5'), lm:ditSoma(rr,'DIT LM') };
   });
-  ditCharts.trend = new Chart(trendCtx,{ type:'line', data:{ labels:series.map(x=>ditDataBr(x.data).slice(0,5)), datasets:[
-    {label:'DIT Total',data:series.map(x=>x.total),borderColor:navy,backgroundColor:'rgba(0,59,122,.08)',fill:true,tension:.32,borderWidth:2.2,pointRadius:2.4,showDataLabels:false},
-    {label:'DIT SVC',data:series.map(x=>x.svc),borderColor:blue,backgroundColor:'transparent',tension:.32,borderWidth:1.9,pointRadius:2.2,showDataLabels:false},
-    {label:'DIT LM',data:series.map(x=>x.lm),borderColor:yellow,backgroundColor:'transparent',tension:.32,borderWidth:1.9,pointRadius:2.2,showDataLabels:false}
-  ]}, options:ditBaseChartOptions({ plugins:{...ditBaseChartOptions().plugins,legend:{position:'bottom',labels:{boxWidth:8,usePointStyle:true,pointStyle:'circle',font:{size:9,family:'Inter'}}},ditDataLabels:false}, scales:{x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:12,font:{size:9}}},y:{beginAtZero:true,grid:{color:'rgba(148,163,184,.10)'},ticks:{font:{size:9}}}} }) });
+  if (series.length <= 1) {
+    const s=series[0] || {total:0,svc:0,lm:0};
+    ditCharts.trend = new Chart(trendCtx,{type:'bar',data:{labels:['DIT Total','DIT SVC','DIT LM'],datasets:[{data:[s.total,s.svc,s.lm],backgroundColor:[navy,blue,yellow],borderRadius:7,showDataLabels:true,dataLabelFormatter:(v)=>ditFmtInt(v)}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:8,weight:'700'}}},y:{beginAtZero:true,grid:{color:'rgba(148,163,184,.10)'},ticks:{font:{size:8}}}}})});
+  } else {
+    ditCharts.trend = new Chart(trendCtx,{ type:'line', data:{ labels:series.map(x=>ditDataBr(x.data).slice(0,5)), datasets:[
+      {label:'DIT Total',data:series.map(x=>x.total),borderColor:navy,backgroundColor:'rgba(0,59,122,.06)',fill:true,tension:.32,borderWidth:2,pointRadius:2,showDataLabels:false},
+      {label:'DIT SVC',data:series.map(x=>x.svc),borderColor:blue,backgroundColor:'transparent',tension:.32,borderWidth:1.7,pointRadius:1.8,showDataLabels:false},
+      {label:'DIT LM',data:series.map(x=>x.lm),borderColor:yellow,backgroundColor:'transparent',tension:.32,borderWidth:1.7,pointRadius:1.8,showDataLabels:false}
+    ]}, options:ditBaseChartOptions({ plugins:{...ditBaseChartOptions().plugins,legend:{position:'bottom',labels:{boxWidth:7,usePointStyle:true,pointStyle:'circle',font:{size:8,family:'Inter'}}},ditDataLabels:false}, scales:{x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:12,font:{size:8}}},y:{beginAtZero:true,grid:{color:'rgba(148,163,184,.10)'},ticks:{font:{size:8}}}} }) });
+  }
 
-  // SVC
-  const svc = ditTop(rowsAtual,'DIT SVC 5',10); ditDestroyChart('svc');
-  ditCharts.svc = new Chart(document.getElementById('dit-chart-svc'),{type:'bar',data:{labels:svc.map(x=>x.categoria),datasets:[{label:'DIT SVC',data:svc.map(x=>x.valor),backgroundColor:svc.map((_,i)=>i===0?'rgba(0,59,122,.92)':`rgba(15,94,168,${Math.max(.22,.70-i*.055)})`),borderRadius:7,showDataLabels:true}]},options:ditBaseChartOptions({indexAxis:'y',plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{beginAtZero:true,grid:{color:'rgba(148,163,184,.10)'},ticks:{font:{size:9}}},y:{grid:{display:false},ticks:{font:{size:9,weight:'600'},color:'#475467'}}}})});
+  // SVC: quantidade + % do SVC
+  const svc = ditTop(rowsAtual,'DIT SVC 5',8); const svcTotal=svc.reduce((s,x)=>s+x.valor,0); ditDestroyChart('svc');
+  ditCharts.svc = new Chart(document.getElementById('dit-chart-svc'),{type:'bar',data:{labels:svc.map(x=>x.categoria),datasets:[{data:svc.map(x=>x.valor),backgroundColor:svc.map((_,i)=>i===0?'rgba(0,59,122,.94)':`rgba(15,94,168,${Math.max(.28,.76-i*.07)})`),borderRadius:5,showDataLabels:true,dataLabelFormatter:(v)=>ditLabelValorPct(v,svcTotal)}]},options:ditBaseChartOptions({indexAxis:'y',layout:{padding:{right:48}},plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{beginAtZero:true,grid:{color:'rgba(148,163,184,.08)'},ticks:{font:{size:7}}},y:{grid:{display:false},ticks:{font:{size:7,weight:'700'},color:'#475467'}}}})});
 
-  // Total donut
+  // Total donut: legenda já traz quantidade + %
   const total = ditTop(rowsAtual,'LT_DELAY_CAUSE_L2',20); ditDestroyChart('total');
   const top5=total.slice(0,5), outros=total.slice(5).reduce((s,r)=>s+r.valor,0); if(outros>0) top5.push({categoria:'Outros',valor:outros});
-  ditCharts.total = new Chart(document.getElementById('dit-chart-total'),{type:'doughnut',data:{labels:top5.map(x=>x.categoria),datasets:[{data:top5.map(x=>x.valor),backgroundColor:[navy,blue,yellow,green,purple,gray],borderColor:'#fff',borderWidth:3,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'bottom',labels:{boxWidth:8,usePointStyle:true,pointStyle:'circle',font:{size:9,family:'Inter'},generateLabels(chart){const ds=chart.data.datasets[0];const total=ds.data.reduce((s,v)=>s+Number(v||0),0);return chart.data.labels.map((label,i)=>({text:`${label} · ${ditFmtInt(ds.data[i])}`,fillStyle:ds.backgroundColor[i],strokeStyle:ds.backgroundColor[i],lineWidth:0,hidden:false,index:i}));}}},tooltip:{callbacks:{label:(ctx)=>`${ctx.label}: ${ditFmtInt(ctx.raw)} (${ditFmtPct(ctx.raw/top5.reduce((s,x)=>s+x.valor,0),1)})`}},ditDataLabels:false}}});
+  const totalSum=top5.reduce((s,x)=>s+x.valor,0);
+  ditCharts.total = new Chart(document.getElementById('dit-chart-total'),{type:'doughnut',data:{labels:top5.map(x=>x.categoria),datasets:[{data:top5.map(x=>x.valor),backgroundColor:[navy,blue,yellow,blue2,blue3,gray],borderColor:'#fff',borderWidth:2,hoverOffset:3}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'right',labels:{boxWidth:7,usePointStyle:true,pointStyle:'circle',padding:7,font:{size:7,family:'Inter'},generateLabels(chart){const ds=chart.data.datasets[0];return chart.data.labels.map((label,i)=>({text:`${label} ${ditFmtInt(ds.data[i])} · ${ditFmtPct(ds.data[i]/totalSum,1)}`,fillStyle:ds.backgroundColor[i],strokeStyle:ds.backgroundColor[i],lineWidth:0,index:i}));}}},tooltip:{callbacks:{label:(ctx)=>`${ctx.label}: ${ditFmtInt(ctx.raw)} (${ditFmtPct(ctx.raw/totalSum,1)})`}},ditDataLabels:false}}});
 
-  // LM
-  const lm = ditTop(rowsAtual,'DIT LM',10); ditDestroyChart('lm');
-  ditCharts.lm = new Chart(document.getElementById('dit-chart-lm'),{type:'bar',data:{labels:lm.map(x=>x.categoria),datasets:[{label:'DIT LM',data:lm.map(x=>x.valor),backgroundColor:'rgba(240,198,74,.88)',borderRadius:7,showDataLabels:true}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:30,minRotation:30,font:{size:8}}},y:{beginAtZero:true,grid:{color:'rgba(148,163,184,.10)'},ticks:{font:{size:9}}}}})});
+  // LM: quantidade + %
+  const lm = ditTop(rowsAtual,'DIT LM',8); const lmTotal=lm.reduce((s,x)=>s+x.valor,0); ditDestroyChart('lm');
+  ditCharts.lm = new Chart(document.getElementById('dit-chart-lm'),{type:'bar',data:{labels:lm.map(x=>x.categoria),datasets:[{data:lm.map(x=>x.valor),backgroundColor:'rgba(240,198,74,.88)',borderRadius:5,showDataLabels:true,dataLabelFormatter:(v)=>ditLabelValorPct(v,lmTotal),dataLabelColor:'#5b4b00'}]},options:ditBaseChartOptions({layout:{padding:{top:12}},plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:28,minRotation:28,font:{size:7}}},y:{beginAtZero:true,grid:{color:'rgba(148,163,184,.08)'},ticks:{font:{size:7}}}}})});
 
-  // Origens
-  const orig=ditTop(rowsAtual,'Origem Ofensora',12); ditDestroyChart('origem');
-  ditCharts.origem = new Chart(document.getElementById('dit-chart-origem'),{type:'bar',data:{labels:orig.map(x=>x.categoria),datasets:[{data:orig.map(x=>x.valor),backgroundColor:'rgba(15,94,168,.82)',borderRadius:6,showDataLabels:true}]},options:ditBaseChartOptions({indexAxis:'y',plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{font:{size:8}}},y:{grid:{display:false},ticks:{font:{size:8,weight:'600'}}}}})});
+  // Origens: quantidade + %
+  const orig=ditTop(rowsAtual,'Origem Ofensora',10); const origTotal=orig.reduce((s,x)=>s+x.valor,0); ditDestroyChart('origem');
+  ditCharts.origem = new Chart(document.getElementById('dit-chart-origem'),{type:'bar',data:{labels:orig.map(x=>x.categoria),datasets:[{data:orig.map(x=>x.valor),backgroundColor:'rgba(15,94,168,.84)',borderRadius:5,showDataLabels:true,dataLabelFormatter:(v)=>ditLabelValorPct(v,origTotal)}]},options:ditBaseChartOptions({indexAxis:'y',layout:{padding:{right:44}},plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{font:{size:7}},grid:{color:'rgba(148,163,184,.08)'}},y:{grid:{display:false},ticks:{font:{size:7,weight:'700'}}}}})});
 
-  // Não shippado
-  const ns=ditTop(rowsAtual,'Não shippado origem',10); ditDestroyChart('ns');
-  ditCharts.ns = new Chart(document.getElementById('dit-chart-nao-shippado'),{type:'bar',data:{labels:ns.map(x=>x.categoria),datasets:[{data:ns.map(x=>x.valor),backgroundColor:'rgba(91,143,195,.82)',borderRadius:6,showDataLabels:true}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:30,minRotation:30,font:{size:8}}},y:{beginAtZero:true,ticks:{precision:0,font:{size:8}}}}})});
+  // Não shippado: quantidade + %
+  const ns=ditTop(rowsAtual,'Não shippado origem',8); const nsTotal=ns.reduce((s,x)=>s+x.valor,0); ditDestroyChart('ns');
+  ditCharts.ns = new Chart(document.getElementById('dit-chart-nao-shippado'),{type:'bar',data:{labels:ns.map(x=>x.categoria),datasets:[{data:ns.map(x=>x.valor),backgroundColor:'rgba(91,143,195,.82)',borderRadius:5,showDataLabels:true,dataLabelFormatter:(v)=>ditLabelValorPct(v,nsTotal)}]},options:ditBaseChartOptions({layout:{padding:{top:12}},plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:28,minRotation:28,font:{size:7}}},y:{beginAtZero:true,ticks:{precision:0,font:{size:7}}}}})});
 
-  // Falha operacional
-  const falha=ditTop(rowsAtual,'Falha Operacional SVC',10); ditDestroyChart('falha');
-  ditCharts.falha = new Chart(document.getElementById('dit-chart-falha'),{type:'bar',data:{labels:falha.map(x=>x.categoria),datasets:[{data:falha.map(x=>x.valor),backgroundColor:falha.map((_,i)=>i===0?'rgba(0,59,122,.88)':'rgba(91,143,195,.68)'),borderRadius:7,showDataLabels:true}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:26,minRotation:26,font:{size:8}}},y:{beginAtZero:true,ticks:{precision:0,font:{size:8}}}}})});
+  // Falha operacional: quantidade + %
+  const falha=ditTop(rowsAtual,'Falha Operacional SVC',6); const falhaTotal=falha.reduce((s,x)=>s+x.valor,0); ditDestroyChart('falha');
+  ditCharts.falha = new Chart(document.getElementById('dit-chart-falha'),{type:'bar',data:{labels:falha.map(x=>x.categoria),datasets:[{data:falha.map(x=>x.valor),backgroundColor:falha.map((_,i)=>i===0?'rgba(0,59,122,.90)':'rgba(91,143,195,.68)'),borderRadius:5,showDataLabels:true,dataLabelFormatter:(v)=>ditLabelValorPct(v,falhaTotal)}]},options:ditBaseChartOptions({layout:{padding:{top:12}},plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:24,minRotation:24,font:{size:7}}},y:{beginAtZero:true,ticks:{precision:0,font:{size:7}}}}})});
 
-  // Promessas
+  // Promessas: compacto e sem rótulo em cada barra para evitar ruído.
   const prom=ditRowsIndicador(rowsAtual,'Promessas Last Mile').slice().sort((a,b)=>ditParseData(a.categoria)?.localeCompare(ditParseData(b.categoria)) || 0); ditDestroyChart('prom');
-  ditCharts.prom = new Chart(document.getElementById('dit-chart-promessas'),{type:'bar',data:{labels:prom.map(x=>{const d=ditParseData(x.categoria);return d?ditDataBr(d).slice(0,5):x.categoria}),datasets:[{label:'SVC - ID',data:prom.map(x=>x.valor),backgroundColor:'rgba(0,59,122,.84)',borderRadius:4,showDataLabels:false},{label:'LM - ID',data:prom.map(x=>Number(x.auxiliar||0)),backgroundColor:'rgba(240,198,74,.82)',borderRadius:4,showDataLabels:false}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{position:'bottom',labels:{boxWidth:8,usePointStyle:true,pointStyle:'circle',font:{size:9}}},ditDataLabels:false},scales:{x:{stacked:false,grid:{display:false},ticks:{autoSkip:true,maxTicksLimit:14,maxRotation:0,font:{size:8}}},y:{beginAtZero:true,ticks:{font:{size:8}}}}})});
+  ditCharts.prom = new Chart(document.getElementById('dit-chart-promessas'),{type:'bar',data:{labels:prom.map(x=>{const d=ditParseData(x.categoria);return d?ditDataBr(d).slice(0,5):x.categoria}),datasets:[{label:'SVC-ID',data:prom.map(x=>x.valor),backgroundColor:'rgba(0,59,122,.86)',borderRadius:3,showDataLabels:false},{label:'LM-ID',data:prom.map(x=>Number(x.auxiliar||0)),backgroundColor:'rgba(240,198,74,.84)',borderRadius:3,showDataLabels:false}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{position:'bottom',labels:{boxWidth:7,usePointStyle:true,pointStyle:'circle',font:{size:7}}},ditDataLabels:false},scales:{x:{stacked:false,grid:{display:false},ticks:{autoSkip:true,maxTicksLimit:10,maxRotation:0,font:{size:7}}},y:{beginAtZero:true,ticks:{font:{size:7}}}}})});
 }
 
 async function ditRecarregar() {
