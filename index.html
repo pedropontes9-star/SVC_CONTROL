@@ -664,7 +664,7 @@
      Dashboard DIT - SRJ2
      ════════════════════════════════════════ */
   #page-dit { max-width: 1920px; }
-  .dit-shell { --dit-ink:#111827; --dit-navy:#101a42; --dit-blue:#3483FA; --dit-yellow:#FFE600; --dit-red:#d93025; --dit-green:#168b4b; --dit-card:#fff; }
+  .dit-shell { --dit-ink:#111827; --dit-navy:#003B7A; --dit-blue:#0F5EA8; --dit-blue-soft:#5B8FC3; --dit-blue-pale:#DCEAF7; --dit-yellow:#F0C64A; --dit-red:#C95A54; --dit-green:#2F6DA1; --dit-card:#fff; }
   .dit-hero { position:relative; overflow:hidden; border-radius:24px; padding:26px 28px; margin-bottom:16px; color:#fff; background:radial-gradient(circle at 85% 18%, rgba(52,131,250,.38), transparent 28%), linear-gradient(125deg,#0b1025 0%,#17245b 55%,#263d94 100%); box-shadow:0 18px 44px rgba(16,26,66,.26); }
   .dit-hero::before { content:''; position:absolute; inset:0 auto 0 0; width:8px; background:linear-gradient(180deg,#FFE600,#ffb800); }
   .dit-hero::after { content:'DIT'; position:absolute; right:-18px; bottom:-42px; font-size:154px; font-weight:900; letter-spacing:-.08em; color:rgba(255,255,255,.045); pointer-events:none; }
@@ -690,11 +690,11 @@
   .dit-date-input { border:1px solid #dfe3ec; border-radius:10px; padding:7px 9px; font:600 11px 'Inter',sans-serif; color:#344054; background:#fff; }
   .dit-refresh-btn { width:34px; height:34px; border-radius:10px; border:1px solid #dfe3ec; background:#fff; cursor:pointer; color:#2D3277; font-size:15px; }
 
-  .dit-kpi-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:12px; margin-bottom:12px; }
-  .dit-kpi { position:relative; min-height:126px; background:#fff; border:1px solid rgba(45,50,119,.08); border-radius:18px; padding:16px 17px; overflow:hidden; box-shadow:0 5px 18px rgba(45,50,119,.06); }
+  .dit-kpi-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:10px; margin-bottom:12px; }
+  .dit-kpi { position:relative; min-height:112px; background:#fff; border:1px solid rgba(45,50,119,.08); border-radius:18px; padding:14px 15px; overflow:hidden; box-shadow:0 5px 18px rgba(45,50,119,.06); }
   .dit-kpi::after { content:''; position:absolute; width:92px; height:92px; border-radius:50%; right:-34px; top:-35px; background:var(--kpi-glow,rgba(52,131,250,.08)); }
   .dit-kpi-label { font-size:10px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:#7b8190; }
-  .dit-kpi-value { margin-top:9px; font-size:30px; line-height:1; font-weight:900; letter-spacing:-.045em; color:#161b2e; }
+  .dit-kpi-value { margin-top:8px; font-size:28px; line-height:1; font-weight:900; letter-spacing:-.045em; color:#161b2e; }
   .dit-kpi-foot { margin-top:9px; display:flex; align-items:center; gap:6px; color:#8b93a5; font-size:10px; line-height:1.25; }
   .dit-kpi-accent { position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--kpi-accent,#3483FA); }
   .dit-delta { display:inline-flex; align-items:center; padding:3px 6px; border-radius:999px; font-size:10px; font-weight:800; }
@@ -708,15 +708,15 @@
   .dit-insight-title { font-size:10px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:#8a91a0; }
   .dit-insight-text { margin-top:4px; font-size:12px; line-height:1.35; font-weight:700; color:#293148; }
 
-  .dit-bento { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:12px; }
-  .dit-card { min-width:0; background:#fff; border:1px solid rgba(45,50,119,.08); border-radius:18px; padding:15px 16px; box-shadow:0 5px 18px rgba(45,50,119,.06); }
+  .dit-bento { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:10px; }
+  .dit-card { min-width:0; background:#fff; border:1px solid rgba(45,50,119,.08); border-radius:18px; padding:13px 14px; box-shadow:0 5px 18px rgba(45,50,119,.06); }
   .dit-span-12 { grid-column:span 12; } .dit-span-8 { grid-column:span 8; } .dit-span-7 { grid-column:span 7; } .dit-span-6 { grid-column:span 6; } .dit-span-5 { grid-column:span 5; } .dit-span-4 { grid-column:span 4; }
   .dit-card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:12px; }
   .dit-card-kicker { font-size:9px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:#9aa1af; }
   .dit-card-title { margin-top:2px; font-size:14px; font-weight:900; color:#1a2140; letter-spacing:-.015em; }
   .dit-card-note { font-size:10px; color:#98a0b0; text-align:right; }
-  .dit-chart-wrap { position:relative; height:290px; }
-  .dit-chart-wrap.sm { height:245px; } .dit-chart-wrap.lg { height:330px; }
+  .dit-chart-wrap { position:relative; height:225px; }
+  .dit-chart-wrap.sm { height:200px; } .dit-chart-wrap.lg { height:255px; }
   .dit-card canvas { max-width:100%; }
 
   .dit-rank-list { display:flex; flex-direction:column; gap:8px; }
@@ -724,10 +724,10 @@
   .dit-rank-pos { width:24px; height:24px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:#f1f4fa; color:#667085; font-size:10px; font-weight:900; }
   .dit-rank-name { font-size:11px; font-weight:800; color:#31384d; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .dit-rank-track { height:7px; border-radius:999px; background:#eef1f5; overflow:hidden; }
-  .dit-rank-fill { height:100%; border-radius:inherit; background:linear-gradient(90deg,#3483FA,#2D3277); }
+  .dit-rank-fill { height:100%; border-radius:inherit; background:linear-gradient(90deg,#5B8FC3,#003B7A); }
   .dit-rank-value { font-size:11px; font-weight:900; color:#20263b; text-align:right; }
 
-  .dit-origin-table-wrap { max-height:340px; overflow:auto; border:1px solid #eef0f4; border-radius:12px; }
+  .dit-origin-table-wrap { max-height:280px; overflow:auto; border:1px solid #eef0f4; border-radius:12px; }
   .dit-origin-table { width:100%; border-collapse:collapse; }
   .dit-origin-table th { position:sticky; top:0; z-index:1; background:#f7f8fb; font-size:9px; color:#7d8494; text-transform:uppercase; letter-spacing:.06em; padding:9px 10px; }
   .dit-origin-table td { padding:9px 10px; font-size:11px; border-bottom:1px solid #f1f2f6; }
@@ -741,7 +741,7 @@
 
   .dit-modal { max-width:860px; max-height:90vh; overflow:auto; }
   .dit-import-zone { border:2px dashed #cdd5e3; border-radius:16px; padding:18px; background:#fafbfe; text-align:center; position:relative; transition:.15s ease; }
-  .dit-import-zone:hover { border-color:#3483FA; background:#f4f8ff; }
+  .dit-import-zone:hover { border-color:#0F5EA8; background:#f4f8ff; }
   .dit-import-zone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; }
   .dit-import-or { display:flex; align-items:center; gap:10px; margin:14px 0; font-size:10px; color:#98a0b0; font-weight:800; text-transform:uppercase; }
   .dit-import-or::before,.dit-import-or::after { content:''; height:1px; background:#e5e8ef; flex:1; }
@@ -1016,12 +1016,12 @@
 
     <div id="dit-dashboard-content">
       <div class="dit-kpi-grid">
-        <div class="dit-kpi" style="--kpi-accent:#2D3277;--kpi-glow:rgba(45,50,119,.10)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT Total</div><div class="dit-kpi-value" id="dit-kpi-total">—</div><div class="dit-kpi-foot" id="dit-kpi-total-foot">—</div></div>
-        <div class="dit-kpi" style="--kpi-accent:#d93025;--kpi-glow:rgba(217,48,37,.10)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT SVC</div><div class="dit-kpi-value" id="dit-kpi-svc">—</div><div class="dit-kpi-foot" id="dit-kpi-svc-foot">—</div></div>
-        <div class="dit-kpi" style="--kpi-accent:#f5c518;--kpi-glow:rgba(245,197,24,.14)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT Last Mile</div><div class="dit-kpi-value" id="dit-kpi-lm">—</div><div class="dit-kpi-foot" id="dit-kpi-lm-foot">—</div></div>
-        <div class="dit-kpi" style="--kpi-accent:#3483FA"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT -1</div><div class="dit-kpi-value" id="dit-kpi-dm1">—</div><div class="dit-kpi-foot">promessas vencidas / recorte da base</div></div>
-        <div class="dit-kpi" style="--kpi-accent:#7B61FF"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT +1</div><div class="dit-kpi-value" id="dit-kpi-dp1">—</div><div class="dit-kpi-foot">promessas futuras / recorte da base</div></div>
-        <div class="dit-kpi" style="--kpi-accent:#168b4b;--kpi-glow:rgba(22,139,75,.10)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">Causa dominante SVC</div><div class="dit-kpi-value" id="dit-kpi-causa" style="font-size:19px;line-height:1.12;margin-top:12px">—</div><div class="dit-kpi-foot" id="dit-kpi-causa-foot">—</div></div>
+        <div class="dit-kpi" style="--kpi-accent:#003B7A;--kpi-glow:rgba(0,59,122,.10)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT Total</div><div class="dit-kpi-value" id="dit-kpi-total">—</div><div class="dit-kpi-foot" id="dit-kpi-total-foot">—</div></div>
+        <div class="dit-kpi" style="--kpi-accent:#0F5EA8;--kpi-glow:rgba(15,94,168,.10)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT SVC</div><div class="dit-kpi-value" id="dit-kpi-svc">—</div><div class="dit-kpi-foot" id="dit-kpi-svc-foot">—</div></div>
+        <div class="dit-kpi" style="--kpi-accent:#F0C64A;--kpi-glow:rgba(240,198,74,.16)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT Last Mile</div><div class="dit-kpi-value" id="dit-kpi-lm">—</div><div class="dit-kpi-foot" id="dit-kpi-lm-foot">—</div></div>
+        <div class="dit-kpi" style="--kpi-accent:#5B8FC3"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT -1</div><div class="dit-kpi-value" id="dit-kpi-dm1">—</div><div class="dit-kpi-foot">promessas vencidas / recorte da base</div></div>
+        <div class="dit-kpi" style="--kpi-accent:#7AA3CE"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT +1</div><div class="dit-kpi-value" id="dit-kpi-dp1">—</div><div class="dit-kpi-foot">promessas futuras / recorte da base</div></div>
+        <div class="dit-kpi" style="--kpi-accent:#003B7A;--kpi-glow:rgba(0,59,122,.10)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">Causa dominante SVC</div><div class="dit-kpi-value" id="dit-kpi-causa" style="font-size:19px;line-height:1.12;margin-top:12px">—</div><div class="dit-kpi-foot" id="dit-kpi-causa-foot">—</div></div>
       </div>
 
       <div class="dit-insight-ribbon">
@@ -12878,11 +12878,68 @@ function ditDestroyChart(nome) {
   if (ditCharts[nome]) { ditCharts[nome].destroy(); delete ditCharts[nome]; }
 }
 
+
+const ditDataLabelsPlugin = {
+  id: 'ditDataLabels',
+  afterDatasetsDraw(chart, args, pluginOptions) {
+    if (!chart?.canvas?.id || !String(chart.canvas.id).startsWith('dit-chart-')) return;
+    if (pluginOptions === false) return;
+    const ctx = chart.ctx;
+    const options = pluginOptions || {};
+    const chartType = chart.config.type;
+    ctx.save();
+    chart.data.datasets.forEach((dataset, datasetIndex) => {
+      if (dataset.showDataLabels === false) return;
+      const meta = chart.getDatasetMeta(datasetIndex);
+      if (!meta || meta.hidden) return;
+      const isHorizontal = chart.options?.indexAxis === 'y';
+      meta.data.forEach((element, index) => {
+        const raw = Array.isArray(dataset.data) ? dataset.data[index] : null;
+        const numeric = Number(raw);
+        if (!Number.isFinite(numeric)) return;
+        if (numeric === 0 && dataset.hideZeroDataLabels !== false) return;
+        if (chartType === 'line' && index !== dataset.data.length - 1) return;
+        const text = typeof dataset.dataLabelFormatter === 'function'
+          ? dataset.dataLabelFormatter(raw, index, dataset, chart)
+          : ditFmtInt(numeric);
+        if (!text) return;
+        const pos = element.tooltipPosition ? element.tooltipPosition() : { x: element.x, y: element.y };
+        ctx.font = dataset.dataLabelFont || options.font || '700 10px Inter, sans-serif';
+        ctx.fillStyle = dataset.dataLabelColor || options.color || '#334155';
+        ctx.textBaseline = 'middle';
+        if (chartType === 'bar') {
+          ctx.textAlign = isHorizontal ? 'left' : 'center';
+          const x = isHorizontal ? pos.x + 8 : pos.x;
+          const y = isHorizontal ? pos.y : pos.y - 8;
+          ctx.fillText(text, x, y);
+        } else if (chartType === 'line') {
+          ctx.textAlign = 'left';
+          ctx.fillText(text, pos.x + 6, pos.y - 10);
+        }
+      });
+    });
+    ctx.restore();
+  }
+};
+if (window.Chart && typeof Chart.register === 'function') {
+  Chart.register(ditDataLabelsPlugin);
+}
+
 function ditBaseChartOptions(extra = {}) {
   return {
-    responsive:true, maintainAspectRatio:false, animation:{ duration:350 },
-    plugins:{ legend:{ labels:{ boxWidth:9, usePointStyle:true, pointStyle:'circle', font:{ size:10, family:'Inter' }, color:'#6b7280' } }, tooltip:{ padding:10, titleFont:{family:'Inter',size:11}, bodyFont:{family:'Inter',size:11} } },
-    scales:{ x:{ grid:{ color:'rgba(148,163,184,.10)' }, ticks:{ color:'#7b8190', font:{size:9,family:'Inter'} } }, y:{ grid:{ color:'rgba(148,163,184,.10)' }, ticks:{ color:'#7b8190', font:{size:9,family:'Inter'} } } },
+    responsive:true,
+    maintainAspectRatio:false,
+    animation:{ duration:320 },
+    layout:{ padding:{ top: 6, right: 18, bottom: 2, left: 2 } },
+    plugins:{
+      legend:{ labels:{ boxWidth:8, usePointStyle:true, pointStyle:'circle', font:{ size:9, family:'Inter' }, color:'#5f6b7b' } },
+      tooltip:{ padding:10, titleFont:{family:'Inter',size:11}, bodyFont:{family:'Inter',size:11} },
+      ditDataLabels:{ color:'#344054', font:'700 10px Inter, sans-serif' }
+    },
+    scales:{
+      x:{ grid:{ color:'rgba(148,163,184,.10)' }, ticks:{ color:'#7b8190', font:{size:9,family:'Inter'} } },
+      y:{ grid:{ color:'rgba(148,163,184,.10)' }, ticks:{ color:'#7b8190', font:{size:9,family:'Inter'} } }
+    },
     ...extra
   };
 }
@@ -12984,7 +13041,7 @@ function ditRender() {
 
 function ditRenderCharts(rows, rowsAtual, datas) {
   const css = getComputedStyle(document.documentElement);
-  const blue = '#3483FA', navy='#2D3277', red='#d93025', yellow='#f4c430', green='#168b4b', purple='#7B61FF', gray='#cbd3e1';
+  const blue = '#0F5EA8', navy='#003B7A', red='#4D7FB3', yellow='#F0C64A', green='#5B8FC3', purple='#89A9CC', gray='#D4DFEA';
 
   // Pulso do DIT
   ditDestroyChart('trend');
@@ -12994,39 +13051,39 @@ function ditRenderCharts(rows, rowsAtual, datas) {
     return { data, total:ditSoma(rr,'LT_DELAY_CAUSE_L2') || (ditSoma(rr,'DIT SVC 5')+ditSoma(rr,'DIT LM')), svc:ditSoma(rr,'DIT SVC 5'), lm:ditSoma(rr,'DIT LM') };
   });
   ditCharts.trend = new Chart(trendCtx,{ type:'line', data:{ labels:series.map(x=>ditDataBr(x.data).slice(0,5)), datasets:[
-    {label:'DIT Total',data:series.map(x=>x.total),borderColor:navy,backgroundColor:'rgba(45,50,119,.08)',fill:true,tension:.32,borderWidth:2.4,pointRadius:2},
-    {label:'DIT SVC',data:series.map(x=>x.svc),borderColor:red,backgroundColor:'transparent',tension:.32,borderWidth:2,pointRadius:2},
-    {label:'DIT LM',data:series.map(x=>x.lm),borderColor:yellow,backgroundColor:'transparent',tension:.32,borderWidth:2,pointRadius:2}
-  ]}, options:ditBaseChartOptions({ plugins:{...ditBaseChartOptions().plugins,legend:{position:'bottom',labels:{boxWidth:8,usePointStyle:true,pointStyle:'circle',font:{size:10,family:'Inter'}}}}, scales:{x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:12,font:{size:9}}},y:{beginAtZero:true,grid:{color:'rgba(148,163,184,.10)'},ticks:{font:{size:9}}}} }) });
+    {label:'DIT Total',data:series.map(x=>x.total),borderColor:navy,backgroundColor:'rgba(0,59,122,.08)',fill:true,tension:.32,borderWidth:2.2,pointRadius:2.4,showDataLabels:false},
+    {label:'DIT SVC',data:series.map(x=>x.svc),borderColor:blue,backgroundColor:'transparent',tension:.32,borderWidth:1.9,pointRadius:2.2,showDataLabels:false},
+    {label:'DIT LM',data:series.map(x=>x.lm),borderColor:yellow,backgroundColor:'transparent',tension:.32,borderWidth:1.9,pointRadius:2.2,showDataLabels:false}
+  ]}, options:ditBaseChartOptions({ plugins:{...ditBaseChartOptions().plugins,legend:{position:'bottom',labels:{boxWidth:8,usePointStyle:true,pointStyle:'circle',font:{size:9,family:'Inter'}}},ditDataLabels:false}, scales:{x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:12,font:{size:9}}},y:{beginAtZero:true,grid:{color:'rgba(148,163,184,.10)'},ticks:{font:{size:9}}}} }) });
 
   // SVC
   const svc = ditTop(rowsAtual,'DIT SVC 5',10); ditDestroyChart('svc');
-  ditCharts.svc = new Chart(document.getElementById('dit-chart-svc'),{type:'bar',data:{labels:svc.map(x=>x.categoria),datasets:[{label:'DIT SVC',data:svc.map(x=>x.valor),backgroundColor:svc.map((_,i)=>i===0?'rgba(217,48,37,.88)':`rgba(217,48,37,${Math.max(.24,.72-i*.055)})`),borderRadius:7}]},options:ditBaseChartOptions({indexAxis:'y',plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{beginAtZero:true,grid:{color:'rgba(148,163,184,.10)'},ticks:{font:{size:9}}},y:{grid:{display:false},ticks:{font:{size:9,weight:'600'},color:'#475467'}}}})});
+  ditCharts.svc = new Chart(document.getElementById('dit-chart-svc'),{type:'bar',data:{labels:svc.map(x=>x.categoria),datasets:[{label:'DIT SVC',data:svc.map(x=>x.valor),backgroundColor:svc.map((_,i)=>i===0?'rgba(0,59,122,.92)':`rgba(15,94,168,${Math.max(.22,.70-i*.055)})`),borderRadius:7,showDataLabels:true}]},options:ditBaseChartOptions({indexAxis:'y',plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{beginAtZero:true,grid:{color:'rgba(148,163,184,.10)'},ticks:{font:{size:9}}},y:{grid:{display:false},ticks:{font:{size:9,weight:'600'},color:'#475467'}}}})});
 
   // Total donut
   const total = ditTop(rowsAtual,'LT_DELAY_CAUSE_L2',20); ditDestroyChart('total');
   const top5=total.slice(0,5), outros=total.slice(5).reduce((s,r)=>s+r.valor,0); if(outros>0) top5.push({categoria:'Outros',valor:outros});
-  ditCharts.total = new Chart(document.getElementById('dit-chart-total'),{type:'doughnut',data:{labels:top5.map(x=>x.categoria),datasets:[{data:top5.map(x=>x.valor),backgroundColor:[green,yellow,red,blue,purple,gray],borderColor:'#fff',borderWidth:3,hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom',labels:{boxWidth:8,usePointStyle:true,pointStyle:'circle',font:{size:9,family:'Inter'}}},tooltip:{callbacks:{label:(ctx)=>`${ctx.label}: ${ditFmtInt(ctx.raw)} (${ditFmtPct(ctx.raw/top5.reduce((s,x)=>s+x.valor,0),1)})`}}}}});
+  ditCharts.total = new Chart(document.getElementById('dit-chart-total'),{type:'doughnut',data:{labels:top5.map(x=>x.categoria),datasets:[{data:top5.map(x=>x.valor),backgroundColor:[navy,blue,yellow,green,purple,gray],borderColor:'#fff',borderWidth:3,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'bottom',labels:{boxWidth:8,usePointStyle:true,pointStyle:'circle',font:{size:9,family:'Inter'},generateLabels(chart){const ds=chart.data.datasets[0];const total=ds.data.reduce((s,v)=>s+Number(v||0),0);return chart.data.labels.map((label,i)=>({text:`${label} · ${ditFmtInt(ds.data[i])}`,fillStyle:ds.backgroundColor[i],strokeStyle:ds.backgroundColor[i],lineWidth:0,hidden:false,index:i}));}}},tooltip:{callbacks:{label:(ctx)=>`${ctx.label}: ${ditFmtInt(ctx.raw)} (${ditFmtPct(ctx.raw/top5.reduce((s,x)=>s+x.valor,0),1)})`}},ditDataLabels:false}}});
 
   // LM
   const lm = ditTop(rowsAtual,'DIT LM',10); ditDestroyChart('lm');
-  ditCharts.lm = new Chart(document.getElementById('dit-chart-lm'),{type:'bar',data:{labels:lm.map(x=>x.categoria),datasets:[{label:'DIT LM',data:lm.map(x=>x.valor),backgroundColor:'rgba(244,196,48,.86)',borderRadius:7}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:35,minRotation:35,font:{size:8}}},y:{beginAtZero:true,grid:{color:'rgba(148,163,184,.10)'},ticks:{font:{size:9}}}}})});
+  ditCharts.lm = new Chart(document.getElementById('dit-chart-lm'),{type:'bar',data:{labels:lm.map(x=>x.categoria),datasets:[{label:'DIT LM',data:lm.map(x=>x.valor),backgroundColor:'rgba(240,198,74,.88)',borderRadius:7,showDataLabels:true}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:30,minRotation:30,font:{size:8}}},y:{beginAtZero:true,grid:{color:'rgba(148,163,184,.10)'},ticks:{font:{size:9}}}}})});
 
   // Origens
   const orig=ditTop(rowsAtual,'Origem Ofensora',12); ditDestroyChart('origem');
-  ditCharts.origem = new Chart(document.getElementById('dit-chart-origem'),{type:'bar',data:{labels:orig.map(x=>x.categoria),datasets:[{data:orig.map(x=>x.valor),backgroundColor:'rgba(52,131,250,.78)',borderRadius:6}]},options:ditBaseChartOptions({indexAxis:'y',plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{font:{size:8}}},y:{grid:{display:false},ticks:{font:{size:8,weight:'600'}}}}})});
+  ditCharts.origem = new Chart(document.getElementById('dit-chart-origem'),{type:'bar',data:{labels:orig.map(x=>x.categoria),datasets:[{data:orig.map(x=>x.valor),backgroundColor:'rgba(15,94,168,.82)',borderRadius:6,showDataLabels:true}]},options:ditBaseChartOptions({indexAxis:'y',plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{font:{size:8}}},y:{grid:{display:false},ticks:{font:{size:8,weight:'600'}}}}})});
 
   // Não shippado
   const ns=ditTop(rowsAtual,'Não shippado origem',10); ditDestroyChart('ns');
-  ditCharts.ns = new Chart(document.getElementById('dit-chart-nao-shippado'),{type:'bar',data:{labels:ns.map(x=>x.categoria),datasets:[{data:ns.map(x=>x.valor),backgroundColor:'rgba(123,97,255,.76)',borderRadius:6}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:35,minRotation:35,font:{size:8}}},y:{beginAtZero:true,ticks:{precision:0,font:{size:8}}}}})});
+  ditCharts.ns = new Chart(document.getElementById('dit-chart-nao-shippado'),{type:'bar',data:{labels:ns.map(x=>x.categoria),datasets:[{data:ns.map(x=>x.valor),backgroundColor:'rgba(91,143,195,.82)',borderRadius:6,showDataLabels:true}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:30,minRotation:30,font:{size:8}}},y:{beginAtZero:true,ticks:{precision:0,font:{size:8}}}}})});
 
   // Falha operacional
   const falha=ditTop(rowsAtual,'Falha Operacional SVC',10); ditDestroyChart('falha');
-  ditCharts.falha = new Chart(document.getElementById('dit-chart-falha'),{type:'bar',data:{labels:falha.map(x=>x.categoria),datasets:[{data:falha.map(x=>x.valor),backgroundColor:falha.map((_,i)=>i===0?'rgba(217,48,37,.86)':'rgba(217,48,37,.48)'),borderRadius:7}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:30,minRotation:30,font:{size:8}}},y:{beginAtZero:true,ticks:{precision:0,font:{size:8}}}}})});
+  ditCharts.falha = new Chart(document.getElementById('dit-chart-falha'),{type:'bar',data:{labels:falha.map(x=>x.categoria),datasets:[{data:falha.map(x=>x.valor),backgroundColor:falha.map((_,i)=>i===0?'rgba(0,59,122,.88)':'rgba(91,143,195,.68)'),borderRadius:7,showDataLabels:true}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:26,minRotation:26,font:{size:8}}},y:{beginAtZero:true,ticks:{precision:0,font:{size:8}}}}})});
 
   // Promessas
   const prom=ditRowsIndicador(rowsAtual,'Promessas Last Mile').slice().sort((a,b)=>ditParseData(a.categoria)?.localeCompare(ditParseData(b.categoria)) || 0); ditDestroyChart('prom');
-  ditCharts.prom = new Chart(document.getElementById('dit-chart-promessas'),{type:'bar',data:{labels:prom.map(x=>{const d=ditParseData(x.categoria);return d?ditDataBr(d).slice(0,5):x.categoria}),datasets:[{label:'SVC - ID',data:prom.map(x=>x.valor),backgroundColor:'rgba(217,48,37,.82)',borderRadius:4},{label:'LM - ID',data:prom.map(x=>Number(x.auxiliar||0)),backgroundColor:'rgba(244,196,48,.82)',borderRadius:4}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{position:'bottom',labels:{boxWidth:8,usePointStyle:true,pointStyle:'circle',font:{size:9}}}},scales:{x:{stacked:false,grid:{display:false},ticks:{autoSkip:true,maxTicksLimit:14,maxRotation:0,font:{size:8}}},y:{beginAtZero:true,ticks:{font:{size:8}}}}})});
+  ditCharts.prom = new Chart(document.getElementById('dit-chart-promessas'),{type:'bar',data:{labels:prom.map(x=>{const d=ditParseData(x.categoria);return d?ditDataBr(d).slice(0,5):x.categoria}),datasets:[{label:'SVC - ID',data:prom.map(x=>x.valor),backgroundColor:'rgba(0,59,122,.84)',borderRadius:4,showDataLabels:false},{label:'LM - ID',data:prom.map(x=>Number(x.auxiliar||0)),backgroundColor:'rgba(240,198,74,.82)',borderRadius:4,showDataLabels:false}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{position:'bottom',labels:{boxWidth:8,usePointStyle:true,pointStyle:'circle',font:{size:9}}},ditDataLabels:false},scales:{x:{stacked:false,grid:{display:false},ticks:{autoSkip:true,maxTicksLimit:14,maxRotation:0,font:{size:8}}},y:{beginAtZero:true,ticks:{font:{size:8}}}}})});
 }
 
 async function ditRecarregar() {
