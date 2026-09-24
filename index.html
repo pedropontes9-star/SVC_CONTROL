@@ -657,6 +657,106 @@
   .home-shortcut-card:hover { transform: translateY(-3px); border-color: var(--meli-action); box-shadow: 0 10px 24px rgba(52,131,250,.18); }
   .home-shortcut-icon { width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #e8f0fe, #f3f5fb); display: inline-flex; align-items: center; justify-content: center; font-size: 22px; }
   .home-shortcut-title { font-weight: 800; color: var(--meli-blue); }
+
+
+  /* ════════════════════════════════════════
+     DIT COMMAND CENTER
+     Dashboard DIT - SRJ2
+     ════════════════════════════════════════ */
+  #page-dit { max-width: 1920px; }
+  .dit-shell { --dit-ink:#111827; --dit-navy:#101a42; --dit-blue:#3483FA; --dit-yellow:#FFE600; --dit-red:#d93025; --dit-green:#168b4b; --dit-card:#fff; }
+  .dit-hero { position:relative; overflow:hidden; border-radius:24px; padding:26px 28px; margin-bottom:16px; color:#fff; background:radial-gradient(circle at 85% 18%, rgba(52,131,250,.38), transparent 28%), linear-gradient(125deg,#0b1025 0%,#17245b 55%,#263d94 100%); box-shadow:0 18px 44px rgba(16,26,66,.26); }
+  .dit-hero::before { content:''; position:absolute; inset:0 auto 0 0; width:8px; background:linear-gradient(180deg,#FFE600,#ffb800); }
+  .dit-hero::after { content:'DIT'; position:absolute; right:-18px; bottom:-42px; font-size:154px; font-weight:900; letter-spacing:-.08em; color:rgba(255,255,255,.045); pointer-events:none; }
+  .dit-hero-row { display:flex; justify-content:space-between; align-items:flex-start; gap:20px; position:relative; z-index:1; flex-wrap:wrap; }
+  .dit-eyebrow { font-size:10px; font-weight:800; letter-spacing:.15em; text-transform:uppercase; color:#FFE600; margin-bottom:7px; }
+  .dit-title { font-size:30px; line-height:1; font-weight:900; letter-spacing:-.035em; margin:0; }
+  .dit-subtitle { margin-top:8px; max-width:740px; color:rgba(255,255,255,.68); font-size:12px; line-height:1.5; }
+  .dit-hero-actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+  .dit-hero-btn { border:1px solid rgba(255,255,255,.22); color:#fff; background:rgba(255,255,255,.08); backdrop-filter:blur(8px); border-radius:12px; padding:9px 13px; font:700 12px 'Inter',sans-serif; cursor:pointer; transition:.15s ease; }
+  .dit-hero-btn:hover { background:rgba(255,255,255,.16); transform:translateY(-1px); }
+  .dit-hero-btn.primary { background:#FFE600; border-color:#FFE600; color:#17245b; box-shadow:0 5px 14px rgba(255,230,0,.25); }
+  .dit-meta-strip { display:flex; gap:8px; flex-wrap:wrap; margin-top:18px; position:relative; z-index:1; }
+  .dit-meta-pill { display:inline-flex; align-items:center; gap:7px; padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); font-size:11px; color:rgba(255,255,255,.78); }
+  .dit-meta-dot { width:7px; height:7px; border-radius:50%; background:#70e000; box-shadow:0 0 0 3px rgba(112,224,0,.12); }
+  .dit-meta-dot.demo { background:#FFE600; box-shadow:0 0 0 3px rgba(255,230,0,.14); }
+  .dit-meta-dot.local { background:#ff9f1c; box-shadow:0 0 0 3px rgba(255,159,28,.14); }
+
+  .dit-toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; background:#fff; border:1px solid rgba(45,50,119,.08); box-shadow:0 5px 18px rgba(45,50,119,.06); padding:11px 13px; border-radius:16px; margin-bottom:16px; }
+  .dit-toolbar-left,.dit-toolbar-right { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .dit-range-group { display:inline-flex; background:#f2f5fb; border-radius:12px; padding:3px; gap:2px; }
+  .dit-range-btn { border:0; background:transparent; border-radius:9px; color:#667085; font:700 11px 'Inter',sans-serif; padding:7px 10px; cursor:pointer; }
+  .dit-range-btn.active { background:#fff; color:#2D3277; box-shadow:0 2px 8px rgba(45,50,119,.12); }
+  .dit-date-input { border:1px solid #dfe3ec; border-radius:10px; padding:7px 9px; font:600 11px 'Inter',sans-serif; color:#344054; background:#fff; }
+  .dit-refresh-btn { width:34px; height:34px; border-radius:10px; border:1px solid #dfe3ec; background:#fff; cursor:pointer; color:#2D3277; font-size:15px; }
+
+  .dit-kpi-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:12px; margin-bottom:12px; }
+  .dit-kpi { position:relative; min-height:126px; background:#fff; border:1px solid rgba(45,50,119,.08); border-radius:18px; padding:16px 17px; overflow:hidden; box-shadow:0 5px 18px rgba(45,50,119,.06); }
+  .dit-kpi::after { content:''; position:absolute; width:92px; height:92px; border-radius:50%; right:-34px; top:-35px; background:var(--kpi-glow,rgba(52,131,250,.08)); }
+  .dit-kpi-label { font-size:10px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:#7b8190; }
+  .dit-kpi-value { margin-top:9px; font-size:30px; line-height:1; font-weight:900; letter-spacing:-.045em; color:#161b2e; }
+  .dit-kpi-foot { margin-top:9px; display:flex; align-items:center; gap:6px; color:#8b93a5; font-size:10px; line-height:1.25; }
+  .dit-kpi-accent { position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--kpi-accent,#3483FA); }
+  .dit-delta { display:inline-flex; align-items:center; padding:3px 6px; border-radius:999px; font-size:10px; font-weight:800; }
+  .dit-delta.up { background:#fff0f0; color:#c62828; }
+  .dit-delta.down { background:#eaf7ef; color:#167a43; }
+  .dit-delta.flat { background:#f2f4f7; color:#667085; }
+
+  .dit-insight-ribbon { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:12px; }
+  .dit-insight { position:relative; overflow:hidden; border-radius:15px; padding:13px 14px 13px 43px; min-height:70px; background:linear-gradient(145deg,#fff,#f8f9fc); border:1px solid rgba(45,50,119,.08); box-shadow:0 4px 14px rgba(45,50,119,.04); }
+  .dit-insight-icon { position:absolute; left:13px; top:13px; width:23px; height:23px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:#eef3ff; font-size:12px; }
+  .dit-insight-title { font-size:10px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:#8a91a0; }
+  .dit-insight-text { margin-top:4px; font-size:12px; line-height:1.35; font-weight:700; color:#293148; }
+
+  .dit-bento { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:12px; }
+  .dit-card { min-width:0; background:#fff; border:1px solid rgba(45,50,119,.08); border-radius:18px; padding:15px 16px; box-shadow:0 5px 18px rgba(45,50,119,.06); }
+  .dit-span-12 { grid-column:span 12; } .dit-span-8 { grid-column:span 8; } .dit-span-7 { grid-column:span 7; } .dit-span-6 { grid-column:span 6; } .dit-span-5 { grid-column:span 5; } .dit-span-4 { grid-column:span 4; }
+  .dit-card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:12px; }
+  .dit-card-kicker { font-size:9px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:#9aa1af; }
+  .dit-card-title { margin-top:2px; font-size:14px; font-weight:900; color:#1a2140; letter-spacing:-.015em; }
+  .dit-card-note { font-size:10px; color:#98a0b0; text-align:right; }
+  .dit-chart-wrap { position:relative; height:290px; }
+  .dit-chart-wrap.sm { height:245px; } .dit-chart-wrap.lg { height:330px; }
+  .dit-card canvas { max-width:100%; }
+
+  .dit-rank-list { display:flex; flex-direction:column; gap:8px; }
+  .dit-rank-row { display:grid; grid-template-columns:28px minmax(90px,1fr) 2fr auto; gap:8px; align-items:center; }
+  .dit-rank-pos { width:24px; height:24px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:#f1f4fa; color:#667085; font-size:10px; font-weight:900; }
+  .dit-rank-name { font-size:11px; font-weight:800; color:#31384d; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .dit-rank-track { height:7px; border-radius:999px; background:#eef1f5; overflow:hidden; }
+  .dit-rank-fill { height:100%; border-radius:inherit; background:linear-gradient(90deg,#3483FA,#2D3277); }
+  .dit-rank-value { font-size:11px; font-weight:900; color:#20263b; text-align:right; }
+
+  .dit-origin-table-wrap { max-height:340px; overflow:auto; border:1px solid #eef0f4; border-radius:12px; }
+  .dit-origin-table { width:100%; border-collapse:collapse; }
+  .dit-origin-table th { position:sticky; top:0; z-index:1; background:#f7f8fb; font-size:9px; color:#7d8494; text-transform:uppercase; letter-spacing:.06em; padding:9px 10px; }
+  .dit-origin-table td { padding:9px 10px; font-size:11px; border-bottom:1px solid #f1f2f6; }
+  .dit-origin-table td:first-child { font-weight:800; color:#2D3277; }
+  .dit-pressure { display:inline-flex; min-width:64px; justify-content:center; padding:3px 7px; border-radius:999px; font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:.03em; }
+  .dit-pressure.high { background:#ffeded; color:#b42318; } .dit-pressure.mid { background:#fff6df; color:#b26a00; } .dit-pressure.low { background:#ebf8f0; color:#17734a; }
+
+  .dit-empty { display:none; padding:54px 24px; border:1px dashed rgba(45,50,119,.2); border-radius:18px; background:#fff; text-align:center; color:#667085; }
+  .dit-empty strong { display:block; font-size:15px; color:#2D3277; margin-bottom:5px; }
+  .dit-empty span { font-size:12px; }
+
+  .dit-modal { max-width:860px; max-height:90vh; overflow:auto; }
+  .dit-import-zone { border:2px dashed #cdd5e3; border-radius:16px; padding:18px; background:#fafbfe; text-align:center; position:relative; transition:.15s ease; }
+  .dit-import-zone:hover { border-color:#3483FA; background:#f4f8ff; }
+  .dit-import-zone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; }
+  .dit-import-or { display:flex; align-items:center; gap:10px; margin:14px 0; font-size:10px; color:#98a0b0; font-weight:800; text-transform:uppercase; }
+  .dit-import-or::before,.dit-import-or::after { content:''; height:1px; background:#e5e8ef; flex:1; }
+  .dit-import-textarea { width:100%; min-height:150px; resize:vertical; padding:11px 12px; border:1px solid #dfe3ea; border-radius:12px; font:11px/1.5 'Inter',monospace; }
+  .dit-import-summary { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:12px; }
+  .dit-import-stat { padding:10px 11px; border-radius:12px; background:#f7f8fb; border:1px solid #edf0f4; }
+  .dit-import-stat span { display:block; font-size:9px; font-weight:800; text-transform:uppercase; color:#99a0ad; letter-spacing:.05em; }
+  .dit-import-stat strong { display:block; margin-top:3px; font-size:18px; color:#20263b; }
+  .dit-import-preview { margin-top:12px; max-height:230px; overflow:auto; border:1px solid #edf0f4; border-radius:12px; }
+  .dit-import-preview table { min-width:720px; }
+  .dit-import-note { margin-top:10px; font-size:10px; color:#7f8796; line-height:1.45; }
+
+  @media (max-width:1280px) { .dit-kpi-grid{grid-template-columns:repeat(3,1fr)} .dit-span-8,.dit-span-7,.dit-span-6,.dit-span-5,.dit-span-4{grid-column:span 6} }
+  @media (max-width:820px) { .dit-kpi-grid{grid-template-columns:repeat(2,1fr)} .dit-insight-ribbon{grid-template-columns:1fr} .dit-span-8,.dit-span-7,.dit-span-6,.dit-span-5,.dit-span-4,.dit-span-12{grid-column:span 12} .dit-import-summary{grid-template-columns:repeat(2,1fr)} .dit-hero{padding:22px 20px} .dit-title{font-size:25px} }
+
 </style>
 </head>
 <body>
@@ -739,6 +839,7 @@
         <button class="tab-btn nav-item" id="tab-yms" data-tab="yms" onclick="switchTab('yms',this)"><span class="nav-icon">🚛</span><span>Monitor YMS</span></button>
         <button class="tab-btn nav-item" id="tab-revisao-ponto" data-tab="revisao-ponto" onclick="switchTab('revisao-ponto',this)"><span class="nav-icon">🕵️</span><span>Revisão de Ponto</span></button>
         <button class="tab-btn nav-item" id="tab-fechamento-diario" data-tab="fechamento-diario" onclick="switchTab('fechamento-diario',this)"><span class="nav-icon">📊</span><span>Fechamento Diário</span></button>
+        <button class="tab-btn nav-item" id="tab-dit" data-tab="dit" onclick="switchTab('dit',this)"><span class="nav-icon">🛰️</span><span>DIT</span></button>
       </div>
     </section>
     <section class="nav-group" data-nav-group="ferramentas">
@@ -855,6 +956,126 @@
           <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🕐</div><p>Nenhum turno cadastrado</p><span>Preencha o formulário acima para começar</span></div></td></tr>
         </tbody>
       </table>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- ════════════════════════════════════════
+     DIT COMMAND CENTER
+════════════════════════════════════════ -->
+<div id="page-dit" class="page">
+  <div class="dit-shell" id="dit-capture-area">
+    <section class="dit-hero">
+      <div class="dit-hero-row">
+        <div>
+          <div class="dit-eyebrow">SRJ2 · Delay Intelligence Tower</div>
+          <h2 class="dit-title">DIT Command Center</h2>
+          <div class="dit-subtitle">Leitura executiva do DIT SVC, Last Mile, causas, origens ofensoras e promessas. Uma visão única para sair do “quanto” e chegar no “por quê”.</div>
+        </div>
+        <div class="dit-hero-actions">
+          <button class="dit-hero-btn" type="button" onclick="ditCopiarLeitura()">📋 Copiar leitura</button>
+          <button class="dit-hero-btn" type="button" onclick="ditExportarPNG()">📸 Exportar PNG</button>
+          <button class="dit-hero-btn" type="button" onclick="ditToggleFullscreen()">⛶ Tela cheia</button>
+          <button class="dit-hero-btn primary" id="dit-btn-importar" type="button" onclick="ditAbrirModalImportacao()">＋ Importar base</button>
+        </div>
+      </div>
+      <div class="dit-meta-strip">
+        <span class="dit-meta-pill"><span class="dit-meta-dot" id="dit-source-dot"></span><span id="dit-source-label">Carregando dados</span></span>
+        <span class="dit-meta-pill">📅 Snapshot: <strong id="dit-snapshot-label">—</strong></span>
+        <span class="dit-meta-pill">🧱 <strong id="dit-record-count">0</strong> registros no recorte</span>
+        <span class="dit-meta-pill">⚡ Lazy load ativo</span>
+      </div>
+    </section>
+
+    <div class="dit-toolbar">
+      <div class="dit-toolbar-left">
+        <div class="dit-range-group" id="dit-range-group">
+          <button class="dit-range-btn" data-range="7" onclick="ditAplicarPreset(7,this)">7D</button>
+          <button class="dit-range-btn" data-range="15" onclick="ditAplicarPreset(15,this)">15D</button>
+          <button class="dit-range-btn active" data-range="30" onclick="ditAplicarPreset(30,this)">30D</button>
+          <button class="dit-range-btn" data-range="90" onclick="ditAplicarPreset(90,this)">90D</button>
+          <button class="dit-range-btn" data-range="all" onclick="ditAplicarPreset('all',this)">Tudo</button>
+        </div>
+        <input class="dit-date-input" type="date" id="dit-data-ini" onchange="ditAplicarDatasCustom()">
+        <span style="font-size:10px;color:#9aa1af;font-weight:700">até</span>
+        <input class="dit-date-input" type="date" id="dit-data-fim" onchange="ditAplicarDatasCustom()">
+      </div>
+      <div class="dit-toolbar-right">
+        <span style="font-size:10px;color:#8b93a5">Período selecionado:</span>
+        <strong id="dit-period-label" style="font-size:11px;color:#2D3277">—</strong>
+        <button class="dit-refresh-btn" title="Atualizar do Supabase" onclick="ditRecarregar()">↻</button>
+      </div>
+    </div>
+
+    <div id="dit-empty" class="dit-empty">
+      <strong>Nenhum snapshot DIT encontrado</strong>
+      <span>Importe a base para inaugurar o Command Center.</span>
+    </div>
+
+    <div id="dit-dashboard-content">
+      <div class="dit-kpi-grid">
+        <div class="dit-kpi" style="--kpi-accent:#2D3277;--kpi-glow:rgba(45,50,119,.10)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT Total</div><div class="dit-kpi-value" id="dit-kpi-total">—</div><div class="dit-kpi-foot" id="dit-kpi-total-foot">—</div></div>
+        <div class="dit-kpi" style="--kpi-accent:#d93025;--kpi-glow:rgba(217,48,37,.10)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT SVC</div><div class="dit-kpi-value" id="dit-kpi-svc">—</div><div class="dit-kpi-foot" id="dit-kpi-svc-foot">—</div></div>
+        <div class="dit-kpi" style="--kpi-accent:#f5c518;--kpi-glow:rgba(245,197,24,.14)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT Last Mile</div><div class="dit-kpi-value" id="dit-kpi-lm">—</div><div class="dit-kpi-foot" id="dit-kpi-lm-foot">—</div></div>
+        <div class="dit-kpi" style="--kpi-accent:#3483FA"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT -1</div><div class="dit-kpi-value" id="dit-kpi-dm1">—</div><div class="dit-kpi-foot">promessas vencidas / recorte da base</div></div>
+        <div class="dit-kpi" style="--kpi-accent:#7B61FF"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT +1</div><div class="dit-kpi-value" id="dit-kpi-dp1">—</div><div class="dit-kpi-foot">promessas futuras / recorte da base</div></div>
+        <div class="dit-kpi" style="--kpi-accent:#168b4b;--kpi-glow:rgba(22,139,75,.10)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">Causa dominante SVC</div><div class="dit-kpi-value" id="dit-kpi-causa" style="font-size:19px;line-height:1.12;margin-top:12px">—</div><div class="dit-kpi-foot" id="dit-kpi-causa-foot">—</div></div>
+      </div>
+
+      <div class="dit-insight-ribbon">
+        <div class="dit-insight"><div class="dit-insight-icon">🎯</div><div class="dit-insight-title">Concentração</div><div class="dit-insight-text" id="dit-insight-1">—</div></div>
+        <div class="dit-insight"><div class="dit-insight-icon">🛰️</div><div class="dit-insight-title">Origem crítica</div><div class="dit-insight-text" id="dit-insight-2">—</div></div>
+        <div class="dit-insight"><div class="dit-insight-icon">📈</div><div class="dit-insight-title">Movimento</div><div class="dit-insight-text" id="dit-insight-3">—</div></div>
+      </div>
+
+      <div class="dit-bento">
+        <section class="dit-card dit-span-8">
+          <div class="dit-card-head"><div><div class="dit-card-kicker">Evolução</div><div class="dit-card-title">Pulso do DIT</div></div><div class="dit-card-note">Total · SVC · Last Mile</div></div>
+          <div class="dit-chart-wrap lg"><canvas id="dit-chart-trend"></canvas></div>
+        </section>
+        <section class="dit-card dit-span-4">
+          <div class="dit-card-head"><div><div class="dit-card-kicker">Agora</div><div class="dit-card-title">Top ofensores SVC</div></div><div class="dit-card-note">snapshot mais recente</div></div>
+          <div class="dit-rank-list" id="dit-rank-svc"></div>
+        </section>
+
+        <section class="dit-card dit-span-7">
+          <div class="dit-card-head"><div><div class="dit-card-kicker">Causa raiz</div><div class="dit-card-title">Composição DIT SVC</div></div><div class="dit-card-note">participação por motivo</div></div>
+          <div class="dit-chart-wrap"><canvas id="dit-chart-svc"></canvas></div>
+        </section>
+        <section class="dit-card dit-span-5">
+          <div class="dit-card-head"><div><div class="dit-card-kicker">Ecossistema</div><div class="dit-card-title">Quem carrega o DIT total?</div></div><div class="dit-card-note">LT_DELAY_CAUSE_L2</div></div>
+          <div class="dit-chart-wrap"><canvas id="dit-chart-total"></canvas></div>
+        </section>
+
+        <section class="dit-card dit-span-6">
+          <div class="dit-card-head"><div><div class="dit-card-kicker">Last Mile</div><div class="dit-card-title">DIT LM por motivo</div></div><div class="dit-card-note">volume absoluto</div></div>
+          <div class="dit-chart-wrap sm"><canvas id="dit-chart-lm"></canvas></div>
+        </section>
+        <section class="dit-card dit-span-6">
+          <div class="dit-card-head"><div><div class="dit-card-kicker">Origem</div><div class="dit-card-title">Top origens ofensoras</div></div><div class="dit-card-note">ranking operacional</div></div>
+          <div class="dit-chart-wrap sm"><canvas id="dit-chart-origem"></canvas></div>
+        </section>
+
+        <section class="dit-card dit-span-5">
+          <div class="dit-card-head"><div><div class="dit-card-kicker">Não shippado</div><div class="dit-card-title">Falhas na origem</div></div><div class="dit-card-note">volumes por nodo</div></div>
+          <div class="dit-chart-wrap sm"><canvas id="dit-chart-nao-shippado"></canvas></div>
+        </section>
+        <section class="dit-card dit-span-7">
+          <div class="dit-card-head"><div><div class="dit-card-kicker">Promessas</div><div class="dit-card-title">SVC-ID x LM-ID</div></div><div class="dit-card-note">linha do tempo de promessa</div></div>
+          <div class="dit-chart-wrap sm"><canvas id="dit-chart-promessas"></canvas></div>
+        </section>
+
+        <section class="dit-card dit-span-5">
+          <div class="dit-card-head"><div><div class="dit-card-kicker">Ação</div><div class="dit-card-title">Falha operacional / POC</div></div><div class="dit-card-note">o que precisa acontecer agora</div></div>
+          <div class="dit-chart-wrap sm"><canvas id="dit-chart-falha"></canvas></div>
+        </section>
+        <section class="dit-card dit-span-7">
+          <div class="dit-card-head"><div><div class="dit-card-kicker">Matriz de pressão</div><div class="dit-card-title">Origem ofensora x não shippado</div></div><div class="dit-card-note">priorização por concentração</div></div>
+          <div class="dit-origin-table-wrap"><table class="dit-origin-table"><thead><tr><th>Origem</th><th>Ofensora</th><th>Não shippado</th><th>Share</th><th>Pressão</th></tr></thead><tbody id="dit-origin-tbody"></tbody></table></div>
+        </section>
+      </div>
     </div>
   </div>
 </div>
@@ -3039,6 +3260,40 @@
 
 </div>
 
+
+
+<!-- DIT - Importação de base -->
+<div class="modal-overlay" id="modal-dit-import" onclick="if(event.target===this)ditFecharModalImportacao()">
+  <div class="modal dit-modal" onclick="event.stopPropagation()">
+    <h3 style="margin-bottom:4px">Importar base DIT</h3>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px">Aceita XLSX, XLS, CSV, TSV ou conteúdo colado. A estrutura esperada é: Data · Indicador · Categoria · Valor · Auxiliar.</div>
+    <div class="dit-import-zone">
+      <input type="file" id="dit-import-file" accept=".xlsx,.xls,.csv,.tsv,.txt" onchange="ditLerArquivoImportacao(event)">
+      <div style="font-size:26px;margin-bottom:5px">📥</div>
+      <div style="font-weight:800;color:#2D3277;font-size:13px">Solte ou selecione a base</div>
+      <div style="font-size:10px;color:#98a0b0;margin-top:4px">O primeiro worksheet será utilizado em arquivos Excel.</div>
+    </div>
+    <div class="dit-import-or">ou cole a base</div>
+    <textarea class="dit-import-textarea" id="dit-import-text" placeholder="24/09/2026\tDIT SVC 5\tFalta de origem\t208\t0,3984\n..."></textarea>
+    <div style="display:flex;gap:8px;margin-top:9px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-secondary btn-sm" type="button" onclick="ditAnalisarTextoImportacao()">Analisar conteúdo</button>
+      <span id="dit-import-file-name" style="font-size:10px;color:#8b93a5">Nenhum arquivo analisado.</span>
+    </div>
+    <div class="dit-import-summary">
+      <div class="dit-import-stat"><span>Registros</span><strong id="dit-import-count">0</strong></div>
+      <div class="dit-import-stat"><span>Datas</span><strong id="dit-import-dates">0</strong></div>
+      <div class="dit-import-stat"><span>Indicadores</span><strong id="dit-import-indicators">0</strong></div>
+      <div class="dit-import-stat"><span>Ignorados</span><strong id="dit-import-skipped">0</strong></div>
+    </div>
+    <div class="dit-import-preview" id="dit-import-preview"><div style="padding:24px;text-align:center;color:#98a0b0;font-size:11px">A prévia aparecerá aqui.</div></div>
+    <div class="dit-import-note">Ao salvar, somente as datas presentes na nova importação são substituídas. O dashboard tenta persistir na tabela <strong>dit_snapshots</strong> do Supabase e mantém um cache local de segurança.</div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="ditFecharModalImportacao()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" id="dit-import-save" onclick="ditSalvarImportacao()" disabled>Salvar no DIT</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -3179,7 +3434,7 @@ const EXIGIR_CADASTRO_PERFIL = true; // Com a tabela svc_usuarios configurada, t
 
 // Abas com permissão configurável (visualizar/editar) para os perfis Auditor e Operador.
 // Cada aba mapeia para os "flags" granulares já usados no restante do sistema.
-const ABAS_CONFIGURAVEIS = ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'insucesso-xpt', 'diaristas', 'yms', 'revisao-ponto', 'fechamento-diario', 'monitor', 'crachas'];
+const ABAS_CONFIGURAVEIS = ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'insucesso-xpt', 'diaristas', 'yms', 'revisao-ponto', 'fechamento-diario', 'dit', 'monitor', 'crachas'];
 
 const MAPA_PERMISSOES_ABA = {
   turnos:     { base: [], editar: ['criar_turnos', 'editar_turnos', 'excluir_turnos'] },
@@ -3193,6 +3448,7 @@ const MAPA_PERMISSOES_ABA = {
   yms:        { base: ['ver_monitor_yms'], editar: ['registrar_yms', 'excluir_yms'] },
   'revisao-ponto': { base: ['ver_revisao_ponto'], editar: [] },
   'fechamento-diario': { base: [], editar: ['registrar_fechamento', 'excluir_fechamento'] },
+  dit:        { base: ['ver_dit'], editar: ['editar_dit'] },
   monitor:    { base: [], editar: ['editar_monitor'] },
   crachas:    { base: [], editar: ['gerar_crachas'] }
 };
@@ -3214,6 +3470,7 @@ function perfilVazioDinamico(label) {
     ver_monitor_yms: false, registrar_yms: false, excluir_yms: false,
     ver_revisao_ponto: false,
     registrar_fechamento: false, excluir_fechamento: false,
+    ver_dit: false, editar_dit: false,
     editar_monitor: false,
     criar_usuarios: false, gerenciar_permissoes: false, excluir_usuarios: false
   };
@@ -3258,7 +3515,7 @@ async function carregarPermissoesDinamicasSeNecessario() {
 const PERFIS_ACESSO = {
   admin: {
     label: 'Administrador',
-    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'insucesso-xpt', 'diaristas', 'yms', 'revisao-ponto', 'fechamento-diario', 'monitor', 'crachas', 'usuarios'],
+    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'insucesso-xpt', 'diaristas', 'yms', 'revisao-ponto', 'fechamento-diario', 'dit', 'monitor', 'crachas', 'usuarios'],
     gerar_crachas: true,
     criar_turnos: true, editar_turnos: true, excluir_turnos: true,
     criar_hc: true, editar_hc: true, excluir_hc: true, exportar_hc: true,
@@ -3271,12 +3528,13 @@ const PERFIS_ACESSO = {
     ver_monitor_yms: true, registrar_yms: true, excluir_yms: true,
     ver_revisao_ponto: true,
     registrar_fechamento: true, excluir_fechamento: true,
+    ver_dit: true, editar_dit: true,
     editar_monitor: true,
     criar_usuarios: true, gerenciar_permissoes: true, excluir_usuarios: true
   },
   coordenador: {
     label: 'Coordenador',
-    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'insucesso-xpt', 'diaristas', 'yms', 'revisao-ponto', 'fechamento-diario', 'monitor', 'crachas', 'usuarios'],
+    tabs: ['turnos', 'headcount', 'scheduling', 'abs', 'anomalias', 'insucesso', 'insucesso-xpt', 'diaristas', 'yms', 'revisao-ponto', 'fechamento-diario', 'dit', 'monitor', 'crachas', 'usuarios'],
     gerar_crachas: true,
     criar_turnos: false, editar_turnos: false, excluir_turnos: false,
     criar_hc: true, editar_hc: true, excluir_hc: false, exportar_hc: true,
@@ -3289,6 +3547,7 @@ const PERFIS_ACESSO = {
     ver_monitor_yms: true, registrar_yms: true, excluir_yms: false,
     ver_revisao_ponto: true,
     registrar_fechamento: true, excluir_fechamento: false,
+    ver_dit: true, editar_dit: true,
     editar_monitor: true,
     criar_usuarios: false, gerenciar_permissoes: true, excluir_usuarios: false
   },
@@ -3371,6 +3630,7 @@ const HOME_SHORTCUTS = [
   { tab: 'yms', icon: '🚛', titulo: 'Monitor YMS', desc: 'Entrada e saída de rotas no pátio', grupo: 'Controles' },
   { tab: 'revisao-ponto', icon: '🕵️', titulo: 'Revisão de Ponto', desc: 'Cruzamento LMS x K+N e possíveis desistências', grupo: 'Controles' },
   { tab: 'fechamento-diario', icon: '📊', titulo: 'Fechamento Diário', desc: 'Fechamento dos ciclos e do dia', grupo: 'Controles' },
+  { tab: 'dit', icon: '🛰️', titulo: 'DIT', desc: 'Command Center de atrasos, causas e origens ofensoras', grupo: 'Controles' },
   { tab: 'monitor', icon: '📦', titulo: 'Monitor — Ciclos', desc: 'Upload e histórico de ciclos', grupo: 'Ferramentas' },
   { tab: 'crachas', icon: '🏷️', titulo: 'Crachás LMS', desc: 'Gerador de crachás', grupo: 'Ferramentas' },
   { tab: 'usuarios', icon: '🔐', titulo: 'Usuários', desc: 'Gestão de acessos do sistema', grupo: 'Ferramentas' }
@@ -3613,6 +3873,7 @@ function aplicarControleAcesso() {
   setVisibleById('btn-registrar-devolucao', pode('registrar_insucesso'), 'inline-flex');
   setVisibleById('btn-registrar-insucesso-xpt', pode('registrar_insucesso_xpt'), 'inline-flex');
   setVisibleById('btn-registrar-devolucao-xpt', pode('registrar_insucesso_xpt'), 'inline-flex');
+  setVisibleById('dit-btn-importar', pode('editar_dit'), 'inline-flex');
   setVisibleById('card-form-usuario', pode('criar_usuarios'));
   setVisibleById('card-form-diarista', pode('criar_diarista') || pode('editar_diarista'));
   document.querySelectorAll('#yms-tab-entrada .form-card, #yms-tab-saida .form-card').forEach(el => {
@@ -4296,6 +4557,10 @@ function switchTab(tab, btn) {
 
   if (tab === 'fechamento-diario') {
     inicializarTelaFechamentoDiario();
+  }
+
+  if (tab === 'dit') {
+    ditInicializarDashboard();
   }
 
   if (tab === 'yms') {
@@ -9897,6 +10162,7 @@ const LABEL_ABA_PERMISSAO = {
   diaristas: 'Controle de Diaristas',
   yms: 'Monitor YMS',
   'revisao-ponto': 'Revisão de Ponto',
+  dit: 'DIT',
   monitor: 'Monitor — Ciclos',
   crachas: 'Crachás LMS'
 };
@@ -12396,6 +12662,489 @@ function abrirDetalheDiaScheduling(dataIso) {
 function fecharModalSchedDiaDetalhe() {
   document.getElementById('modal-sched-dia-detalhe').classList.remove('open');
 }
+
+
+
+// ════════════════════════════════════════
+//  DIT COMMAND CENTER
+//  Lazy load + cache local + Supabase opcional
+// ════════════════════════════════════════
+const DIT_CACHE_KEY = 'srj2_dit_cache_v1';
+const DIT_MAX_REMOTE_DAYS = 180;
+const DIT_DEMO_REGISTROS = [{"data":"2026-09-24","indicador":"DIT LM","categoria":"INSUCESSO","valor":317.0,"auxiliar":449645.0},{"data":"2026-09-24","indicador":"DIT LM","categoria":"POC","valor":156.0,"auxiliar":221277.0},{"data":"2026-09-24","indicador":"DIT LM","categoria":"PLACE","valor":80.0,"auxiliar":113475.0},{"data":"2026-09-24","indicador":"DIT LM","categoria":"Last Mile No Show","valor":72.0,"auxiliar":102128.0},{"data":"2026-09-24","indicador":"DIT LM","categoria":"DESCONTAINERIZADO","valor":61.0,"auxiliar":86525.0},{"data":"2026-09-24","indicador":"DIT LM","categoria":"NEX","valor":15.0,"auxiliar":21277.0},{"data":"2026-09-24","indicador":"DIT LM","categoria":"AVARIA","valor":3.0,"auxiliar":4255.0},{"data":"2026-09-24","indicador":"DIT LM","categoria":"AUDIT_CARRINHO","valor":1.0,"auxiliar":1418.0},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"Last Mile","valor":1643.0,"auxiliar":0.2711221122},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"Seller","valor":1414.0,"auxiliar":0.2333333333},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"Line Haul","valor":977.0,"auxiliar":0.1612211221},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"SVC","valor":522.0,"auxiliar":0.08613861386},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"First Mile","valor":498.0,"auxiliar":0.08217821782},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"FBM","valor":448.0,"auxiliar":0.07392739274},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"XD","valor":309.0,"auxiliar":0.05099009901},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"Place","valor":95.0,"auxiliar":0.01567656766},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"OP Consolidation","valor":70.0,"auxiliar":0.01155115512},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"XPT/LM","valor":57.0,"auxiliar":0.009405940594},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"Handshake FM","valor":22.0,"auxiliar":0.003630363036},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"LH/OP Consolidation","valor":4.0,"auxiliar":0.0006600660066},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"LH AIR/OP Consolidation","valor":1.0,"auxiliar":0.0001650165017},{"data":"2026-09-24","indicador":"DIT SVC 5","categoria":"Falta de origem","valor":208.0,"auxiliar":0.398467433},{"data":"2026-09-24","indicador":"DIT SVC 5","categoria":"POC CCO","valor":129.0,"auxiliar":0.2471264368},{"data":"2026-09-24","indicador":"DIT SVC 5","categoria":"CHP","valor":79.0,"auxiliar":0.1513409962},{"data":"2026-09-24","indicador":"DIT SVC 5","categoria":"Não roteirizado","valor":27.0,"auxiliar":0.05172413793},{"data":"2026-09-24","indicador":"DIT SVC 5","categoria":"Não shippado na origem","valor":20.0,"auxiliar":0.03831417625},{"data":"2026-09-24","indicador":"DIT SVC 5","categoria":"buffered","valor":15.0,"auxiliar":0.02873563218},{"data":"2026-09-24","indicador":"DIT SVC 5","categoria":"Pacote desconteinerizado","valor":13.0,"auxiliar":0.02490421456},{"data":"2026-09-24","indicador":"DIT SVC 5","categoria":"Falha Operacional","valor":12.0,"auxiliar":0.02298850575},{"data":"2026-09-24","indicador":"DIT SVC 5","categoria":"Em tratativa PS","valor":10.0,"auxiliar":0.01915708812},{"data":"2026-09-24","indicador":"DIT SVC 5","categoria":"Insucesso em tratativa","valor":9.0,"auxiliar":0.01724137931},{"data":"2026-09-24","indicador":"Falha Operacional SVC","categoria":"POSSÍVEL BAIXA","valor":11.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Falha Operacional SVC","categoria":"PROCURAR PACOTE","valor":101.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Falha Operacional SVC","categoria":"SEGUIR COM ENTREGA","valor":16.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Falha Operacional SVC","categoria":"SEGUIR FLUXO DE DEVOLUÇÃO","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"ARENA","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRBA01","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRMG02","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRRJ02","valor":4.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRSC02","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRSP02","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRSP04","valor":2.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRSP09","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRSP11","valor":2.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRSP14","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRXES1","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRXSP10","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRXSP14","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"XPASC1","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"XSP4","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"ARENA","valor":9.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRMG02","valor":3.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRMG03","valor":2.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRMG04","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRRJ02","valor":25.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRSC02","valor":6.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRSP02","valor":6.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRSP04","valor":6.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRSP06","valor":4.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRSP10","valor":3.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRSP11","valor":7.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRSP14","valor":7.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRSP15","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRSP18","valor":5.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRSP19","valor":5.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRSP26","valor":2.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXES1","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXGO1","valor":2.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXPR2","valor":2.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXPR4","valor":3.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXRS1","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXSC2","valor":7.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXSP10","valor":37.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXSP11","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXSP14","valor":9.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXSP16","valor":21.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXSP18","valor":8.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXSP5","valor":5.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXSP7","valor":2.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"CAMPINAS","valor":4.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"XMG1","valor":6.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"XSP4","valor":7.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"15/08/2026","valor":0.0,"auxiliar":1.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"18/08/2026","valor":1.0,"auxiliar":0.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"19/08/2026","valor":1.0,"auxiliar":0.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"21/08/2026","valor":0.0,"auxiliar":1.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"24/08/2026","valor":0.0,"auxiliar":1.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"25/08/2026","valor":0.0,"auxiliar":1.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"26/08/2026","valor":0.0,"auxiliar":1.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"27/08/2026","valor":1.0,"auxiliar":1.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"28/08/2026","valor":2.0,"auxiliar":2.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"29/08/2026","valor":1.0,"auxiliar":2.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"30/08/2026","valor":0.0,"auxiliar":4.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"31/08/2026","valor":1.0,"auxiliar":1.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"01/09/2026","valor":0.0,"auxiliar":6.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"02/09/2026","valor":2.0,"auxiliar":2.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"03/09/2026","valor":2.0,"auxiliar":3.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"04/09/2026","valor":3.0,"auxiliar":5.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"05/09/2026","valor":1.0,"auxiliar":6.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"06/09/2026","valor":1.0,"auxiliar":2.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"07/09/2026","valor":1.0,"auxiliar":1.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"08/09/2026","valor":1.0,"auxiliar":0.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"09/09/2026","valor":25.0,"auxiliar":7.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"10/09/2026","valor":24.0,"auxiliar":14.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"11/09/2026","valor":13.0,"auxiliar":40.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"12/09/2026","valor":7.0,"auxiliar":16.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"13/09/2026","valor":4.0,"auxiliar":6.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"14/09/2026","valor":6.0,"auxiliar":11.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"15/09/2026","valor":177.0,"auxiliar":12.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"16/09/2026","valor":141.0,"auxiliar":13.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"17/09/2026","valor":181.0,"auxiliar":13.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"18/09/2026","valor":146.0,"auxiliar":21.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"19/09/2026","valor":136.0,"auxiliar":19.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"20/09/2026","valor":40.0,"auxiliar":26.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"21/09/2026","valor":134.0,"auxiliar":17.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"22/09/2026","valor":245.0,"auxiliar":67.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"23/09/2026","valor":346.0,"auxiliar":200.0},{"data":"2026-09-24","indicador":"Total Geral DIT","categoria":"Count dit -1","valor":200.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Total Geral DIT","categoria":"Count dit +1","valor":322.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Total Geral DIT","categoria":"Count dit total","valor":522.0,"auxiliar":null}];
+let ditDados = [];
+let ditFonte = 'carregando';
+let ditInicializado = false;
+let ditCarregando = false;
+let ditSupabaseDisponivel = null;
+let ditCharts = {};
+let ditImportRegistros = [];
+let ditImportIgnorados = 0;
+
+function ditNorm(value) {
+  return asText(value).trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+function ditFmtInt(value) {
+  const n = Number(value || 0);
+  return new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(Number.isFinite(n) ? n : 0);
+}
+
+function ditFmtPct(value, casas = 1) {
+  const n = Number(value || 0);
+  return `${(n * 100).toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas })}%`;
+}
+
+function ditDataBr(iso) {
+  if (!iso) return '—';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function ditParseNumero(value) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  let s = asText(value).trim();
+  if (!s || /^[-—]+$/.test(s)) return null;
+  const pct = s.includes('%');
+  s = s.replace(/\s/g, '').replace(/%/g, '');
+  s = s.replace(/R\$/gi, '');
+  if (s.includes(',') && s.includes('.')) s = s.replace(/\./g, '').replace(',', '.');
+  else if (s.includes(',')) s = s.replace(',', '.');
+  else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+  s = s.replace(/[^0-9+\-.]/g, '');
+  const n = Number(s);
+  if (!Number.isFinite(n)) return null;
+  return pct ? n / 100 : n;
+}
+
+function ditParseData(value) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const z = new Date(value.getTime() - value.getTimezoneOffset() * 60000);
+    return z.toISOString().slice(0,10);
+  }
+  if (typeof value === 'number' && value > 20000 && window.XLSX?.SSF?.parse_date_code) {
+    const p = XLSX.SSF.parse_date_code(value);
+    if (p) return `${String(p.y).padStart(4,'0')}-${String(p.m).padStart(2,'0')}-${String(p.d).padStart(2,'0')}`;
+  }
+  const s = asText(value).trim();
+  let m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+  m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  return null;
+}
+
+function ditNormalizarRegistro(row) {
+  if (!Array.isArray(row)) return null;
+  const data = ditParseData(row[0]);
+  const indicador = asText(row[1]).trim();
+  const categoria = asText(row[2]).trim();
+  const valor = ditParseNumero(row[3]);
+  const auxiliar = ditParseNumero(row[4]);
+  if (!data || !indicador || !categoria || valor === null) return null;
+  return { data, indicador, categoria, valor, auxiliar };
+}
+
+function ditRowsIndicador(rows, indicador) {
+  const alvo = ditNorm(indicador);
+  return rows.filter(r => ditNorm(r.indicador) === alvo);
+}
+
+function ditSoma(rows, indicador) {
+  return ditRowsIndicador(rows, indicador).reduce((s,r) => s + Number(r.valor || 0), 0);
+}
+
+function ditValorCategoria(rows, indicador, trechoCategoria) {
+  const i = ditNorm(indicador), c = ditNorm(trechoCategoria);
+  const achado = rows.find(r => ditNorm(r.indicador) === i && ditNorm(r.categoria).includes(c));
+  return achado ? Number(achado.valor || 0) : 0;
+}
+
+function ditTop(rows, indicador, limite = 10) {
+  return ditRowsIndicador(rows, indicador)
+    .map(r => ({ ...r, valor:Number(r.valor || 0) }))
+    .sort((a,b) => b.valor - a.valor)
+    .slice(0, limite);
+}
+
+function ditLerCacheLocal() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(DIT_CACHE_KEY) || '[]');
+    return Array.isArray(parsed) ? parsed.filter(r => r?.data && r?.indicador && r?.categoria) : [];
+  } catch (_) { return []; }
+}
+
+function ditSalvarCacheLocal(rows) {
+  try { localStorage.setItem(DIT_CACHE_KEY, JSON.stringify(rows || [])); } catch (_) {}
+}
+
+function ditAtualizarFonteUi() {
+  const label = document.getElementById('dit-source-label');
+  const dot = document.getElementById('dit-source-dot');
+  if (!label || !dot) return;
+  dot.className = 'dit-meta-dot';
+  if (ditFonte === 'supabase') label.textContent = 'Supabase · dados compartilhados';
+  else if (ditFonte === 'local') { label.textContent = 'Cache local · Supabase DIT indisponível'; dot.classList.add('local'); }
+  else if (ditFonte === 'demo') { label.textContent = 'Demonstração · base 24/09/2026'; dot.classList.add('demo'); }
+  else label.textContent = 'Carregando dados';
+}
+
+async function ditCarregarDados(force = false) {
+  if (ditCarregando) return;
+  if (ditInicializado && !force) { ditRender(); return; }
+  ditCarregando = true;
+  ditFonte = 'carregando';
+  ditAtualizarFonteUi();
+
+  let remotos = [];
+  try {
+    const limite = new Date();
+    limite.setDate(limite.getDate() - DIT_MAX_REMOTE_DAYS);
+    const limIso = new Date(limite.getTime() - limite.getTimezoneOffset() * 60000).toISOString().slice(0,10);
+    remotos = await buscarTodasLinhas(() => db.from('dit_snapshots')
+      .select('data_ref,indicador,categoria,valor,auxiliar')
+      .gte('data_ref', limIso)
+      .order('data_ref', { ascending:true }));
+    remotos = (remotos || []).map(r => ({ data:r.data_ref, indicador:r.indicador, categoria:r.categoria, valor:Number(r.valor || 0), auxiliar:r.auxiliar === null ? null : Number(r.auxiliar) }));
+    ditSupabaseDisponivel = true;
+  } catch (error) {
+    console.warn('DIT: tabela dit_snapshots indisponível, usando cache local.', error);
+    ditSupabaseDisponivel = false;
+  }
+
+  const locais = ditLerCacheLocal();
+  if (remotos.length) {
+    ditDados = remotos;
+    ditFonte = 'supabase';
+    ditSalvarCacheLocal(remotos);
+  } else if (locais.length) {
+    ditDados = locais;
+    ditFonte = 'local';
+  } else {
+    ditDados = DIT_DEMO_REGISTROS.slice();
+    ditFonte = 'demo';
+  }
+
+  ditInicializado = true;
+  ditCarregando = false;
+  ditConfigurarDatasPadrao();
+  ditRender();
+}
+
+function ditConfigurarDatasPadrao() {
+  const ini = document.getElementById('dit-data-ini');
+  const fim = document.getElementById('dit-data-fim');
+  if (!ini || !fim || !ditDados.length) return;
+  const datas = [...new Set(ditDados.map(r => r.data))].sort();
+  const max = datas[datas.length - 1];
+  const d = new Date(max + 'T12:00:00');
+  d.setDate(d.getDate() - 29);
+  const start = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0,10);
+  ini.min = datas[0]; ini.max = max; fim.min = datas[0]; fim.max = max;
+  if (!ini.value) ini.value = start < datas[0] ? datas[0] : start;
+  if (!fim.value) fim.value = max;
+}
+
+function ditAplicarPreset(dias, btn) {
+  document.querySelectorAll('.dit-range-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  if (!ditDados.length) return;
+  const datas = [...new Set(ditDados.map(r => r.data))].sort();
+  const fim = datas[datas.length - 1];
+  let ini = datas[0];
+  if (dias !== 'all') {
+    const d = new Date(fim + 'T12:00:00');
+    d.setDate(d.getDate() - Number(dias) + 1);
+    const calc = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0,10);
+    ini = calc < datas[0] ? datas[0] : calc;
+  }
+  document.getElementById('dit-data-ini').value = ini;
+  document.getElementById('dit-data-fim').value = fim;
+  ditRender();
+}
+
+function ditAplicarDatasCustom() {
+  document.querySelectorAll('.dit-range-btn').forEach(b => b.classList.remove('active'));
+  ditRender();
+}
+
+function ditRecorte() {
+  const ini = document.getElementById('dit-data-ini')?.value || '0000-00-00';
+  const fim = document.getElementById('dit-data-fim')?.value || '9999-99-99';
+  return ditDados.filter(r => r.data >= ini && r.data <= fim);
+}
+
+function ditDestroyChart(nome) {
+  if (ditCharts[nome]) { ditCharts[nome].destroy(); delete ditCharts[nome]; }
+}
+
+function ditBaseChartOptions(extra = {}) {
+  return {
+    responsive:true, maintainAspectRatio:false, animation:{ duration:350 },
+    plugins:{ legend:{ labels:{ boxWidth:9, usePointStyle:true, pointStyle:'circle', font:{ size:10, family:'Inter' }, color:'#6b7280' } }, tooltip:{ padding:10, titleFont:{family:'Inter',size:11}, bodyFont:{family:'Inter',size:11} } },
+    scales:{ x:{ grid:{ color:'rgba(148,163,184,.10)' }, ticks:{ color:'#7b8190', font:{size:9,family:'Inter'} } }, y:{ grid:{ color:'rgba(148,163,184,.10)' }, ticks:{ color:'#7b8190', font:{size:9,family:'Inter'} } } },
+    ...extra
+  };
+}
+
+function ditSetKpi(id, valor, footId, footHtml) {
+  const el = document.getElementById(id); if (el) el.textContent = valor;
+  if (footId) { const f = document.getElementById(footId); if (f) f.innerHTML = footHtml || '—'; }
+}
+
+function ditDeltaHtml(atual, anterior) {
+  if (!anterior) return '<span class="dit-delta flat">sem base D-1</span>';
+  const dif = atual - anterior;
+  const pct = (dif / Math.abs(anterior));
+  if (Math.abs(dif) < 0.0001) return '<span class="dit-delta flat">0,0%</span> vs snapshot anterior';
+  const cls = dif > 0 ? 'up' : 'down';
+  const seta = dif > 0 ? '▲' : '▼';
+  return `<span class="dit-delta ${cls}">${seta} ${Math.abs(pct*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}%</span> vs snapshot anterior`;
+}
+
+function ditRenderRank(containerId, itens, total) {
+  const el = document.getElementById(containerId); if (!el) return;
+  if (!itens.length) { el.innerHTML = '<div style="padding:24px;text-align:center;color:#98a0b0;font-size:11px">Sem dados no snapshot.</div>'; return; }
+  const max = Math.max(...itens.map(x=>x.valor),1);
+  el.innerHTML = itens.slice(0,8).map((x,i) => `<div class="dit-rank-row">
+    <div class="dit-rank-pos">${i+1}</div>
+    <div class="dit-rank-name" title="${escapeHtml(x.categoria)}">${escapeHtml(x.categoria)}</div>
+    <div class="dit-rank-track"><div class="dit-rank-fill" style="width:${Math.max(3,(x.valor/max)*100)}%"></div></div>
+    <div class="dit-rank-value">${ditFmtInt(x.valor)} <span style="color:#a0a7b5;font-weight:600">${total ? ditFmtPct(x.valor/total,0):''}</span></div>
+  </div>`).join('');
+}
+
+function ditRenderMatrizOrigem(rowsAtual) {
+  const tbody = document.getElementById('dit-origin-tbody'); if (!tbody) return;
+  const ofens = ditTop(rowsAtual,'Origem Ofensora',50);
+  const nao = new Map(ditRowsIndicador(rowsAtual,'Não shippado origem').map(r => [ditNorm(r.categoria),Number(r.valor||0)]));
+  const total = ofens.reduce((s,r)=>s+r.valor,0) || 1;
+  const itens = ofens.slice(0,14);
+  if (!itens.length) { tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:#98a0b0;padding:26px">Sem origens para o snapshot.</td></tr>'; return; }
+  tbody.innerHTML = itens.map((r,i) => {
+    const ns = nao.get(ditNorm(r.categoria)) || 0;
+    const share = r.valor/total;
+    const score = share*0.75 + (ns / Math.max(1,r.valor))*0.25;
+    const cls = score >= .16 ? 'high' : score >= .08 ? 'mid' : 'low';
+    const label = cls==='high'?'alta':cls==='mid'?'média':'baixa';
+    return `<tr><td>${escapeHtml(r.categoria)}</td><td>${ditFmtInt(r.valor)}</td><td>${ditFmtInt(ns)}</td><td>${ditFmtPct(share,1)}</td><td><span class="dit-pressure ${cls}">${label}</span></td></tr>`;
+  }).join('');
+}
+
+function ditRender() {
+  ditAtualizarFonteUi();
+  const rows = ditRecorte();
+  const vazio = document.getElementById('dit-empty');
+  const content = document.getElementById('dit-dashboard-content');
+  if (!rows.length) { if(vazio)vazio.style.display='block'; if(content)content.style.display='none'; return; }
+  if(vazio)vazio.style.display='none'; if(content)content.style.display='block';
+
+  const datas = [...new Set(rows.map(r=>r.data))].sort();
+  const latest = datas[datas.length-1];
+  const rowsAtual = rows.filter(r=>r.data===latest);
+  const todasDatas = [...new Set(ditDados.map(r=>r.data))].sort();
+  const idxGlobal = todasDatas.indexOf(latest);
+  const prevDate = idxGlobal>0 ? todasDatas[idxGlobal-1] : null;
+  const rowsPrev = prevDate ? ditDados.filter(r=>r.data===prevDate) : [];
+
+  const totalAtual = ditSoma(rowsAtual,'LT_DELAY_CAUSE_L2') || (ditSoma(rowsAtual,'DIT SVC 5') + ditSoma(rowsAtual,'DIT LM'));
+  const svcAtual = ditSoma(rowsAtual,'DIT SVC 5');
+  const lmAtual = ditSoma(rowsAtual,'DIT LM');
+  const totalPrev = ditSoma(rowsPrev,'LT_DELAY_CAUSE_L2') || (ditSoma(rowsPrev,'DIT SVC 5') + ditSoma(rowsPrev,'DIT LM'));
+  const svcPrev = ditSoma(rowsPrev,'DIT SVC 5');
+  const lmPrev = ditSoma(rowsPrev,'DIT LM');
+  const dm1 = ditValorCategoria(rowsAtual,'Total Geral DIT','dit -1');
+  const dp1 = ditValorCategoria(rowsAtual,'Total Geral DIT','dit +1');
+  const svcTop = ditTop(rowsAtual,'DIT SVC 5',20);
+  const topSvc = svcTop[0];
+  const topOrigem = ditTop(rowsAtual,'Origem Ofensora',1)[0];
+  const origensTotal = ditSoma(rowsAtual,'Origem Ofensora');
+
+  document.getElementById('dit-snapshot-label').textContent = ditDataBr(latest);
+  document.getElementById('dit-record-count').textContent = ditFmtInt(rows.length);
+  document.getElementById('dit-period-label').textContent = `${ditDataBr(datas[0])} → ${ditDataBr(latest)} · ${datas.length} snapshot${datas.length===1?'':'s'}`;
+
+  ditSetKpi('dit-kpi-total',ditFmtInt(totalAtual),'dit-kpi-total-foot',ditDeltaHtml(totalAtual,totalPrev));
+  ditSetKpi('dit-kpi-svc',ditFmtInt(svcAtual),'dit-kpi-svc-foot',ditDeltaHtml(svcAtual,svcPrev));
+  ditSetKpi('dit-kpi-lm',ditFmtInt(lmAtual),'dit-kpi-lm-foot',ditDeltaHtml(lmAtual,lmPrev));
+  document.getElementById('dit-kpi-dm1').textContent = ditFmtInt(dm1);
+  document.getElementById('dit-kpi-dp1').textContent = ditFmtInt(dp1);
+  document.getElementById('dit-kpi-causa').textContent = topSvc?.categoria || '—';
+  document.getElementById('dit-kpi-causa-foot').textContent = topSvc && svcAtual ? `${ditFmtInt(topSvc.valor)} · ${ditFmtPct(topSvc.valor/svcAtual,1)} do SVC` : 'sem composição disponível';
+
+  document.getElementById('dit-insight-1').textContent = topSvc && svcAtual ? `${topSvc.categoria} concentra ${ditFmtPct(topSvc.valor/svcAtual,1)} do DIT SVC (${ditFmtInt(topSvc.valor)} volumes).` : 'Sem leitura de concentração disponível.';
+  document.getElementById('dit-insight-2').textContent = topOrigem ? `${topOrigem.categoria} lidera as origens ofensoras com ${ditFmtInt(topOrigem.valor)} ocorrências${origensTotal?` (${ditFmtPct(topOrigem.valor/origensTotal,1)})`:''}.` : 'Sem origem ofensora registrada.';
+  const mov = totalPrev ? ((totalAtual-totalPrev)/Math.abs(totalPrev)) : 0;
+  document.getElementById('dit-insight-3').textContent = totalPrev ? `DIT total ${mov>0?'subiu':mov<0?'caiu':'ficou estável'} ${Math.abs(mov*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}% contra ${ditDataBr(prevDate)}.` : 'Primeiro snapshot disponível no histórico carregado.';
+  ditRenderRank('dit-rank-svc',svcTop,svcAtual);
+  ditRenderMatrizOrigem(rowsAtual);
+
+  ditRenderCharts(rows, rowsAtual, datas);
+}
+
+function ditRenderCharts(rows, rowsAtual, datas) {
+  const css = getComputedStyle(document.documentElement);
+  const blue = '#3483FA', navy='#2D3277', red='#d93025', yellow='#f4c430', green='#168b4b', purple='#7B61FF', gray='#cbd3e1';
+
+  // Pulso do DIT
+  ditDestroyChart('trend');
+  const trendCtx = document.getElementById('dit-chart-trend');
+  const series = datas.map(data => {
+    const rr=rows.filter(r=>r.data===data);
+    return { data, total:ditSoma(rr,'LT_DELAY_CAUSE_L2') || (ditSoma(rr,'DIT SVC 5')+ditSoma(rr,'DIT LM')), svc:ditSoma(rr,'DIT SVC 5'), lm:ditSoma(rr,'DIT LM') };
+  });
+  ditCharts.trend = new Chart(trendCtx,{ type:'line', data:{ labels:series.map(x=>ditDataBr(x.data).slice(0,5)), datasets:[
+    {label:'DIT Total',data:series.map(x=>x.total),borderColor:navy,backgroundColor:'rgba(45,50,119,.08)',fill:true,tension:.32,borderWidth:2.4,pointRadius:2},
+    {label:'DIT SVC',data:series.map(x=>x.svc),borderColor:red,backgroundColor:'transparent',tension:.32,borderWidth:2,pointRadius:2},
+    {label:'DIT LM',data:series.map(x=>x.lm),borderColor:yellow,backgroundColor:'transparent',tension:.32,borderWidth:2,pointRadius:2}
+  ]}, options:ditBaseChartOptions({ plugins:{...ditBaseChartOptions().plugins,legend:{position:'bottom',labels:{boxWidth:8,usePointStyle:true,pointStyle:'circle',font:{size:10,family:'Inter'}}}}, scales:{x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:12,font:{size:9}}},y:{beginAtZero:true,grid:{color:'rgba(148,163,184,.10)'},ticks:{font:{size:9}}}} }) });
+
+  // SVC
+  const svc = ditTop(rowsAtual,'DIT SVC 5',10); ditDestroyChart('svc');
+  ditCharts.svc = new Chart(document.getElementById('dit-chart-svc'),{type:'bar',data:{labels:svc.map(x=>x.categoria),datasets:[{label:'DIT SVC',data:svc.map(x=>x.valor),backgroundColor:svc.map((_,i)=>i===0?'rgba(217,48,37,.88)':`rgba(217,48,37,${Math.max(.24,.72-i*.055)})`),borderRadius:7}]},options:ditBaseChartOptions({indexAxis:'y',plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{beginAtZero:true,grid:{color:'rgba(148,163,184,.10)'},ticks:{font:{size:9}}},y:{grid:{display:false},ticks:{font:{size:9,weight:'600'},color:'#475467'}}}})});
+
+  // Total donut
+  const total = ditTop(rowsAtual,'LT_DELAY_CAUSE_L2',20); ditDestroyChart('total');
+  const top5=total.slice(0,5), outros=total.slice(5).reduce((s,r)=>s+r.valor,0); if(outros>0) top5.push({categoria:'Outros',valor:outros});
+  ditCharts.total = new Chart(document.getElementById('dit-chart-total'),{type:'doughnut',data:{labels:top5.map(x=>x.categoria),datasets:[{data:top5.map(x=>x.valor),backgroundColor:[green,yellow,red,blue,purple,gray],borderColor:'#fff',borderWidth:3,hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom',labels:{boxWidth:8,usePointStyle:true,pointStyle:'circle',font:{size:9,family:'Inter'}}},tooltip:{callbacks:{label:(ctx)=>`${ctx.label}: ${ditFmtInt(ctx.raw)} (${ditFmtPct(ctx.raw/top5.reduce((s,x)=>s+x.valor,0),1)})`}}}}});
+
+  // LM
+  const lm = ditTop(rowsAtual,'DIT LM',10); ditDestroyChart('lm');
+  ditCharts.lm = new Chart(document.getElementById('dit-chart-lm'),{type:'bar',data:{labels:lm.map(x=>x.categoria),datasets:[{label:'DIT LM',data:lm.map(x=>x.valor),backgroundColor:'rgba(244,196,48,.86)',borderRadius:7}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:35,minRotation:35,font:{size:8}}},y:{beginAtZero:true,grid:{color:'rgba(148,163,184,.10)'},ticks:{font:{size:9}}}}})});
+
+  // Origens
+  const orig=ditTop(rowsAtual,'Origem Ofensora',12); ditDestroyChart('origem');
+  ditCharts.origem = new Chart(document.getElementById('dit-chart-origem'),{type:'bar',data:{labels:orig.map(x=>x.categoria),datasets:[{data:orig.map(x=>x.valor),backgroundColor:'rgba(52,131,250,.78)',borderRadius:6}]},options:ditBaseChartOptions({indexAxis:'y',plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{font:{size:8}}},y:{grid:{display:false},ticks:{font:{size:8,weight:'600'}}}}})});
+
+  // Não shippado
+  const ns=ditTop(rowsAtual,'Não shippado origem',10); ditDestroyChart('ns');
+  ditCharts.ns = new Chart(document.getElementById('dit-chart-nao-shippado'),{type:'bar',data:{labels:ns.map(x=>x.categoria),datasets:[{data:ns.map(x=>x.valor),backgroundColor:'rgba(123,97,255,.76)',borderRadius:6}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:35,minRotation:35,font:{size:8}}},y:{beginAtZero:true,ticks:{precision:0,font:{size:8}}}}})});
+
+  // Falha operacional
+  const falha=ditTop(rowsAtual,'Falha Operacional SVC',10); ditDestroyChart('falha');
+  ditCharts.falha = new Chart(document.getElementById('dit-chart-falha'),{type:'bar',data:{labels:falha.map(x=>x.categoria),datasets:[{data:falha.map(x=>x.valor),backgroundColor:falha.map((_,i)=>i===0?'rgba(217,48,37,.86)':'rgba(217,48,37,.48)'),borderRadius:7}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:30,minRotation:30,font:{size:8}}},y:{beginAtZero:true,ticks:{precision:0,font:{size:8}}}}})});
+
+  // Promessas
+  const prom=ditRowsIndicador(rowsAtual,'Promessas Last Mile').slice().sort((a,b)=>ditParseData(a.categoria)?.localeCompare(ditParseData(b.categoria)) || 0); ditDestroyChart('prom');
+  ditCharts.prom = new Chart(document.getElementById('dit-chart-promessas'),{type:'bar',data:{labels:prom.map(x=>{const d=ditParseData(x.categoria);return d?ditDataBr(d).slice(0,5):x.categoria}),datasets:[{label:'SVC - ID',data:prom.map(x=>x.valor),backgroundColor:'rgba(217,48,37,.82)',borderRadius:4},{label:'LM - ID',data:prom.map(x=>Number(x.auxiliar||0)),backgroundColor:'rgba(244,196,48,.82)',borderRadius:4}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{position:'bottom',labels:{boxWidth:8,usePointStyle:true,pointStyle:'circle',font:{size:9}}}},scales:{x:{stacked:false,grid:{display:false},ticks:{autoSkip:true,maxTicksLimit:14,maxRotation:0,font:{size:8}}},y:{beginAtZero:true,ticks:{font:{size:8}}}}})});
+}
+
+async function ditRecarregar() {
+  ditInicializado = false;
+  await ditCarregarDados(true);
+  toast('DIT atualizado.', 'success');
+}
+
+function ditAbrirModalImportacao() {
+  ditImportRegistros = []; ditImportIgnorados = 0;
+  const txt=document.getElementById('dit-import-text'); if(txt)txt.value='';
+  const file=document.getElementById('dit-import-file'); if(file)file.value='';
+  ditAtualizarPreviewImportacao();
+  document.getElementById('modal-dit-import')?.classList.add('open');
+}
+function ditFecharModalImportacao() { document.getElementById('modal-dit-import')?.classList.remove('open'); }
+
+function ditRowsFromText(texto) {
+  const t=asText(texto).trim(); if(!t)return [];
+  const linhas=t.split(/\r?\n/).filter(Boolean);
+  if(linhas.some(l=>l.trim().startsWith('|'))) {
+    return linhas.filter(l=>l.includes('|')).map(l=>l.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim())).filter(r=>!r.every(c=>/^[-: ]+$/.test(c)));
+  }
+  const parsed=Papa.parse(t,{skipEmptyLines:true,dynamicTyping:false});
+  return parsed.data || [];
+}
+
+function ditProcessarLinhas(rawRows) {
+  const valid=[]; let skipped=0;
+  (rawRows||[]).forEach(row=>{ const r=ditNormalizarRegistro(row); if(r) valid.push(r); else skipped++; });
+  ditImportRegistros=valid; ditImportIgnorados=skipped; ditAtualizarPreviewImportacao();
+}
+
+async function ditLerArquivoImportacao(event) {
+  const file=event.target.files?.[0]; if(!file)return;
+  document.getElementById('dit-import-file-name').textContent=`Analisando ${file.name}...`;
+  try {
+    const ext=file.name.split('.').pop().toLowerCase();
+    if(['xlsx','xls'].includes(ext)) {
+      const buf=await file.arrayBuffer();
+      const wb=XLSX.read(buf,{type:'array',cellDates:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:true});
+      ditProcessarLinhas(rows);
+    } else {
+      const txt=await file.text();
+      ditProcessarLinhas(ditRowsFromText(txt));
+    }
+    document.getElementById('dit-import-file-name').textContent=`${file.name} · ${ditFmtInt(ditImportRegistros.length)} registros válidos`;
+  } catch(error) { console.error(error); toast('Não foi possível ler a base DIT: '+(error.message||error),'error'); }
+}
+
+function ditAnalisarTextoImportacao() {
+  const txt=document.getElementById('dit-import-text')?.value || '';
+  ditProcessarLinhas(ditRowsFromText(txt));
+  document.getElementById('dit-import-file-name').textContent=`Conteúdo colado · ${ditFmtInt(ditImportRegistros.length)} registros válidos`;
+}
+
+function ditAtualizarPreviewImportacao() {
+  const datas=[...new Set(ditImportRegistros.map(r=>r.data))];
+  const inds=[...new Set(ditImportRegistros.map(r=>r.indicador))];
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
+  set('dit-import-count',ditFmtInt(ditImportRegistros.length)); set('dit-import-dates',datas.length); set('dit-import-indicators',inds.length); set('dit-import-skipped',ditImportIgnorados);
+  const save=document.getElementById('dit-import-save'); if(save)save.disabled=!ditImportRegistros.length;
+  const prev=document.getElementById('dit-import-preview'); if(!prev)return;
+  if(!ditImportRegistros.length){prev.innerHTML='<div style="padding:24px;text-align:center;color:#98a0b0;font-size:11px">A prévia aparecerá aqui.</div>';return;}
+  prev.innerHTML=`<table><thead><tr><th>Data</th><th>Indicador</th><th>Categoria</th><th>Valor</th><th>Auxiliar</th></tr></thead><tbody>${ditImportRegistros.slice(0,40).map(r=>`<tr><td>${ditDataBr(r.data)}</td><td>${escapeHtml(r.indicador)}</td><td>${escapeHtml(r.categoria)}</td><td>${ditFmtInt(r.valor)}</td><td>${r.auxiliar===null?'—':String(r.auxiliar).replace('.',',')}</td></tr>`).join('')}</tbody></table>`;
+}
+
+async function ditSalvarImportacao() {
+  if(!ditImportRegistros.length)return;
+  const btn=document.getElementById('dit-import-save'); setButtonLoading(btn,true,'Salvando...');
+  const datas=[...new Set(ditImportRegistros.map(r=>r.data))];
+  let remotoOk=false;
+  try {
+    const {error:delErr}=await db.from('dit_snapshots').delete().in('data_ref',datas);
+    if(delErr)throw delErr;
+    const payload=ditImportRegistros.map(r=>({data_ref:r.data,indicador:r.indicador,categoria:r.categoria,valor:r.valor,auxiliar:r.auxiliar}));
+    for(let i=0;i<payload.length;i+=500){const {error}=await db.from('dit_snapshots').insert(payload.slice(i,i+500));if(error)throw error;}
+    remotoOk=true; ditSupabaseDisponivel=true;
+  } catch(error) { console.warn('DIT: não foi possível persistir no Supabase. Cache local mantido.',error); ditSupabaseDisponivel=false; }
+
+  const cache=ditLerCacheLocal().filter(r=>!datas.includes(r.data));
+  const novo=[...cache,...ditImportRegistros].sort((a,b)=>a.data.localeCompare(b.data));
+  ditSalvarCacheLocal(novo);
+  ditDados=novo; ditFonte=remotoOk?'supabase':'local'; ditInicializado=true;
+  ditFecharModalImportacao(); ditConfigurarDatasPadrao(); ditAplicarPreset(30,document.querySelector('.dit-range-btn[data-range="30"]'));
+  toast(remotoOk?'Base DIT salva e compartilhada no Supabase.':'Base DIT salva neste navegador. Configure dit_snapshots para compartilhar com o time.',remotoOk?'success':'');
+  setButtonLoading(btn,false);
+}
+
+async function ditExportarPNG() {
+  const alvo=document.getElementById('dit-capture-area'); if(!alvo)return;
+  try {
+    toast('Gerando imagem do DIT...','');
+    const canvas=await html2canvas(alvo,{scale:1.5,backgroundColor:'#EBEBEB',useCORS:true});
+    const a=document.createElement('a'); a.download=`DIT_SRJ2_${document.getElementById('dit-snapshot-label')?.textContent?.replace(/\//g,'-')||'snapshot'}.png`; a.href=canvas.toDataURL('image/png'); a.click();
+  } catch(error){console.error(error);toast('Erro ao exportar dashboard.','error');}
+}
+
+function ditToggleFullscreen() {
+  const alvo=document.getElementById('page-dit');
+  if(!document.fullscreenElement) alvo?.requestFullscreen?.(); else document.exitFullscreen?.();
+}
+
+async function ditCopiarLeitura() {
+  const rows=ditRecorte(); if(!rows.length)return;
+  const datas=[...new Set(rows.map(r=>r.data))].sort(); const latest=datas[datas.length-1]; const rr=rows.filter(r=>r.data===latest);
+  const total=ditSoma(rr,'LT_DELAY_CAUSE_L2') || (ditSoma(rr,'DIT SVC 5')+ditSoma(rr,'DIT LM')); const svc=ditSoma(rr,'DIT SVC 5'); const lm=ditSoma(rr,'DIT LM');
+  const causa=ditTop(rr,'DIT SVC 5',1)[0]; const origem=ditTop(rr,'Origem Ofensora',1)[0];
+  const texto=[`DIT SRJ2 · ${ditDataBr(latest)}`,`DIT Total: ${ditFmtInt(total)}`,`DIT SVC: ${ditFmtInt(svc)}${causa?` · Principal causa: ${causa.categoria} (${ditFmtInt(causa.valor)})`:''}`,`DIT LM: ${ditFmtInt(lm)}`,origem?`Origem ofensora: ${origem.categoria} (${ditFmtInt(origem.valor)})`:null].filter(Boolean).join('\n');
+  try{await navigator.clipboard.writeText(texto);toast('Leitura DIT copiada.','success');}catch(_){toast('Não foi possível copiar automaticamente.','error');}
+}
+
+function ditInicializarDashboard() {
+  if(!ditInicializado) ditCarregarDados(false); else ditRender();
+}
+
 
 window.addEventListener('DOMContentLoaded', async function() {
   limparQueryVaziaDaUrl();
