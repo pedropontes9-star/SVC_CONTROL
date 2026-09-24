@@ -823,6 +823,49 @@
     .dit-span-4,.dit-span-5,.dit-span-6,.dit-span-7,.dit-span-8 { grid-column:span 6; }
   }
 
+
+  /* DIT v4 — navegação por camada operacional */
+  .dit-section-nav { display:flex; align-items:center; gap:5px; padding:5px; margin-bottom:8px; background:#fff; border:1px solid rgba(0,59,122,.09); border-radius:12px; box-shadow:0 3px 10px rgba(0,59,122,.05); overflow-x:auto; }
+  .dit-section-btn { flex:0 0 auto; display:inline-flex; align-items:center; gap:6px; border:0; background:transparent; color:#667085; padding:7px 10px; border-radius:9px; font:800 9px 'Inter',sans-serif; cursor:pointer; white-space:nowrap; transition:.15s ease; }
+  .dit-section-btn:hover { background:#f3f7fb; color:#003B7A; }
+  .dit-section-btn.active { background:#003B7A; color:#fff; box-shadow:0 3px 8px rgba(0,59,122,.18); }
+  .dit-nav-badge { display:inline-flex; align-items:center; justify-content:center; min-width:34px; height:17px; padding:0 5px; border-radius:999px; background:#eef4fa; color:#0F5EA8; font-size:7px; font-weight:900; }
+  .dit-section-btn.active .dit-nav-badge { background:rgba(255,255,255,.14); color:#fff; }
+  .dit-view { display:none; }
+  .dit-view.active { display:block; }
+  .dit-view-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; margin-bottom:7px; }
+  .dit-mini-kpi { background:#fff; border:1px solid rgba(0,59,122,.08); border-radius:11px; padding:9px 11px; min-height:67px; box-shadow:0 3px 10px rgba(0,59,122,.04); }
+  .dit-mini-kpi-label { font-size:7px; font-weight:900; text-transform:uppercase; letter-spacing:.07em; color:#98a2b3; }
+  .dit-mini-kpi-value { margin-top:4px; font-size:20px; font-weight:900; color:#10213e; line-height:1; }
+  .dit-mini-kpi-sub { margin-top:5px; font-size:8px; color:#7b8493; line-height:1.2; }
+  .dit-focus-grid { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:7px; }
+  .dit-focus-span-12{grid-column:span 12}.dit-focus-span-8{grid-column:span 8}.dit-focus-span-7{grid-column:span 7}.dit-focus-span-6{grid-column:span 6}.dit-focus-span-5{grid-column:span 5}.dit-focus-span-4{grid-column:span 4}
+  .dit-chart-wrap.xs { height:126px; }
+  .dit-chart-wrap.md { height:178px; }
+  .dit-chart-wrap.prom { height:185px; }
+  .dit-chart-wrap.donut { height:178px; max-width:520px; margin:0 auto; }
+  .dit-rank-card .dit-rank-list { max-height:180px; overflow:auto; padding-right:2px; }
+  .dit-stage-focus { display:grid; grid-template-columns:minmax(210px,.8fr) minmax(0,2.2fr); gap:7px; }
+  .dit-stage-panel { border-radius:12px; background:linear-gradient(145deg,#003B7A,#0F5EA8); color:#fff; padding:16px; min-height:174px; display:flex; flex-direction:column; justify-content:space-between; }
+  .dit-stage-panel-label { font-size:8px; font-weight:900; letter-spacing:.09em; text-transform:uppercase; color:rgba(255,255,255,.65); }
+  .dit-stage-panel-name { font-size:20px; font-weight:900; margin-top:4px; }
+  .dit-stage-panel-value { font-size:38px; font-weight:900; line-height:1; margin-top:16px; letter-spacing:-.04em; }
+  .dit-stage-panel-share { margin-top:6px; font-size:11px; font-weight:800; color:#F0C64A; }
+  .dit-stage-progress { margin-top:10px; height:7px; border-radius:99px; background:rgba(255,255,255,.14); overflow:hidden; }
+  .dit-stage-progress > span { display:block; height:100%; border-radius:inherit; background:#F0C64A; }
+  .dit-stage-panel-note { margin-top:10px; font-size:8px; line-height:1.35; color:rgba(255,255,255,.68); }
+  .dit-view-note { padding:8px 10px; border-radius:10px; background:#f6f9fc; border:1px solid #e8eef5; color:#667085; font-size:8px; line-height:1.35; margin-bottom:7px; }
+  .dit-empty-detail { height:100%; display:flex; align-items:center; justify-content:center; text-align:center; padding:20px; color:#98a2b3; font-size:9px; line-height:1.4; }
+  @media (max-width:1150px) {
+    .dit-view-summary { grid-template-columns:1fr 1fr; }
+    .dit-focus-span-8,.dit-focus-span-7,.dit-focus-span-6,.dit-focus-span-5,.dit-focus-span-4 { grid-column:span 6; }
+  }
+  @media (max-width:760px) {
+    .dit-view-summary { grid-template-columns:1fr; }
+    .dit-focus-span-8,.dit-focus-span-7,.dit-focus-span-6,.dit-focus-span-5,.dit-focus-span-4,.dit-focus-span-12 { grid-column:span 12; }
+    .dit-stage-focus { grid-template-columns:1fr; }
+  }
+
 </style>
 </head>
 <body>
@@ -1081,67 +1124,127 @@
     </div>
 
     <div id="dit-dashboard-content">
-      <div class="dit-kpi-grid">
-        <div class="dit-kpi" style="--kpi-accent:#003B7A;--kpi-glow:rgba(0,59,122,.10)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT Total</div><div class="dit-kpi-value" id="dit-kpi-total">—</div><div class="dit-kpi-foot" id="dit-kpi-total-foot">—</div></div>
-        <div class="dit-kpi" style="--kpi-accent:#0F5EA8;--kpi-glow:rgba(15,94,168,.10)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT SVC</div><div class="dit-kpi-value" id="dit-kpi-svc">—</div><div class="dit-kpi-foot" id="dit-kpi-svc-foot">—</div></div>
-        <div class="dit-kpi" style="--kpi-accent:#F0C64A;--kpi-glow:rgba(240,198,74,.16)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT Last Mile</div><div class="dit-kpi-value" id="dit-kpi-lm">—</div><div class="dit-kpi-foot" id="dit-kpi-lm-foot">—</div></div>
-        <div class="dit-kpi" style="--kpi-accent:#5B8FC3"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT -1</div><div class="dit-kpi-value" id="dit-kpi-dm1">—</div><div class="dit-kpi-foot">promessas vencidas / recorte da base</div></div>
-        <div class="dit-kpi" style="--kpi-accent:#7AA3CE"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT +1</div><div class="dit-kpi-value" id="dit-kpi-dp1">—</div><div class="dit-kpi-foot">promessas futuras / recorte da base</div></div>
-        <div class="dit-kpi" style="--kpi-accent:#003B7A;--kpi-glow:rgba(0,59,122,.10)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">Causa dominante SVC</div><div class="dit-kpi-value" id="dit-kpi-causa" style="font-size:15px;line-height:1.08;margin-top:7px">—</div><div class="dit-kpi-foot" id="dit-kpi-causa-foot">—</div></div>
-      </div>
+      <nav class="dit-section-nav" aria-label="Navegação DIT por camada operacional">
+        <button class="dit-section-btn active" data-dit-view="overview" onclick="ditSetView('overview',this)">◫ Visão geral</button>
+        <button class="dit-section-btn" data-dit-view="first-mile" onclick="ditSetView('first-mile',this)">FM First Mile <span class="dit-nav-badge" id="dit-nav-badge-first-mile">—</span></button>
+        <button class="dit-section-btn" data-dit-view="line-haul" onclick="ditSetView('line-haul',this)">LH Line Haul <span class="dit-nav-badge" id="dit-nav-badge-line-haul">—</span></button>
+        <button class="dit-section-btn" data-dit-view="svc" onclick="ditSetView('svc',this)">SVC <span class="dit-nav-badge" id="dit-nav-badge-svc">—</span></button>
+        <button class="dit-section-btn" data-dit-view="last-mile" onclick="ditSetView('last-mile',this)">LM Last Mile <span class="dit-nav-badge" id="dit-nav-badge-last-mile">—</span></button>
+        <button class="dit-section-btn" data-dit-view="origins" onclick="ditSetView('origins',this)">⌖ Origens / pressão</button>
+      </nav>
 
-      <div class="dit-insight-ribbon">
-        <div class="dit-insight"><div class="dit-insight-icon">🎯</div><div class="dit-insight-title">Concentração</div><div class="dit-insight-text" id="dit-insight-1">—</div></div>
-        <div class="dit-insight"><div class="dit-insight-icon">🛰️</div><div class="dit-insight-title">Origem crítica</div><div class="dit-insight-text" id="dit-insight-2">—</div></div>
-        <div class="dit-insight"><div class="dit-insight-icon">📈</div><div class="dit-insight-title">Movimento</div><div class="dit-insight-text" id="dit-insight-3">—</div></div>
-      </div>
+      <section class="dit-view active" id="dit-view-overview" data-view="overview">
+        <div class="dit-kpi-grid">
+          <div class="dit-kpi" style="--kpi-accent:#003B7A;--kpi-glow:rgba(0,59,122,.10)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT Total</div><div class="dit-kpi-value" id="dit-kpi-total">—</div><div class="dit-kpi-foot" id="dit-kpi-total-foot">—</div></div>
+          <div class="dit-kpi" style="--kpi-accent:#0F5EA8;--kpi-glow:rgba(15,94,168,.10)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT SVC</div><div class="dit-kpi-value" id="dit-kpi-svc">—</div><div class="dit-kpi-foot" id="dit-kpi-svc-foot">—</div></div>
+          <div class="dit-kpi" style="--kpi-accent:#F0C64A;--kpi-glow:rgba(240,198,74,.16)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT Last Mile detalhado</div><div class="dit-kpi-value" id="dit-kpi-lm">—</div><div class="dit-kpi-foot" id="dit-kpi-lm-foot">—</div></div>
+          <div class="dit-kpi" style="--kpi-accent:#5B8FC3"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT -1</div><div class="dit-kpi-value" id="dit-kpi-dm1">—</div><div class="dit-kpi-foot">promessas vencidas / recorte</div></div>
+          <div class="dit-kpi" style="--kpi-accent:#7AA3CE"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT +1</div><div class="dit-kpi-value" id="dit-kpi-dp1">—</div><div class="dit-kpi-foot">promessas futuras / recorte</div></div>
+          <div class="dit-kpi" style="--kpi-accent:#003B7A;--kpi-glow:rgba(0,59,122,.10)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">Causa dominante SVC</div><div class="dit-kpi-value" id="dit-kpi-causa" style="font-size:15px;line-height:1.08;margin-top:7px">—</div><div class="dit-kpi-foot" id="dit-kpi-causa-foot">—</div></div>
+        </div>
+        <div class="dit-insight-ribbon">
+          <div class="dit-insight"><div class="dit-insight-icon">🎯</div><div class="dit-insight-title">Concentração</div><div class="dit-insight-text" id="dit-insight-1">—</div></div>
+          <div class="dit-insight"><div class="dit-insight-icon">⌖</div><div class="dit-insight-title">Origem crítica</div><div class="dit-insight-text" id="dit-insight-2">—</div></div>
+          <div class="dit-insight"><div class="dit-insight-icon">↗</div><div class="dit-insight-title">Movimento</div><div class="dit-insight-text" id="dit-insight-3">—</div></div>
+        </div>
+        <div class="dit-focus-grid">
+          <section class="dit-card dit-focus-span-7">
+            <div class="dit-card-head"><div><div class="dit-card-kicker">Evolução</div><div class="dit-card-title">Pulso do DIT</div></div><div class="dit-card-note">Total · SVC · Last Mile detalhado</div></div>
+            <div class="dit-chart-wrap md"><canvas id="dit-chart-trend"></canvas></div>
+          </section>
+          <section class="dit-card dit-focus-span-5">
+            <div class="dit-card-head"><div><div class="dit-card-kicker">Ecossistema</div><div class="dit-card-title">Composição do DIT total</div></div><div class="dit-card-note">volume · participação</div></div>
+            <div class="dit-chart-wrap donut"><canvas id="dit-chart-total"></canvas></div>
+          </section>
+        </div>
+      </section>
 
-      <div class="dit-bento">
-        <section class="dit-card dit-span-6">
-          <div class="dit-card-head"><div><div class="dit-card-kicker">Evolução</div><div class="dit-card-title">Pulso do DIT</div></div><div class="dit-card-note">Total · SVC · Last Mile</div></div>
-          <div class="dit-chart-wrap lg"><canvas id="dit-chart-trend"></canvas></div>
-        </section>
-        <section class="dit-card dit-span-6">
-          <div class="dit-card-head"><div><div class="dit-card-kicker">Agora</div><div class="dit-card-title">Top ofensores SVC</div></div><div class="dit-card-note">volume · participação</div></div>
-          <div class="dit-rank-list" id="dit-rank-svc"></div>
-        </section>
+      <section class="dit-view" id="dit-view-stage" data-view="stage">
+        <div class="dit-stage-focus">
+          <div class="dit-stage-panel">
+            <div>
+              <div class="dit-stage-panel-label">LT_DELAY_CAUSE_L2</div>
+              <div class="dit-stage-panel-name" id="dit-stage-name">First Mile</div>
+              <div class="dit-stage-panel-value" id="dit-stage-value">—</div>
+              <div class="dit-stage-panel-share" id="dit-stage-share">—</div>
+              <div class="dit-stage-progress"><span id="dit-stage-progress" style="width:0%"></span></div>
+            </div>
+            <div class="dit-stage-panel-note" id="dit-stage-note">—</div>
+          </div>
+          <section class="dit-card">
+            <div class="dit-card-head"><div><div class="dit-card-kicker">Histórico da camada</div><div class="dit-card-title" id="dit-stage-chart-title">First Mile</div></div><div class="dit-card-note">volume por snapshot</div></div>
+            <div class="dit-chart-wrap md"><canvas id="dit-chart-stage"></canvas></div>
+          </section>
+        </div>
+      </section>
 
-        <section class="dit-card dit-span-4">
-          <div class="dit-card-head"><div><div class="dit-card-kicker">Causa raiz</div><div class="dit-card-title">Composição DIT SVC</div></div><div class="dit-card-note">vol. · % SVC</div></div>
-          <div class="dit-chart-wrap"><canvas id="dit-chart-svc"></canvas></div>
-        </section>
-        <section class="dit-card dit-span-4">
-          <div class="dit-card-head"><div><div class="dit-card-kicker">Ecossistema</div><div class="dit-card-title">Quem carrega o DIT total?</div></div><div class="dit-card-note">volume · participação</div></div>
-          <div class="dit-chart-wrap"><canvas id="dit-chart-total"></canvas></div>
-        </section>
+      <section class="dit-view" id="dit-view-svc" data-view="svc">
+        <div class="dit-view-summary">
+          <div class="dit-mini-kpi"><div class="dit-mini-kpi-label">DIT SVC</div><div class="dit-mini-kpi-value" id="dit-svc-total">—</div><div class="dit-mini-kpi-sub" id="dit-svc-share">—</div></div>
+          <div class="dit-mini-kpi"><div class="dit-mini-kpi-label">Principal causa</div><div class="dit-mini-kpi-value" id="dit-svc-top-name" style="font-size:14px;line-height:1.1">—</div><div class="dit-mini-kpi-sub" id="dit-svc-top-meta">—</div></div>
+          <div class="dit-mini-kpi"><div class="dit-mini-kpi-label">Falha operacional / POC</div><div class="dit-mini-kpi-value" id="dit-svc-falha-total">—</div><div class="dit-mini-kpi-sub">volumes classificados no bloco operacional</div></div>
+        </div>
+        <div class="dit-focus-grid">
+          <section class="dit-card dit-focus-span-7">
+            <div class="dit-card-head"><div><div class="dit-card-kicker">Causa raiz</div><div class="dit-card-title">Composição DIT SVC</div></div><div class="dit-card-note">volume · % SVC</div></div>
+            <div class="dit-chart-wrap md"><canvas id="dit-chart-svc"></canvas></div>
+          </section>
+          <section class="dit-card dit-focus-span-5 dit-rank-card">
+            <div class="dit-card-head"><div><div class="dit-card-kicker">Agora</div><div class="dit-card-title">Top ofensores SVC</div></div><div class="dit-card-note">volume · participação</div></div>
+            <div class="dit-rank-list" id="dit-rank-svc"></div>
+          </section>
+          <section class="dit-card dit-focus-span-6">
+            <div class="dit-card-head"><div><div class="dit-card-kicker">Ação</div><div class="dit-card-title">Falha operacional / POC</div></div><div class="dit-card-note">volume · participação</div></div>
+            <div class="dit-chart-wrap xs"><canvas id="dit-chart-falha"></canvas></div>
+          </section>
+          <section class="dit-card dit-focus-span-6">
+            <div class="dit-card-head"><div><div class="dit-card-kicker">Direcionamento</div><div class="dit-card-title">Leitura rápida do SVC</div></div><div class="dit-card-note">snapshot atual</div></div>
+            <div id="dit-svc-quickread" class="dit-empty-detail">—</div>
+          </section>
+        </div>
+      </section>
 
-        <section class="dit-card dit-span-4">
-          <div class="dit-card-head"><div><div class="dit-card-kicker">Last Mile</div><div class="dit-card-title">DIT LM por motivo</div></div><div class="dit-card-note">vol. · % LM</div></div>
-          <div class="dit-chart-wrap sm"><canvas id="dit-chart-lm"></canvas></div>
-        </section>
-        <section class="dit-card dit-span-4">
-          <div class="dit-card-head"><div><div class="dit-card-kicker">Origem</div><div class="dit-card-title">Top origens ofensoras</div></div><div class="dit-card-note">vol. · % origens</div></div>
-          <div class="dit-chart-wrap sm"><canvas id="dit-chart-origem"></canvas></div>
-        </section>
+      <section class="dit-view" id="dit-view-last-mile" data-view="last-mile">
+        <div class="dit-view-summary">
+          <div class="dit-mini-kpi"><div class="dit-mini-kpi-label">Last Mile · LT_DELAY_CAUSE_L2</div><div class="dit-mini-kpi-value" id="dit-lm-l2-total">—</div><div class="dit-mini-kpi-sub" id="dit-lm-l2-share">—</div></div>
+          <div class="dit-mini-kpi"><div class="dit-mini-kpi-label">DIT LM detalhado</div><div class="dit-mini-kpi-value" id="dit-lm-detail-total">—</div><div class="dit-mini-kpi-sub">soma do bloco DIT LM</div></div>
+          <div class="dit-mini-kpi"><div class="dit-mini-kpi-label">Principal motivo detalhado</div><div class="dit-mini-kpi-value" id="dit-lm-top-name" style="font-size:14px;line-height:1.1">—</div><div class="dit-mini-kpi-sub" id="dit-lm-top-meta">—</div></div>
+        </div>
+        <div class="dit-view-note">A base possui duas leituras distintas para Last Mile: a camada <strong>LT_DELAY_CAUSE_L2</strong> e o bloco detalhado <strong>DIT LM</strong>. Elas são exibidas separadamente para não misturar universos.</div>
+        <div class="dit-focus-grid">
+          <section class="dit-card dit-focus-span-7">
+            <div class="dit-card-head"><div><div class="dit-card-kicker">Last Mile</div><div class="dit-card-title">DIT LM por motivo</div></div><div class="dit-card-note">volume · % LM detalhado</div></div>
+            <div class="dit-chart-wrap md"><canvas id="dit-chart-lm"></canvas></div>
+          </section>
+          <section class="dit-card dit-focus-span-5">
+            <div class="dit-card-head"><div><div class="dit-card-kicker">Promessas</div><div class="dit-card-title">SVC-ID x LM-ID</div></div><div class="dit-card-note">últimas datas do snapshot</div></div>
+            <div class="dit-chart-wrap prom"><canvas id="dit-chart-promessas"></canvas></div>
+          </section>
+        </div>
+      </section>
 
-        <section class="dit-card dit-span-4">
-          <div class="dit-card-head"><div><div class="dit-card-kicker">Não shippado</div><div class="dit-card-title">Falhas na origem</div></div><div class="dit-card-note">vol. · % não shippado</div></div>
-          <div class="dit-chart-wrap sm"><canvas id="dit-chart-nao-shippado"></canvas></div>
-        </section>
-        <section class="dit-card dit-span-4">
-          <div class="dit-card-head"><div><div class="dit-card-kicker">Promessas</div><div class="dit-card-title">SVC-ID x LM-ID</div></div><div class="dit-card-note">linha do tempo</div></div>
-          <div class="dit-chart-wrap sm"><canvas id="dit-chart-promessas"></canvas></div>
-        </section>
-
-        <section class="dit-card dit-span-4">
-          <div class="dit-card-head"><div><div class="dit-card-kicker">Ação</div><div class="dit-card-title">Falha operacional / POC</div></div><div class="dit-card-note">vol. · participação</div></div>
-          <div class="dit-chart-wrap sm"><canvas id="dit-chart-falha"></canvas></div>
-        </section>
-        <section class="dit-card dit-span-8">
-          <div class="dit-card-head"><div><div class="dit-card-kicker">Mapa de calor</div><div class="dit-card-title">Pressão por origem</div></div><div class="dit-card-note">intensidade normalizada</div></div>
-          <div id="dit-heatmap-wrap"></div>
-        </section>
-      </div>
+      <section class="dit-view" id="dit-view-origins" data-view="origins">
+        <div class="dit-view-summary">
+          <div class="dit-mini-kpi"><div class="dit-mini-kpi-label">Origem mais ofensora</div><div class="dit-mini-kpi-value" id="dit-origin-top-name" style="font-size:14px">—</div><div class="dit-mini-kpi-sub" id="dit-origin-top-meta">—</div></div>
+          <div class="dit-mini-kpi"><div class="dit-mini-kpi-label">Total origem ofensora</div><div class="dit-mini-kpi-value" id="dit-origin-total">—</div><div class="dit-mini-kpi-sub">ocorrências no snapshot</div></div>
+          <div class="dit-mini-kpi"><div class="dit-mini-kpi-label">Não shippado origem</div><div class="dit-mini-kpi-value" id="dit-ns-total">—</div><div class="dit-mini-kpi-sub">volumes mapeados por nodo</div></div>
+        </div>
+        <div class="dit-focus-grid">
+          <section class="dit-card dit-focus-span-6">
+            <div class="dit-card-head"><div><div class="dit-card-kicker">Origem</div><div class="dit-card-title">Top origens ofensoras</div></div><div class="dit-card-note">volume · % origens</div></div>
+            <div class="dit-chart-wrap md"><canvas id="dit-chart-origem"></canvas></div>
+          </section>
+          <section class="dit-card dit-focus-span-6">
+            <div class="dit-card-head"><div><div class="dit-card-kicker">Não shippado</div><div class="dit-card-title">Falhas na origem</div></div><div class="dit-card-note">volume · % não shippado</div></div>
+            <div class="dit-chart-wrap md"><canvas id="dit-chart-nao-shippado"></canvas></div>
+          </section>
+          <section class="dit-card dit-focus-span-12">
+            <div class="dit-card-head"><div><div class="dit-card-kicker">Mapa de calor</div><div class="dit-card-title">Pressão por origem</div></div><div class="dit-card-note">ofensora × não shippado × share</div></div>
+            <div id="dit-heatmap-wrap"></div>
+          </section>
+        </div>
+      </section>
+    </div>
     </div>
   </div>
 </div>
@@ -12744,6 +12847,8 @@ let ditInicializado = false;
 let ditCarregando = false;
 let ditSupabaseDisponivel = null;
 let ditCharts = {};
+let ditActiveView = 'overview';
+let ditStageSelecionado = 'first-mile';
 let ditImportRegistros = [];
 let ditImportIgnorados = 0;
 
@@ -13077,6 +13182,62 @@ function ditRenderMatrizOrigem(rowsAtual) {
   <div class="dit-heat-caption"><span>baixa</span><span class="dit-heat-scale"><span class="dit-heat-1"></span><span class="dit-heat-2"></span><span class="dit-heat-3"></span><span class="dit-heat-4"></span><span class="dit-heat-5"></span><span class="dit-heat-6"></span></span><span>alta pressão</span></div>`;
 }
 
+
+function ditL2Row(rows, categoria) {
+  const alvo = ditNorm(categoria);
+  return ditRowsIndicador(rows, 'LT_DELAY_CAUSE_L2').find(r => ditNorm(r.categoria) === alvo) || null;
+}
+
+function ditSetNavBadge(id, row, total) {
+  const el=document.getElementById(id); if(!el) return;
+  el.textContent = row && total ? ditFmtPct(Number(row.valor||0)/total,1) : '—';
+}
+
+function ditSetView(view, btn) {
+  ditActiveView = view;
+  document.querySelectorAll('.dit-section-btn').forEach(b=>b.classList.toggle('active', b===btn || b.dataset.ditView===view));
+  document.querySelectorAll('.dit-view').forEach(v=>v.classList.remove('active'));
+  const stageView = view==='first-mile' || view==='line-haul';
+  const target=document.getElementById(stageView ? 'dit-view-stage' : `dit-view-${view}`);
+  if(target) target.classList.add('active');
+  if(stageView) {
+    ditStageSelecionado=view;
+    ditRenderStageFocus(view);
+  }
+  requestAnimationFrame(()=>setTimeout(()=>{
+    Object.values(ditCharts).forEach(c=>{ try{ c.resize(); }catch(_){} });
+  },30));
+}
+
+function ditRenderStageFocus(stageKey) {
+  const rows=ditRecorte(); if(!rows.length) return;
+  const datas=[...new Set(rows.map(r=>r.data))].sort();
+  const latest=datas[datas.length-1];
+  const rowsAtual=rows.filter(r=>r.data===latest);
+  const total=ditSoma(rowsAtual,'LT_DELAY_CAUSE_L2');
+  const cfg = stageKey==='line-haul'
+    ? {label:'Line Haul', categoria:'Line Haul'}
+    : {label:'First Mile', categoria:'First Mile'};
+  const row=ditL2Row(rowsAtual,cfg.categoria);
+  const valor=Number(row?.valor||0), share=total?valor/total:0;
+  const name=document.getElementById('dit-stage-name'); if(name)name.textContent=cfg.label;
+  const val=document.getElementById('dit-stage-value'); if(val)val.textContent=ditFmtInt(valor);
+  const sh=document.getElementById('dit-stage-share'); if(sh)sh.textContent=`${ditFmtPct(share,1)} do DIT total`;
+  const prog=document.getElementById('dit-stage-progress'); if(prog)prog.style.width=`${Math.max(0,Math.min(100,share*100))}%`;
+  const title=document.getElementById('dit-stage-chart-title'); if(title)title.textContent=cfg.label;
+  const note=document.getElementById('dit-stage-note');
+  if(note) note.textContent=`A base importada fornece esta camada de forma agregada em LT_DELAY_CAUSE_L2. Quando houver mais snapshots, o histórico abaixo passa a mostrar a tendência automaticamente.`;
+
+  ditDestroyChart('stage');
+  const canvas=document.getElementById('dit-chart-stage'); if(!canvas)return;
+  const serie=datas.map(data=>{ const rr=rows.filter(r=>r.data===data); return {data,valor:Number(ditL2Row(rr,cfg.categoria)?.valor||0)}; });
+  if(serie.length<=1){
+    ditCharts.stage=new Chart(canvas,{type:'bar',data:{labels:[cfg.label],datasets:[{data:[valor],backgroundColor:'#0F5EA8',borderRadius:7,showDataLabels:true}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false}},y:{beginAtZero:true}}})});
+  } else {
+    ditCharts.stage=new Chart(canvas,{type:'line',data:{labels:serie.map(x=>ditDataBr(x.data).slice(0,5)),datasets:[{label:cfg.label,data:serie.map(x=>x.valor),borderColor:'#003B7A',backgroundColor:'rgba(15,94,168,.08)',fill:true,tension:.3,borderWidth:2,pointRadius:2,showDataLabels:false}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{display:false},ditDataLabels:false},scales:{x:{grid:{display:false}},y:{beginAtZero:true}}})});
+  }
+}
+
 function ditRender() {
   ditAtualizarFonteUi();
   const rows = ditRecorte();
@@ -13122,10 +13283,42 @@ function ditRender() {
   document.getElementById('dit-insight-2').textContent = topOrigem ? `${topOrigem.categoria} lidera as origens ofensoras com ${ditFmtInt(topOrigem.valor)} ocorrências${origensTotal?` (${ditFmtPct(topOrigem.valor/origensTotal,1)})`:''}.` : 'Sem origem ofensora registrada.';
   const mov = totalPrev ? ((totalAtual-totalPrev)/Math.abs(totalPrev)) : 0;
   document.getElementById('dit-insight-3').textContent = totalPrev ? `DIT total ${mov>0?'subiu':mov<0?'caiu':'ficou estável'} ${Math.abs(mov*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}% contra ${ditDataBr(prevDate)}.` : 'Primeiro snapshot disponível no histórico carregado.';
+
+  const l2Total=ditSoma(rowsAtual,'LT_DELAY_CAUSE_L2');
+  const fmRow=ditL2Row(rowsAtual,'First Mile'), lhRow=ditL2Row(rowsAtual,'Line Haul'), svcL2Row=ditL2Row(rowsAtual,'SVC'), lmL2Row=ditL2Row(rowsAtual,'Last Mile');
+  ditSetNavBadge('dit-nav-badge-first-mile',fmRow,l2Total);
+  ditSetNavBadge('dit-nav-badge-line-haul',lhRow,l2Total);
+  ditSetNavBadge('dit-nav-badge-svc',svcL2Row,l2Total);
+  ditSetNavBadge('dit-nav-badge-last-mile',lmL2Row,l2Total);
+
+  const falhaTotal=ditSoma(rowsAtual,'Falha Operacional SVC');
+  const lmTop=ditTop(rowsAtual,'DIT LM',1)[0];
+  const topOrigemObj=ditTop(rowsAtual,'Origem Ofensora',1)[0];
+  const nsTotal=ditSoma(rowsAtual,'Não shippado origem');
+  const setTxt=(id,val)=>{const el=document.getElementById(id); if(el)el.textContent=val;};
+  setTxt('dit-svc-total',ditFmtInt(svcAtual));
+  setTxt('dit-svc-share',l2Total?`${ditFmtPct((svcL2Row?.valor||svcAtual)/l2Total,1)} do DIT total`:'—');
+  setTxt('dit-svc-top-name',topSvc?.categoria||'—');
+  setTxt('dit-svc-top-meta',topSvc&&svcAtual?`${ditFmtInt(topSvc.valor)} · ${ditFmtPct(topSvc.valor/svcAtual,1)} do SVC`:'—');
+  setTxt('dit-svc-falha-total',ditFmtInt(falhaTotal));
+  const quick=document.getElementById('dit-svc-quickread'); if(quick)quick.innerHTML=topSvc&&svcAtual?`<div style="max-width:360px"><strong style="display:block;color:#003B7A;font-size:12px;margin-bottom:6px">${escapeHtml(topSvc.categoria)}</strong><span>${ditFmtInt(topSvc.valor)} volumes representam <strong>${ditFmtPct(topSvc.valor/svcAtual,1)}</strong> do DIT SVC. ${topOrigemObj?`A origem mais ofensora no snapshot é <strong>${escapeHtml(topOrigemObj.categoria)}</strong> com ${ditFmtInt(topOrigemObj.valor)} ocorrências.`:''}</span></div>`:'Sem leitura SVC disponível.';
+
+  setTxt('dit-lm-l2-total',ditFmtInt(Number(lmL2Row?.valor||0)));
+  setTxt('dit-lm-l2-share',l2Total?`${ditFmtPct(Number(lmL2Row?.valor||0)/l2Total,1)} do DIT total`:'—');
+  setTxt('dit-lm-detail-total',ditFmtInt(lmAtual));
+  setTxt('dit-lm-top-name',lmTop?.categoria||'—');
+  setTxt('dit-lm-top-meta',lmTop&&lmAtual?`${ditFmtInt(lmTop.valor)} · ${ditFmtPct(lmTop.valor/lmAtual,1)} do DIT LM detalhado`:'—');
+
+  setTxt('dit-origin-top-name',topOrigemObj?.categoria||'—');
+  setTxt('dit-origin-top-meta',topOrigemObj&&origensTotal?`${ditFmtInt(topOrigemObj.valor)} · ${ditFmtPct(topOrigemObj.valor/origensTotal,1)} das origens`:'—');
+  setTxt('dit-origin-total',ditFmtInt(origensTotal));
+  setTxt('dit-ns-total',ditFmtInt(nsTotal));
+
   ditRenderRank('dit-rank-svc',svcTop,svcAtual);
   ditRenderMatrizOrigem(rowsAtual);
-
   ditRenderCharts(rows, rowsAtual, datas);
+  if(ditActiveView==='first-mile'||ditActiveView==='line-haul') ditRenderStageFocus(ditActiveView);
+  requestAnimationFrame(()=>setTimeout(()=>Object.values(ditCharts).forEach(c=>{try{c.resize()}catch(_){}}),20));
 }
 
 
@@ -13183,7 +13376,7 @@ function ditRenderCharts(rows, rowsAtual, datas) {
   ditCharts.falha = new Chart(document.getElementById('dit-chart-falha'),{type:'bar',data:{labels:falha.map(x=>x.categoria),datasets:[{data:falha.map(x=>x.valor),backgroundColor:falha.map((_,i)=>i===0?'rgba(0,59,122,.90)':'rgba(91,143,195,.68)'),borderRadius:5,showDataLabels:true,dataLabelFormatter:(v)=>ditLabelValorPct(v,falhaTotal)}]},options:ditBaseChartOptions({layout:{padding:{top:12}},plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:24,minRotation:24,font:{size:7}}},y:{beginAtZero:true,ticks:{precision:0,font:{size:7}}}}})});
 
   // Promessas: compacto e sem rótulo em cada barra para evitar ruído.
-  const prom=ditRowsIndicador(rowsAtual,'Promessas Last Mile').slice().sort((a,b)=>ditParseData(a.categoria)?.localeCompare(ditParseData(b.categoria)) || 0); ditDestroyChart('prom');
+  const promTodos=ditRowsIndicador(rowsAtual,'Promessas Last Mile').slice().sort((a,b)=>ditParseData(a.categoria)?.localeCompare(ditParseData(b.categoria)) || 0); const prom=promTodos.slice(-16); ditDestroyChart('prom');
   ditCharts.prom = new Chart(document.getElementById('dit-chart-promessas'),{type:'bar',data:{labels:prom.map(x=>{const d=ditParseData(x.categoria);return d?ditDataBr(d).slice(0,5):x.categoria}),datasets:[{label:'SVC-ID',data:prom.map(x=>x.valor),backgroundColor:'rgba(0,59,122,.86)',borderRadius:3,showDataLabels:false},{label:'LM-ID',data:prom.map(x=>Number(x.auxiliar||0)),backgroundColor:'rgba(240,198,74,.84)',borderRadius:3,showDataLabels:false}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{position:'bottom',labels:{boxWidth:7,usePointStyle:true,pointStyle:'circle',font:{size:7}}},ditDataLabels:false},scales:{x:{stacked:false,grid:{display:false},ticks:{autoSkip:true,maxTicksLimit:10,maxRotation:0,font:{size:7}}},y:{beginAtZero:true,ticks:{font:{size:7}}}}})});
 }
 
