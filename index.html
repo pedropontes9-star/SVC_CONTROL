@@ -1138,7 +1138,7 @@
       </div>
       <div class="dit-meta-strip">
         <span class="dit-meta-pill"><span class="dit-meta-dot" id="dit-source-dot"></span><span id="dit-source-label">Carregando dados</span></span>
-        <span class="dit-meta-pill">📅 Snapshot: <strong id="dit-snapshot-label">—</strong></span>
+        <span class="dit-meta-pill">📅 Período: <strong id="dit-snapshot-label">—</strong></span>
         <span class="dit-meta-pill">🧱 <strong id="dit-record-count">0</strong> registros no recorte</span>
         <span class="dit-meta-pill">⚡ Lazy load ativo</span>
       </div>
@@ -1182,10 +1182,10 @@
       <section class="dit-view active" id="dit-view-overview" data-view="overview">
         <div class="dit-kpi-grid">
           <div class="dit-kpi" style="--kpi-accent:#003B7A;--kpi-glow:rgba(0,59,122,.10)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT Total</div><div class="dit-kpi-value" id="dit-kpi-total">—</div><div class="dit-kpi-foot" id="dit-kpi-total-foot">—</div></div>
-          <div class="dit-kpi" style="--kpi-accent:#0F5EA8;--kpi-glow:rgba(15,94,168,.10)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT SVC</div><div class="dit-kpi-value" id="dit-kpi-svc">—</div><div class="dit-kpi-foot" id="dit-kpi-svc-foot">—</div></div>
+          <div class="dit-kpi" style="--kpi-accent:#0F5EA8;--kpi-glow:rgba(15,94,168,.10)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT SVC · PERÍODO</div><div class="dit-kpi-value" id="dit-kpi-svc">—</div><div class="dit-kpi-foot" id="dit-kpi-svc-foot">—</div></div>
           <div class="dit-kpi" style="--kpi-accent:#F0C64A;--kpi-glow:rgba(240,198,74,.16)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT Last Mile detalhado</div><div class="dit-kpi-value" id="dit-kpi-lm">—</div><div class="dit-kpi-foot" id="dit-kpi-lm-foot">—</div></div>
-          <div class="dit-kpi" style="--kpi-accent:#5B8FC3"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT -1</div><div class="dit-kpi-value" id="dit-kpi-dm1">—</div><div class="dit-kpi-foot">promessas vencidas / recorte</div></div>
-          <div class="dit-kpi" style="--kpi-accent:#7AA3CE"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT +1</div><div class="dit-kpi-value" id="dit-kpi-dp1">—</div><div class="dit-kpi-foot">promessas futuras / recorte</div></div>
+          <div class="dit-kpi" style="--kpi-accent:#5B8FC3"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT SVC D-1</div><div class="dit-kpi-value" id="dit-kpi-dm1">—</div><div class="dit-kpi-foot">promessas vencidas do SVC</div></div>
+          <div class="dit-kpi" style="--kpi-accent:#7AA3CE"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">DIT SVC D+1</div><div class="dit-kpi-value" id="dit-kpi-dp1">—</div><div class="dit-kpi-foot">promessas futuras do SVC</div></div>
           <div class="dit-kpi" style="--kpi-accent:#003B7A;--kpi-glow:rgba(0,59,122,.10)"><span class="dit-kpi-accent"></span><div class="dit-kpi-label">Causa dominante SVC</div><div class="dit-kpi-value" id="dit-kpi-causa" style="font-size:15px;line-height:1.08;margin-top:7px">—</div><div class="dit-kpi-foot" id="dit-kpi-causa-foot">—</div></div>
         </div>
         <div class="dit-insight-ribbon">
@@ -1199,7 +1199,7 @@
             <div class="dit-chart-wrap md"><canvas id="dit-chart-trend"></canvas></div>
           </section>
           <section class="dit-card dit-focus-span-5">
-            <div class="dit-card-head"><div><div class="dit-card-kicker">Ecossistema</div><div class="dit-card-title">Composição do ecossistema DIT</div></div><div class="dit-card-note">volume · participação L2</div></div>
+            <div class="dit-card-head"><div><div class="dit-card-kicker">DIT Total</div><div class="dit-card-title">Composição do DIT total</div></div><div class="dit-card-note">volume · % do DIT Total</div></div>
             <div class="dit-chart-wrap donut"><canvas id="dit-chart-total"></canvas></div>
           </section>
         </div>
@@ -12945,7 +12945,7 @@ function fecharModalSchedDiaDetalhe() {
 
 
 // ════════════════════════════════════════
-//  DIT COMMAND CENTER
+//  DIT COMMAND CENTER v16 — DIT Total = LT_DELAY_CAUSE_L2
 //  Supabase (dit_snapshots) + atualização automática ao entrar + cache local
 // ════════════════════════════════════════
 const DIT_CACHE_KEY = 'srj2_dit_cache_v3_supabase';
@@ -13038,16 +13038,43 @@ function ditSoma(rows, indicador) {
 
 function ditValorCategoria(rows, indicador, trechoCategoria) {
   const i = ditNorm(indicador), c = ditNorm(trechoCategoria);
-  const achado = rows.find(r => ditNorm(r.indicador) === i && ditNorm(r.categoria).includes(c));
-  return achado ? Number(achado.valor || 0) : 0;
+  return rows
+    .filter(r => ditNorm(r.indicador) === i && ditNorm(r.categoria).includes(c))
+    .reduce((s,r) => s + Number(r.valor || 0), 0);
+}
+
+function ditAgruparIndicador(rows, indicador) {
+  const alvo = ditNorm(indicador);
+  const mapa = new Map();
+  rows.forEach(r => {
+    if (ditNorm(r.indicador) !== alvo) return;
+    const chave = ditNorm(r.categoria);
+    if (!chave) return;
+    const atual = mapa.get(chave) || { ...r, valor:0, auxiliar:0, _auxCount:0 };
+    atual.valor += Number(r.valor || 0);
+    if (r.auxiliar !== null && r.auxiliar !== undefined && Number.isFinite(Number(r.auxiliar))) {
+      atual.auxiliar += Number(r.auxiliar || 0);
+      atual._auxCount += 1;
+    }
+    mapa.set(chave, atual);
+  });
+  return [...mapa.values()].map(r => {
+    const out = { ...r };
+    if (!out._auxCount) out.auxiliar = null;
+    delete out._auxCount;
+    return out;
+  });
 }
 
 function ditTotalOficial(rows) {
-  return ditValorCategoria(rows, 'Total Geral DIT', 'dit total');
+  // DIT Total = soma do ecossistema LT_DELAY_CAUSE_L2.
+  // O bloco 'Total Geral DIT' representa o recorte SVC (D-1 + D+1), não o total global.
+  const totalL2 = ditSoma(rows, 'LT_DELAY_CAUSE_L2');
+  return totalL2 || ditValorCategoria(rows, 'Total Geral DIT', 'dit total');
 }
 
 function ditTop(rows, indicador, limite = 10) {
-  return ditRowsIndicador(rows, indicador)
+  return ditAgruparIndicador(rows, indicador)
     .map(r => ({ ...r, valor:Number(r.valor || 0) }))
     .sort((a,b) => b.valor - a.valor)
     .slice(0, limite);
@@ -13309,13 +13336,13 @@ function ditSetKpi(id, valor, footId, footHtml) {
 }
 
 function ditDeltaHtml(atual, anterior) {
-  if (!anterior) return '<span class="dit-delta flat">sem base D-1</span>';
+  if (!anterior) return '<span class="dit-delta flat">sem período anterior</span>';
   const dif = atual - anterior;
   const pct = (dif / Math.abs(anterior));
-  if (Math.abs(dif) < 0.0001) return '<span class="dit-delta flat">0,0%</span> vs snapshot anterior';
+  if (Math.abs(dif) < 0.0001) return '<span class="dit-delta flat">0,0%</span> vs período anterior';
   const cls = dif > 0 ? 'up' : 'down';
   const seta = dif > 0 ? '▲' : '▼';
-  return `<span class="dit-delta ${cls}">${seta} ${Math.abs(pct*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}%</span> vs snapshot anterior`;
+  return `<span class="dit-delta ${cls}">${seta} ${Math.abs(pct*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}%</span> vs período anterior`;
 }
 
 function ditRenderRank(containerId, itens, total) {
@@ -13373,7 +13400,7 @@ function ditRenderMatrizOrigem(rowsAtual) {
 
 function ditL2Row(rows, categoria) {
   const alvo = ditNorm(categoria);
-  return ditRowsIndicador(rows, 'LT_DELAY_CAUSE_L2').find(r => ditNorm(r.categoria) === alvo) || null;
+  return ditAgruparIndicador(rows, 'LT_DELAY_CAUSE_L2').find(r => ditNorm(r.categoria) === alvo) || null;
 }
 
 function ditSetNavBadge(id, row, total) {
@@ -13401,7 +13428,7 @@ function ditRenderStageFocus(stageKey) {
   const rows=ditRecorte(); if(!rows.length) return;
   const datas=[...new Set(rows.map(r=>r.data))].sort();
   const latest=datas[datas.length-1];
-  const rowsAtual=rows.filter(r=>r.data===latest);
+  const rowsAtual=rows;
   const total=ditSoma(rowsAtual,'LT_DELAY_CAUSE_L2');
   const totalOficial=ditTotalOficial(rowsAtual);
   const cfg = stageKey==='line-haul'
@@ -13411,11 +13438,11 @@ function ditRenderStageFocus(stageKey) {
   const valor=Number(row?.valor||0), share=total?valor/total:0;
   const name=document.getElementById('dit-stage-name'); if(name)name.textContent=cfg.label;
   const val=document.getElementById('dit-stage-value'); if(val)val.textContent=ditFmtInt(valor);
-  const sh=document.getElementById('dit-stage-share'); if(sh)sh.textContent=`${ditFmtPct(share,1)} do ecossistema L2 · DIT Total ${ditFmtInt(totalOficial)}`;
+  const sh=document.getElementById('dit-stage-share'); if(sh)sh.textContent=`${ditFmtPct(share,1)} do DIT Total · ${ditFmtInt(valor)} de ${ditFmtInt(totalOficial)}`;
   const prog=document.getElementById('dit-stage-progress'); if(prog)prog.style.width=`${Math.max(0,Math.min(100,share*100))}%`;
   const title=document.getElementById('dit-stage-chart-title'); if(title)title.textContent=cfg.label;
   const note=document.getElementById('dit-stage-note');
-  if(note) note.textContent=`Esta camada pertence ao ecossistema LT_DELAY_CAUSE_L2. O DIT Total oficial do snapshot é ${ditFmtInt(totalOficial)} e permanece visível no contexto superior.`;
+  if(note) note.textContent=`Participação desta camada sobre o DIT Total acumulado no período selecionado (${ditFmtInt(totalOficial)} volumes), calculado pelo LT_DELAY_CAUSE_L2.`;
 
   ditDestroyChart('stage');
   const canvas=document.getElementById('dit-chart-stage'); if(!canvas)return;
@@ -13436,12 +13463,23 @@ function ditRender() {
   if(vazio)vazio.style.display='none'; if(content)content.style.display='block';
 
   const datas = [...new Set(rows.map(r=>r.data))].sort();
+  const inicio = datas[0];
   const latest = datas[datas.length-1];
-  const rowsAtual = rows.filter(r=>r.data===latest);
-  const todasDatas = [...new Set(ditDados.map(r=>r.data))].sort();
-  const idxGlobal = todasDatas.indexOf(latest);
-  const prevDate = idxGlobal>0 ? todasDatas[idxGlobal-1] : null;
-  const rowsPrev = prevDate ? ditDados.filter(r=>r.data===prevDate) : [];
+
+  // Tudo que não é série histórica passa a respeitar TODO o período selecionado.
+  const rowsAtual = rows;
+
+  // Compara o período selecionado com o período imediatamente anterior de mesmo tamanho em dias.
+  const MS_DIA = 86400000;
+  const startUtc = Date.parse(inicio + 'T00:00:00Z');
+  const endUtc = Date.parse(latest + 'T00:00:00Z');
+  const spanDays = Math.max(1, Math.round((endUtc - startUtc) / MS_DIA) + 1);
+  const prevEndUtc = startUtc - MS_DIA;
+  const prevStartUtc = prevEndUtc - (spanDays - 1) * MS_DIA;
+  const isoUtc = ms => new Date(ms).toISOString().slice(0,10);
+  const prevStart = isoUtc(prevStartUtc);
+  const prevEnd = isoUtc(prevEndUtc);
+  const rowsPrev = ditDados.filter(r => r.data >= prevStart && r.data <= prevEnd);
 
   const totalAtual = ditTotalOficial(rowsAtual);
   const svcAtual = ditSoma(rowsAtual,'DIT SVC 5');
@@ -13456,11 +13494,11 @@ function ditRender() {
   const topOrigem = ditTop(rowsAtual,'Origem Ofensora',1)[0];
   const origensTotal = ditSoma(rowsAtual,'Origem Ofensora');
 
-  document.getElementById('dit-snapshot-label').textContent = ditDataBr(latest);
+  document.getElementById('dit-snapshot-label').textContent = datas.length===1 ? ditDataBr(latest) : `${ditDataBr(inicio)} → ${ditDataBr(latest)}`;
   document.getElementById('dit-record-count').textContent = ditFmtInt(rows.length);
   document.getElementById('dit-period-label').textContent = `${ditDataBr(datas[0])} → ${ditDataBr(latest)} · ${datas.length} snapshot${datas.length===1?'':'s'}`;
   const ctxTotal=document.getElementById('dit-context-total'); if(ctxTotal) ctxTotal.textContent=ditFmtInt(totalAtual);
-  const ctxDate=document.getElementById('dit-context-date'); if(ctxDate) ctxDate.textContent=ditDataBr(latest);
+  const ctxDate=document.getElementById('dit-context-date'); if(ctxDate) ctxDate.textContent=datas.length===1?ditDataBr(latest):`${ditDataBr(inicio)} → ${ditDataBr(latest)}`;
   const ctxPeriod=document.getElementById('dit-context-period'); if(ctxPeriod) ctxPeriod.textContent=`${ditDataBr(datas[0])} → ${ditDataBr(latest)}`;
 
   ditSetKpi('dit-kpi-total',ditFmtInt(totalAtual),'dit-kpi-total-foot',ditDeltaHtml(totalAtual,totalPrev));
@@ -13474,7 +13512,7 @@ function ditRender() {
   document.getElementById('dit-insight-1').textContent = topSvc && svcAtual ? `${topSvc.categoria} concentra ${ditFmtPct(topSvc.valor/svcAtual,1)} do DIT SVC (${ditFmtInt(topSvc.valor)} volumes).` : 'Sem leitura de concentração disponível.';
   document.getElementById('dit-insight-2').textContent = topOrigem ? `${topOrigem.categoria} lidera as origens ofensoras com ${ditFmtInt(topOrigem.valor)} ocorrências${origensTotal?` (${ditFmtPct(topOrigem.valor/origensTotal,1)})`:''}.` : 'Sem origem ofensora registrada.';
   const mov = totalPrev ? ((totalAtual-totalPrev)/Math.abs(totalPrev)) : 0;
-  const insight3=document.getElementById('dit-insight-3'); if(insight3) insight3.textContent = totalPrev ? `DIT total ${mov>0?'subiu':mov<0?'caiu':'ficou estável'} ${Math.abs(mov*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}% contra ${ditDataBr(prevDate)}.` : 'Primeiro snapshot disponível no histórico carregado.';
+  const insight3=document.getElementById('dit-insight-3'); if(insight3) insight3.textContent = totalPrev ? `DIT total ${mov>0?'subiu':mov<0?'caiu':'ficou estável'} ${Math.abs(mov*100).toLocaleString('pt-BR',{maximumFractionDigits:1})}% contra o período anterior (${ditDataBr(prevStart)} → ${ditDataBr(prevEnd)}).` : 'Primeiro snapshot disponível no histórico carregado.';
 
   const l2Total=ditSoma(rowsAtual,'LT_DELAY_CAUSE_L2');
   const fmRow=ditL2Row(rowsAtual,'First Mile'), lhRow=ditL2Row(rowsAtual,'Line Haul'), svcL2Row=ditL2Row(rowsAtual,'SVC'), lmL2Row=ditL2Row(rowsAtual,'Last Mile');
@@ -13489,14 +13527,14 @@ function ditRender() {
   const nsTotal=ditSoma(rowsAtual,'Não shippado origem');
   const setTxt=(id,val)=>{const el=document.getElementById(id); if(el)el.textContent=val;};
   setTxt('dit-svc-total',ditFmtInt(svcAtual));
-  setTxt('dit-svc-share',`DIT Total oficial: ${ditFmtInt(totalAtual)} · ${l2Total?ditFmtPct((svcL2Row?.valor||svcAtual)/l2Total,1):'—'} do ecossistema L2`);
+  setTxt('dit-svc-share',`${l2Total?ditFmtPct((svcL2Row?.valor||svcAtual)/l2Total,1):'—'} do DIT Total · ${ditFmtInt(svcAtual)} de ${ditFmtInt(totalAtual)}`);
   setTxt('dit-svc-top-name',topSvc?.categoria||'—');
   setTxt('dit-svc-top-meta',topSvc&&svcAtual?`${ditFmtInt(topSvc.valor)} · ${ditFmtPct(topSvc.valor/svcAtual,1)} do SVC`:'—');
   setTxt('dit-svc-falha-total',ditFmtInt(falhaTotal));
-  const quick=document.getElementById('dit-svc-quickread'); if(quick)quick.innerHTML=topSvc&&svcAtual?`<div style="max-width:620px"><strong style="display:block;color:#003B7A;font-size:20px;margin-bottom:10px;line-height:1.1">${escapeHtml(topSvc.categoria)}</strong><span style="font-size:13px;line-height:1.6;color:#7f8aa0">${ditFmtInt(topSvc.valor)} volumes representam <strong style="color:#003B7A">${ditFmtPct(topSvc.valor/svcAtual,1)}</strong> do DIT SVC. ${topOrigemObj?`A origem mais ofensora no snapshot é <strong style=\"color:#003B7A\">${escapeHtml(topOrigemObj.categoria)}</strong> com ${ditFmtInt(topOrigemObj.valor)} ocorrências.`:''}</span></div>`:'Sem leitura SVC disponível.';
+  const quick=document.getElementById('dit-svc-quickread'); if(quick)quick.innerHTML=topSvc&&svcAtual?`<div style="max-width:620px"><strong style="display:block;color:#003B7A;font-size:20px;margin-bottom:10px;line-height:1.1">${escapeHtml(topSvc.categoria)}</strong><span style="font-size:13px;line-height:1.6;color:#7f8aa0">${ditFmtInt(topSvc.valor)} volumes representam <strong style="color:#003B7A">${ditFmtPct(topSvc.valor/svcAtual,1)}</strong> do DIT SVC. ${topOrigemObj?`A origem mais ofensora no período é <strong style=\"color:#003B7A\">${escapeHtml(topOrigemObj.categoria)}</strong> com ${ditFmtInt(topOrigemObj.valor)} ocorrências.`:''}</span></div>`:'Sem leitura SVC disponível.';
 
   setTxt('dit-lm-l2-total',ditFmtInt(Number(lmL2Row?.valor||0)));
-  setTxt('dit-lm-l2-share',`DIT Total oficial: ${ditFmtInt(totalAtual)} · ${l2Total?ditFmtPct(Number(lmL2Row?.valor||0)/l2Total,1):'—'} do ecossistema L2`);
+  setTxt('dit-lm-l2-share',`${l2Total?ditFmtPct(Number(lmL2Row?.valor||0)/l2Total,1):'—'} do DIT Total · ${ditFmtInt(Number(lmL2Row?.valor||0))} de ${ditFmtInt(totalAtual)}`);
   setTxt('dit-lm-detail-total',ditFmtInt(lmAtual));
   setTxt('dit-lm-top-name',lmTop?.categoria||'—');
   setTxt('dit-lm-top-meta',lmTop&&lmAtual?`${ditFmtInt(lmTop.valor)} · ${ditFmtPct(lmTop.valor/lmAtual,1)} do DIT LM detalhado`:'—');
@@ -13567,8 +13605,8 @@ function ditRenderCharts(rows, rowsAtual, datas) {
   const falha=ditTop(rowsAtual,'Falha Operacional SVC',6); const falhaTotal=falha.reduce((s,x)=>s+x.valor,0); ditDestroyChart('falha');
   ditCharts.falha = new Chart(document.getElementById('dit-chart-falha'),{type:'bar',data:{labels:falha.map(x=>x.categoria),datasets:[{data:falha.map(x=>x.valor),backgroundColor:falha.map((_,i)=>i===0?'rgba(0,59,122,.90)':'rgba(91,143,195,.68)'),borderRadius:5,showDataLabels:true,dataLabelFormatter:(v)=>ditLabelValorPct(v,falhaTotal),dataLabelFont:'800 12px Inter, sans-serif',dataLabelColor:'#20314d'}]},options:ditBaseChartOptions({layout:{padding:{top:18,right:10,bottom:2,left:4}},plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:22,minRotation:22,font:{size:9,weight:'700'},color:'#5f6368'}},y:{beginAtZero:true,ticks:{precision:0,font:{size:10,weight:'700'},color:'#475467'}}}})});
 
-  // Promessas: compacto e sem rótulo em cada barra para evitar ruído.
-  const promTodos=ditRowsIndicador(rowsAtual,'Promessas Last Mile').slice().sort((a,b)=>ditParseData(a.categoria)?.localeCompare(ditParseData(b.categoria)) || 0); const prom=promTodos.slice(-16); ditDestroyChart('prom');
+  // Promessas: agregado pelo período selecionado e agrupado pela data de promessa.
+  const promTodos=ditAgruparIndicador(rowsAtual,'Promessas Last Mile').slice().sort((a,b)=>(ditParseData(a.categoria)||'').localeCompare(ditParseData(b.categoria)||'')); const prom=promTodos.slice(-16); ditDestroyChart('prom');
   ditCharts.prom = new Chart(document.getElementById('dit-chart-promessas'),{type:'bar',data:{labels:prom.map(x=>{const d=ditParseData(x.categoria);return d?ditDataBr(d).slice(0,5):x.categoria}),datasets:[{label:'SVC-ID',data:prom.map(x=>x.valor),backgroundColor:'rgba(0,59,122,.86)',borderRadius:3,showDataLabels:true,dataLabelFormatter:(v)=>v?ditFmtInt(v):'',dataLabelFont:'800 10px Inter, sans-serif',dataLabelColor:'#003B7A'},{label:'LM-ID',data:prom.map(x=>Number(x.auxiliar||0)),backgroundColor:'rgba(240,198,74,.84)',borderRadius:3,showDataLabels:true,dataLabelFormatter:(v)=>v?ditFmtInt(v):'',dataLabelFont:'800 10px Inter, sans-serif',dataLabelColor:'#6b5600'}]},options:ditBaseChartOptions({layout:{padding:{top:20,right:12,bottom:2,left:4}},plugins:{...ditBaseChartOptions().plugins,legend:{position:'bottom',labels:{boxWidth:10,usePointStyle:true,pointStyle:'circle',padding:12,color:'#475467',font:{size:10,weight:'700'}}}},scales:{x:{stacked:false,grid:{display:false},ticks:{autoSkip:true,maxTicksLimit:10,maxRotation:0,font:{size:9,weight:'700'},color:'#475467'}},y:{beginAtZero:true,ticks:{font:{size:10,weight:'700'},color:'#475467'}}}})});
 }
 
