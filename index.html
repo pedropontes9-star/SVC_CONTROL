@@ -881,6 +881,33 @@
   #dit-view-svc .dit-empty-detail strong { font-size: 16px !important; }
   #dit-view-svc .dit-empty-detail span { font-size: 12px !important; }
 
+  /* DIT v14 — legibilidade reforçada */
+  .dit-card-kicker { font-size: 8px; color:#667085; }
+  .dit-card-title { font-size: 12px; color:#14213d; }
+  .dit-card-note { font-size: 10px; color:#667085; font-weight:700; }
+  .dit-rank-name { font-size:10px; color:#25324a; }
+  .dit-rank-value { font-size:10px; color:#14213d; font-weight:900; }
+  .dit-mini-kpi-label { color:#667085; }
+  .dit-mini-kpi-sub { color:#667085; font-size:9px; }
+  .dit-chart-wrap.xs { height:146px; }
+  .dit-chart-wrap.md { height:205px; }
+  .dit-chart-wrap.prom { height:232px; }
+  .dit-chart-wrap.donut { height:248px; }
+  #dit-view-overview .dit-chart-wrap.md { height: 215px; }
+  #dit-view-stage .dit-chart-wrap.md { height: 290px; }
+  #dit-view-svc .dit-chart-wrap.md { height: 230px; }
+  #dit-view-svc .dit-chart-wrap.xs { height: 155px; }
+  #dit-view-last-mile .dit-chart-wrap.prom { height: 235px; }
+  #dit-view-last-mile .dit-chart-wrap.md { height: 205px; }
+  .dit-stage-panel { min-height: 196px; }
+  .dit-stage-panel-label { font-size:9px; color:rgba(255,255,255,.72); }
+  .dit-stage-panel-name { font-size:21px; }
+  .dit-stage-panel-share { font-size:12px; }
+  .dit-stage-panel-note { font-size:9px; line-height:1.45; color:rgba(255,255,255,.76); }
+  .dit-empty-detail { font-size:13px; color:#667085; }
+  .dit-empty-detail strong { color:#003B7A; }
+  .dit-rank-card .dit-rank-list { max-height: 198px; }
+
 </style>
 </head>
 <body>
@@ -1168,7 +1195,7 @@
             <div class="dit-chart-wrap md"><canvas id="dit-chart-trend"></canvas></div>
           </section>
           <section class="dit-card dit-focus-span-5">
-            <div class="dit-card-head"><div><div class="dit-card-kicker">Ecossistema</div><div class="dit-card-title">Composição do DIT total</div></div><div class="dit-card-note">volume · participação</div></div>
+            <div class="dit-card-head"><div><div class="dit-card-kicker">Ecossistema</div><div class="dit-card-title">Composição do ecossistema DIT</div></div><div class="dit-card-note">volume · participação L2</div></div>
             <div class="dit-chart-wrap donut"><canvas id="dit-chart-total"></canvas></div>
           </section>
         </div>
@@ -13011,6 +13038,10 @@ function ditValorCategoria(rows, indicador, trechoCategoria) {
   return achado ? Number(achado.valor || 0) : 0;
 }
 
+function ditTotalOficial(rows) {
+  return ditValorCategoria(rows, 'Total Geral DIT', 'dit total');
+}
+
 function ditTop(rows, indicador, limite = 10) {
   return ditRowsIndicador(rows, indicador)
     .map(r => ({ ...r, valor:Number(r.valor || 0) }))
@@ -13251,15 +13282,15 @@ function ditBaseChartOptions(extra = {}) {
     responsive:true,
     maintainAspectRatio:false,
     animation:{ duration:320 },
-    layout:{ padding:{ top: 6, right: 18, bottom: 2, left: 2 } },
+    layout:{ padding:{ top: 10, right: 18, bottom: 4, left: 4 } },
     plugins:{
-      legend:{ labels:{ boxWidth:8, usePointStyle:true, pointStyle:'circle', font:{ size:9, family:'Inter' }, color:'#5f6b7b' } },
+      legend:{ labels:{ boxWidth:10, usePointStyle:true, pointStyle:'circle', padding:12, font:{ size:10, family:'Inter', weight:'700' }, color:'#475467' } },
       tooltip:{ padding:10, titleFont:{family:'Inter',size:11}, bodyFont:{family:'Inter',size:11} },
-      ditDataLabels:{ color:'#344054', font:'700 10px Inter, sans-serif' }
+      ditDataLabels:{ color:'#344054', font:'800 11px Inter, sans-serif' }
     },
     scales:{
-      x:{ grid:{ color:'rgba(148,163,184,.10)' }, ticks:{ color:'#7b8190', font:{size:9,family:'Inter'} } },
-      y:{ grid:{ color:'rgba(148,163,184,.10)' }, ticks:{ color:'#7b8190', font:{size:9,family:'Inter'} } }
+      x:{ grid:{ color:'rgba(148,163,184,.10)' }, ticks:{ color:'#475467', font:{size:10,family:'Inter',weight:'700'} } },
+      y:{ grid:{ color:'rgba(148,163,184,.10)' }, ticks:{ color:'#475467', font:{size:10,family:'Inter',weight:'700'} } }
     },
     ...extra
   };
@@ -13288,7 +13319,7 @@ function ditRenderRank(containerId, itens, total) {
     <div class="dit-rank-pos">${i+1}</div>
     <div class="dit-rank-name" title="${escapeHtml(x.categoria)}">${escapeHtml(x.categoria)}</div>
     <div class="dit-rank-track"><div class="dit-rank-fill" style="width:${Math.max(3,(x.valor/max)*100)}%"></div></div>
-    <div class="dit-rank-value">${ditFmtInt(x.valor)} <span style="color:#a0a7b5;font-weight:600">${total ? ditFmtPct(x.valor/total,0):''}</span></div>
+    <div class="dit-rank-value">${ditFmtInt(x.valor)} <span style="color:#667085;font-weight:800">${total ? '· ' + ditFmtPct(x.valor/total,0) : ''}</span></div>
   </div>`).join('');
 }
 
@@ -13382,9 +13413,9 @@ function ditRenderStageFocus(stageKey) {
   const canvas=document.getElementById('dit-chart-stage'); if(!canvas)return;
   const serie=datas.map(data=>{ const rr=rows.filter(r=>r.data===data); return {data,valor:Number(ditL2Row(rr,cfg.categoria)?.valor||0)}; });
   if(serie.length<=1){
-    ditCharts.stage=new Chart(canvas,{type:'bar',data:{labels:[cfg.label],datasets:[{data:[valor],backgroundColor:'#0F5EA8',borderRadius:8,showDataLabels:true,categoryPercentage:.62,barPercentage:.78,maxBarThickness:180}]},options:ditBaseChartOptions({layout:{padding:{top:16,right:16,bottom:8,left:8}},plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:12,weight:'700'}}},y:{beginAtZero:true,ticks:{font:{size:10}}}}})});
+    ditCharts.stage=new Chart(canvas,{type:'bar',data:{labels:[cfg.label],datasets:[{data:[valor],backgroundColor:'#0F5EA8',borderRadius:8,showDataLabels:true,dataLabelFormatter:(v)=>ditFmtInt(v),dataLabelFont:'800 13px Inter, sans-serif',categoryPercentage:.62,barPercentage:.78,maxBarThickness:180}]},options:ditBaseChartOptions({layout:{padding:{top:22,right:16,bottom:8,left:8}},plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:13,weight:'800'},color:'#334155'}},y:{beginAtZero:true,ticks:{font:{size:11,weight:'700'},color:'#475467'}}}})});
   } else {
-    ditCharts.stage=new Chart(canvas,{type:'line',data:{labels:serie.map(x=>ditDataBr(x.data).slice(0,5)),datasets:[{label:cfg.label,data:serie.map(x=>x.valor),borderColor:'#003B7A',backgroundColor:'rgba(15,94,168,.08)',fill:true,tension:.3,borderWidth:2,pointRadius:2,showDataLabels:false}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{display:false},ditDataLabels:false},scales:{x:{grid:{display:false}},y:{beginAtZero:true}}})});
+    ditCharts.stage=new Chart(canvas,{type:'line',data:{labels:serie.map(x=>ditDataBr(x.data).slice(0,5)),datasets:[{label:cfg.label,data:serie.map(x=>x.valor),borderColor:'#003B7A',backgroundColor:'rgba(15,94,168,.10)',fill:true,tension:.3,borderWidth:2.2,pointRadius:2.4,showDataLabels:true,dataLabelFormatter:(v)=>ditFmtInt(v),dataLabelFont:'800 12px Inter, sans-serif',dataLabelColor:'#003B7A'}]},options:ditBaseChartOptions({layout:{padding:{top:18,right:16,bottom:4,left:4}},plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10,weight:'700'},color:'#475467'}},y:{beginAtZero:true,ticks:{font:{size:10,weight:'700'},color:'#475467'}}}})});
   }
 }
 
@@ -13404,10 +13435,10 @@ function ditRender() {
   const prevDate = idxGlobal>0 ? todasDatas[idxGlobal-1] : null;
   const rowsPrev = prevDate ? ditDados.filter(r=>r.data===prevDate) : [];
 
-  const totalAtual = ditSoma(rowsAtual,'LT_DELAY_CAUSE_L2') || (ditSoma(rowsAtual,'DIT SVC 5') + ditSoma(rowsAtual,'DIT LM'));
+  const totalAtual = ditTotalOficial(rowsAtual);
   const svcAtual = ditSoma(rowsAtual,'DIT SVC 5');
   const lmAtual = ditSoma(rowsAtual,'DIT LM');
-  const totalPrev = ditSoma(rowsPrev,'LT_DELAY_CAUSE_L2') || (ditSoma(rowsPrev,'DIT SVC 5') + ditSoma(rowsPrev,'DIT LM'));
+  const totalPrev = ditTotalOficial(rowsPrev);
   const svcPrev = ditSoma(rowsPrev,'DIT SVC 5');
   const lmPrev = ditSoma(rowsPrev,'DIT LM');
   const dm1 = ditValorCategoria(rowsAtual,'Total Geral DIT','dit -1');
@@ -13486,48 +13517,48 @@ function ditRenderCharts(rows, rowsAtual, datas) {
   const trendCtx = document.getElementById('dit-chart-trend');
   const series = datas.map(data => {
     const rr=rows.filter(r=>r.data===data);
-    return { data, total:ditSoma(rr,'LT_DELAY_CAUSE_L2') || (ditSoma(rr,'DIT SVC 5')+ditSoma(rr,'DIT LM')), svc:ditSoma(rr,'DIT SVC 5'), lm:ditSoma(rr,'DIT LM') };
+    return { data, total:ditTotalOficial(rr), svc:ditSoma(rr,'DIT SVC 5'), lm:ditSoma(rr,'DIT LM') };
   });
   if (series.length <= 1) {
     const s=series[0] || {total:0,svc:0,lm:0};
     ditCharts.trend = new Chart(trendCtx,{type:'bar',data:{labels:['DIT Total','DIT SVC','DIT LM'],datasets:[{data:[s.total,s.svc,s.lm],backgroundColor:[navy,blue,yellow],borderRadius:7,showDataLabels:true,dataLabelFormatter:(v)=>ditFmtInt(v)}]},options:ditBaseChartOptions({plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:8,weight:'700'}}},y:{beginAtZero:true,grid:{color:'rgba(148,163,184,.10)'},ticks:{font:{size:8}}}}})});
   } else {
     ditCharts.trend = new Chart(trendCtx,{ type:'line', data:{ labels:series.map(x=>ditDataBr(x.data).slice(0,5)), datasets:[
-      {label:'DIT Total',data:series.map(x=>x.total),borderColor:navy,backgroundColor:'rgba(0,59,122,.06)',fill:true,tension:.32,borderWidth:2,pointRadius:2,showDataLabels:false},
-      {label:'DIT SVC',data:series.map(x=>x.svc),borderColor:blue,backgroundColor:'transparent',tension:.32,borderWidth:1.7,pointRadius:1.8,showDataLabels:false},
-      {label:'DIT LM',data:series.map(x=>x.lm),borderColor:yellow,backgroundColor:'transparent',tension:.32,borderWidth:1.7,pointRadius:1.8,showDataLabels:false}
-    ]}, options:ditBaseChartOptions({ plugins:{...ditBaseChartOptions().plugins,legend:{position:'bottom',labels:{boxWidth:7,usePointStyle:true,pointStyle:'circle',font:{size:8,family:'Inter'}}},ditDataLabels:false}, scales:{x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:12,font:{size:8}}},y:{beginAtZero:true,grid:{color:'rgba(148,163,184,.10)'},ticks:{font:{size:8}}}} }) });
+      {label:'DIT Total',data:series.map(x=>x.total),borderColor:navy,backgroundColor:'rgba(0,59,122,.06)',fill:true,tension:.32,borderWidth:2.2,pointRadius:2.2,showDataLabels:true,dataLabelFormatter:(v)=>ditFmtInt(v),dataLabelFont:'800 12px Inter, sans-serif',dataLabelColor:navy},
+      {label:'DIT SVC',data:series.map(x=>x.svc),borderColor:blue,backgroundColor:'transparent',tension:.32,borderWidth:1.9,pointRadius:2,showDataLabels:true,dataLabelFormatter:(v)=>ditFmtInt(v),dataLabelFont:'800 11px Inter, sans-serif',dataLabelColor:blue},
+      {label:'DIT LM',data:series.map(x=>x.lm),borderColor:yellow,backgroundColor:'transparent',tension:.32,borderWidth:1.9,pointRadius:2,showDataLabels:true,dataLabelFormatter:(v)=>ditFmtInt(v),dataLabelFont:'800 11px Inter, sans-serif',dataLabelColor:'#8d6b00'}
+    ]}, options:ditBaseChartOptions({ layout:{padding:{top:22,right:18,bottom:4,left:4}}, plugins:{...ditBaseChartOptions().plugins,legend:{position:'bottom',labels:{boxWidth:9,usePointStyle:true,pointStyle:'circle',font:{size:10,family:'Inter',weight:'700'},color:'#475467'}}}, scales:{x:{grid:{display:false},ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:12,font:{size:9,weight:'700'},color:'#475467'}},y:{beginAtZero:true,grid:{color:'rgba(148,163,184,.10)'},ticks:{font:{size:10,weight:'700'},color:'#475467'}}}} ) });
   }
 
   // SVC: quantidade + % do SVC
   const svc = ditTop(rowsAtual,'DIT SVC 5',8); const svcTotal=svc.reduce((s,x)=>s+x.valor,0); ditDestroyChart('svc');
-  ditCharts.svc = new Chart(document.getElementById('dit-chart-svc'),{type:'bar',data:{labels:svc.map(x=>x.categoria),datasets:[{data:svc.map(x=>x.valor),backgroundColor:svc.map((_,i)=>i===0?'rgba(0,59,122,.94)':`rgba(15,94,168,${Math.max(.28,.76-i*.07)})`),borderRadius:5,showDataLabels:true,dataLabelFormatter:(v)=>ditLabelValorPct(v,svcTotal),dataLabelFont:'800 11px Inter, sans-serif'}]},options:ditBaseChartOptions({indexAxis:'y',layout:{padding:{right:62}},plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{beginAtZero:true,grid:{color:'rgba(148,163,184,.08)'},ticks:{font:{size:8}}},y:{grid:{display:false},ticks:{font:{size:9,weight:'700'},color:'#475467'}}}})});
+  ditCharts.svc = new Chart(document.getElementById('dit-chart-svc'),{type:'bar',data:{labels:svc.map(x=>x.categoria),datasets:[{data:svc.map(x=>x.valor),backgroundColor:svc.map((_,i)=>i===0?'rgba(0,59,122,.94)':`rgba(15,94,168,${Math.max(.28,.76-i*.07)})`),borderRadius:5,showDataLabels:true,dataLabelFormatter:(v)=>ditLabelValorPct(v,svcTotal),dataLabelFont:'800 12px Inter, sans-serif',dataLabelColor:'#20314d'}]},options:ditBaseChartOptions({indexAxis:'y',layout:{padding:{right:72,top:10}},plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{beginAtZero:true,grid:{color:'rgba(148,163,184,.08)'},ticks:{font:{size:10,weight:'700'},color:'#475467'}},y:{grid:{display:false},ticks:{font:{size:10,weight:'800'},color:'#334155'}}}})});
 
   // Total donut: legenda já traz quantidade + %
   const total = ditTop(rowsAtual,'LT_DELAY_CAUSE_L2',20); ditDestroyChart('total');
   const top5=total.slice(0,5), outros=total.slice(5).reduce((s,r)=>s+r.valor,0); if(outros>0) top5.push({categoria:'Outros',valor:outros});
   const totalSum=top5.reduce((s,x)=>s+x.valor,0);
-  ditCharts.total = new Chart(document.getElementById('dit-chart-total'),{type:'doughnut',data:{labels:top5.map(x=>x.categoria),datasets:[{data:top5.map(x=>x.valor),backgroundColor:[navy,blue,yellow,blue2,blue3,gray],borderColor:'#fff',borderWidth:2,hoverOffset:3,showDataLabels:true,dataLabelFormatter:(v)=>ditFmtPct(v/totalSum,1),dataLabelColor:'#ffffff',dataLabelFont:'800 11px Inter, sans-serif'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'63%',layout:{padding:{top:4,right:12,bottom:4,left:8}},plugins:{legend:{position:'right',labels:{boxWidth:9,usePointStyle:true,pointStyle:'circle',padding:10,font:{size:10,family:'Inter',weight:'700'},generateLabels(chart){const ds=chart.data.datasets[0];return chart.data.labels.map((label,i)=>({text:`${label} ${ditFmtInt(ds.data[i])} · ${ditFmtPct(ds.data[i]/totalSum,1)}`,fillStyle:ds.backgroundColor[i],strokeStyle:ds.backgroundColor[i],lineWidth:0,index:i}));}}},tooltip:{callbacks:{label:(ctx)=>`${ctx.label}: ${ditFmtInt(ctx.raw)} (${ditFmtPct(ctx.raw/totalSum,1)})`}},ditDataLabels:{color:'#fff',font:'800 11px Inter, sans-serif'}}}});
+  ditCharts.total = new Chart(document.getElementById('dit-chart-total'),{type:'doughnut',data:{labels:top5.map(x=>x.categoria),datasets:[{data:top5.map(x=>x.valor),backgroundColor:[navy,blue,yellow,blue2,blue3,gray],borderColor:'#fff',borderWidth:2,hoverOffset:3,showDataLabels:true,dataLabelFormatter:(v)=>ditFmtPct(v/totalSum,1),dataLabelColor:'#ffffff',dataLabelFont:'800 11px Inter, sans-serif'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'63%',layout:{padding:{top:4,right:12,bottom:4,left:8}},plugins:{legend:{position:'right',labels:{boxWidth:10,usePointStyle:true,pointStyle:'circle',padding:12,color:'#334155',font:{size:11,family:'Inter',weight:'800'},generateLabels(chart){const ds=chart.data.datasets[0];return chart.data.labels.map((label,i)=>({text:`${label} ${ditFmtInt(ds.data[i])} · ${ditFmtPct(ds.data[i]/totalSum,1)}`,fillStyle:ds.backgroundColor[i],strokeStyle:ds.backgroundColor[i],lineWidth:0,index:i,fontColor:'#334155'}));}}},tooltip:{callbacks:{label:(ctx)=>`${ctx.label}: ${ditFmtInt(ctx.raw)} (${ditFmtPct(ctx.raw/totalSum,1)})`}},ditDataLabels:{color:'#fff',font:'800 12px Inter, sans-serif'}}}});
 
   // LM: quantidade + %
   const lm = ditTop(rowsAtual,'DIT LM',8); const lmTotal=lm.reduce((s,x)=>s+x.valor,0); ditDestroyChart('lm');
-  ditCharts.lm = new Chart(document.getElementById('dit-chart-lm'),{type:'bar',data:{labels:lm.map(x=>x.categoria),datasets:[{data:lm.map(x=>x.valor),backgroundColor:'rgba(240,198,74,.88)',borderRadius:5,showDataLabels:true,dataLabelFormatter:(v)=>ditLabelValorPct(v,lmTotal),dataLabelColor:'#5b4b00'}]},options:ditBaseChartOptions({layout:{padding:{top:12}},plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:28,minRotation:28,font:{size:7}}},y:{beginAtZero:true,grid:{color:'rgba(148,163,184,.08)'},ticks:{font:{size:7}}}}})});
+  ditCharts.lm = new Chart(document.getElementById('dit-chart-lm'),{type:'bar',data:{labels:lm.map(x=>x.categoria),datasets:[{data:lm.map(x=>x.valor),backgroundColor:'rgba(240,198,74,.88)',borderRadius:5,showDataLabels:true,dataLabelFormatter:(v)=>ditLabelValorPct(v,lmTotal),dataLabelColor:'#5b4b00',dataLabelFont:'800 12px Inter, sans-serif'}]},options:ditBaseChartOptions({layout:{padding:{top:18,right:10,bottom:2,left:4}},plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:24,minRotation:24,font:{size:9,weight:'700'},color:'#5f6368'}},y:{beginAtZero:true,grid:{color:'rgba(148,163,184,.08)'},ticks:{font:{size:10,weight:'700'},color:'#475467'}}}})});
 
   // Origens: quantidade + %
   const orig=ditTop(rowsAtual,'Origem Ofensora',10); const origTotal=orig.reduce((s,x)=>s+x.valor,0); ditDestroyChart('origem');
-  ditCharts.origem = new Chart(document.getElementById('dit-chart-origem'),{type:'bar',data:{labels:orig.map(x=>x.categoria),datasets:[{data:orig.map(x=>x.valor),backgroundColor:'rgba(15,94,168,.84)',borderRadius:5,showDataLabels:true,dataLabelFormatter:(v)=>ditLabelValorPct(v,origTotal)}]},options:ditBaseChartOptions({indexAxis:'y',layout:{padding:{right:44}},plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{font:{size:7}},grid:{color:'rgba(148,163,184,.08)'}},y:{grid:{display:false},ticks:{font:{size:7,weight:'700'}}}}})});
+  ditCharts.origem = new Chart(document.getElementById('dit-chart-origem'),{type:'bar',data:{labels:orig.map(x=>x.categoria),datasets:[{data:orig.map(x=>x.valor),backgroundColor:'rgba(15,94,168,.84)',borderRadius:5,showDataLabels:true,dataLabelFormatter:(v)=>ditLabelValorPct(v,origTotal),dataLabelFont:'800 11px Inter, sans-serif',dataLabelColor:'#20314d'}]},options:ditBaseChartOptions({indexAxis:'y',layout:{padding:{right:56,top:8}},plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{font:{size:10,weight:'700'},color:'#475467'},grid:{color:'rgba(148,163,184,.08)'}},y:{grid:{display:false},ticks:{font:{size:9,weight:'800'},color:'#334155'}}}})});
 
   // Não shippado: quantidade + %
   const ns=ditTop(rowsAtual,'Não shippado origem',8); const nsTotal=ns.reduce((s,x)=>s+x.valor,0); ditDestroyChart('ns');
-  ditCharts.ns = new Chart(document.getElementById('dit-chart-nao-shippado'),{type:'bar',data:{labels:ns.map(x=>x.categoria),datasets:[{data:ns.map(x=>x.valor),backgroundColor:'rgba(91,143,195,.82)',borderRadius:5,showDataLabels:true,dataLabelFormatter:(v)=>ditLabelValorPct(v,nsTotal)}]},options:ditBaseChartOptions({layout:{padding:{top:12}},plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:28,minRotation:28,font:{size:7}}},y:{beginAtZero:true,ticks:{precision:0,font:{size:7}}}}})});
+  ditCharts.ns = new Chart(document.getElementById('dit-chart-nao-shippado'),{type:'bar',data:{labels:ns.map(x=>x.categoria),datasets:[{data:ns.map(x=>x.valor),backgroundColor:'rgba(91,143,195,.82)',borderRadius:5,showDataLabels:true,dataLabelFormatter:(v)=>ditLabelValorPct(v,nsTotal),dataLabelFont:'800 11px Inter, sans-serif',dataLabelColor:'#20314d'}]},options:ditBaseChartOptions({layout:{padding:{top:18,right:10,bottom:2,left:4}},plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:24,minRotation:24,font:{size:9,weight:'700'},color:'#475467'}},y:{beginAtZero:true,ticks:{precision:0,font:{size:10,weight:'700'},color:'#475467'}}}})});
 
   // Falha operacional: quantidade + %
   const falha=ditTop(rowsAtual,'Falha Operacional SVC',6); const falhaTotal=falha.reduce((s,x)=>s+x.valor,0); ditDestroyChart('falha');
-  ditCharts.falha = new Chart(document.getElementById('dit-chart-falha'),{type:'bar',data:{labels:falha.map(x=>x.categoria),datasets:[{data:falha.map(x=>x.valor),backgroundColor:falha.map((_,i)=>i===0?'rgba(0,59,122,.90)':'rgba(91,143,195,.68)'),borderRadius:5,showDataLabels:true,dataLabelFormatter:(v)=>ditLabelValorPct(v,falhaTotal)}]},options:ditBaseChartOptions({layout:{padding:{top:12}},plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:24,minRotation:24,font:{size:7}}},y:{beginAtZero:true,ticks:{precision:0,font:{size:7}}}}})});
+  ditCharts.falha = new Chart(document.getElementById('dit-chart-falha'),{type:'bar',data:{labels:falha.map(x=>x.categoria),datasets:[{data:falha.map(x=>x.valor),backgroundColor:falha.map((_,i)=>i===0?'rgba(0,59,122,.90)':'rgba(91,143,195,.68)'),borderRadius:5,showDataLabels:true,dataLabelFormatter:(v)=>ditLabelValorPct(v,falhaTotal),dataLabelFont:'800 12px Inter, sans-serif',dataLabelColor:'#20314d'}]},options:ditBaseChartOptions({layout:{padding:{top:18,right:10,bottom:2,left:4}},plugins:{...ditBaseChartOptions().plugins,legend:{display:false}},scales:{x:{grid:{display:false},ticks:{maxRotation:22,minRotation:22,font:{size:9,weight:'700'},color:'#5f6368'}},y:{beginAtZero:true,ticks:{precision:0,font:{size:10,weight:'700'},color:'#475467'}}}})});
 
   // Promessas: compacto e sem rótulo em cada barra para evitar ruído.
   const promTodos=ditRowsIndicador(rowsAtual,'Promessas Last Mile').slice().sort((a,b)=>ditParseData(a.categoria)?.localeCompare(ditParseData(b.categoria)) || 0); const prom=promTodos.slice(-16); ditDestroyChart('prom');
-  ditCharts.prom = new Chart(document.getElementById('dit-chart-promessas'),{type:'bar',data:{labels:prom.map(x=>{const d=ditParseData(x.categoria);return d?ditDataBr(d).slice(0,5):x.categoria}),datasets:[{label:'SVC-ID',data:prom.map(x=>x.valor),backgroundColor:'rgba(0,59,122,.86)',borderRadius:3,showDataLabels:true,dataLabelFormatter:(v)=>v?ditFmtInt(v):'',dataLabelFont:'700 8px Inter, sans-serif'},{label:'LM-ID',data:prom.map(x=>Number(x.auxiliar||0)),backgroundColor:'rgba(240,198,74,.84)',borderRadius:3,showDataLabels:true,dataLabelFormatter:(v)=>v?ditFmtInt(v):'',dataLabelFont:'700 8px Inter, sans-serif',dataLabelColor:'#6b5600'}]},options:ditBaseChartOptions({layout:{padding:{top:16,right:10,bottom:0,left:2}},plugins:{...ditBaseChartOptions().plugins,legend:{position:'bottom',labels:{boxWidth:8,usePointStyle:true,pointStyle:'circle',font:{size:8}}}},scales:{x:{stacked:false,grid:{display:false},ticks:{autoSkip:true,maxTicksLimit:10,maxRotation:0,font:{size:8}}},y:{beginAtZero:true,ticks:{font:{size:8}}}}})});
+  ditCharts.prom = new Chart(document.getElementById('dit-chart-promessas'),{type:'bar',data:{labels:prom.map(x=>{const d=ditParseData(x.categoria);return d?ditDataBr(d).slice(0,5):x.categoria}),datasets:[{label:'SVC-ID',data:prom.map(x=>x.valor),backgroundColor:'rgba(0,59,122,.86)',borderRadius:3,showDataLabels:true,dataLabelFormatter:(v)=>v?ditFmtInt(v):'',dataLabelFont:'800 10px Inter, sans-serif',dataLabelColor:'#003B7A'},{label:'LM-ID',data:prom.map(x=>Number(x.auxiliar||0)),backgroundColor:'rgba(240,198,74,.84)',borderRadius:3,showDataLabels:true,dataLabelFormatter:(v)=>v?ditFmtInt(v):'',dataLabelFont:'800 10px Inter, sans-serif',dataLabelColor:'#6b5600'}]},options:ditBaseChartOptions({layout:{padding:{top:20,right:12,bottom:2,left:4}},plugins:{...ditBaseChartOptions().plugins,legend:{position:'bottom',labels:{boxWidth:10,usePointStyle:true,pointStyle:'circle',padding:12,color:'#475467',font:{size:10,weight:'700'}}}},scales:{x:{stacked:false,grid:{display:false},ticks:{autoSkip:true,maxTicksLimit:10,maxRotation:0,font:{size:9,weight:'700'},color:'#475467'}},y:{beginAtZero:true,ticks:{font:{size:10,weight:'700'},color:'#475467'}}}})});
 }
 
 async function ditRecarregar() {
@@ -13636,7 +13667,7 @@ function ditToggleFullscreen() {
 async function ditCopiarLeitura() {
   const rows=ditRecorte(); if(!rows.length)return;
   const datas=[...new Set(rows.map(r=>r.data))].sort(); const latest=datas[datas.length-1]; const rr=rows.filter(r=>r.data===latest);
-  const total=ditSoma(rr,'LT_DELAY_CAUSE_L2') || (ditSoma(rr,'DIT SVC 5')+ditSoma(rr,'DIT LM')); const svc=ditSoma(rr,'DIT SVC 5'); const lm=ditSoma(rr,'DIT LM');
+  const total=ditTotalOficial(rr); const svc=ditSoma(rr,'DIT SVC 5'); const lm=ditSoma(rr,'DIT LM');
   const causa=ditTop(rr,'DIT SVC 5',1)[0]; const origem=ditTop(rr,'Origem Ofensora',1)[0];
   const texto=[`DIT SRJ2 · ${ditDataBr(latest)}`,`DIT Total: ${ditFmtInt(total)}`,`DIT SVC: ${ditFmtInt(svc)}${causa?` · Principal causa: ${causa.categoria} (${ditFmtInt(causa.valor)})`:''}`,`DIT LM: ${ditFmtInt(lm)}`,origem?`Origem ofensora: ${origem.categoria} (${ditFmtInt(origem.valor)})`:null].filter(Boolean).join('\n');
   try{await navigator.clipboard.writeText(texto);toast('Leitura DIT copiada.','success');}catch(_){toast('Não foi possível copiar automaticamente.','error');}
