@@ -1102,7 +1102,7 @@
           <button class="dit-hero-btn" type="button" onclick="ditCopiarLeitura()">📋 Copiar leitura</button>
           <button class="dit-hero-btn" type="button" onclick="ditExportarPNG()">📸 Exportar PNG</button>
           <button class="dit-hero-btn" type="button" onclick="ditToggleFullscreen()">⛶ Tela cheia</button>
-          <button class="dit-hero-btn primary" id="dit-btn-importar" type="button" onclick="ditAbrirModalImportacao()">＋ Importar base</button>
+          <button class="dit-hero-btn primary" id="dit-btn-atualizar-planilha" type="button" onclick="ditRecarregar()">↻ Atualizar planilha</button>
         </div>
       </div>
       <div class="dit-meta-strip">
@@ -1129,7 +1129,7 @@
       <div class="dit-toolbar-right">
         <span style="font-size:10px;color:#8b93a5">Período selecionado:</span>
         <strong id="dit-period-label" style="font-size:11px;color:#2D3277">—</strong>
-        <button class="dit-refresh-btn" title="Atualizar do Supabase" onclick="ditRecarregar()">↻</button>
+        <button class="dit-refresh-btn" title="Atualizar pela planilha DIT" onclick="ditRecarregar()">↻</button>
       </div>
     </div>
 
@@ -3470,7 +3470,7 @@
       <div class="dit-import-stat"><span>Ignorados</span><strong id="dit-import-skipped">0</strong></div>
     </div>
     <div class="dit-import-preview" id="dit-import-preview"><div style="padding:24px;text-align:center;color:#98a0b0;font-size:11px">A prévia aparecerá aqui.</div></div>
-    <div class="dit-import-note">Ao salvar, somente as datas presentes na nova importação são substituídas. O dashboard tenta persistir na tabela <strong>dit_snapshots</strong> do Supabase e mantém um cache local de segurança.</div>
+    <div class="dit-import-note">Importação manual mantida apenas como ferramenta de contingência. A fonte principal do DIT agora é a aba <strong>DIT</strong> do Google Sheets.</div>
     <div class="modal-actions">
       <button class="btn btn-secondary btn-sm" onclick="ditFecharModalImportacao()">Cancelar</button>
       <button class="btn btn-primary btn-sm" id="dit-import-save" onclick="ditSalvarImportacao()" disabled>Salvar no DIT</button>
@@ -4057,7 +4057,6 @@ function aplicarControleAcesso() {
   setVisibleById('btn-registrar-devolucao', pode('registrar_insucesso'), 'inline-flex');
   setVisibleById('btn-registrar-insucesso-xpt', pode('registrar_insucesso_xpt'), 'inline-flex');
   setVisibleById('btn-registrar-devolucao-xpt', pode('registrar_insucesso_xpt'), 'inline-flex');
-  setVisibleById('dit-btn-importar', pode('editar_dit'), 'inline-flex');
   setVisibleById('card-form-usuario', pode('criar_usuarios'));
   setVisibleById('card-form-diarista', pode('criar_diarista') || pode('editar_diarista'));
   document.querySelectorAll('#yms-tab-entrada .form-card, #yms-tab-saida .form-card').forEach(el => {
@@ -5732,7 +5731,7 @@ function atualizarScorecardMedidas(dados) {
     <div class="stat-card">
       <div class="stat-label">Elegíveis para Medida</div>
       <div class="stat-value">${totalElegiveis}</div>
-      <div class="stat-sub">Total > 2 ofensas</div>
+      <div class="stat-sub">CIA + COA ≥ 2 ofensas</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Com Medida Aplicada</div>
@@ -5776,9 +5775,13 @@ function renderConsolidado() {
   const { inicioIso: inicio, fimIso: fim } = sincronizarFiltroConsolidadoComAnomalias();
   const busca = lower(document.getElementById('cons-busca')?.value || '');
 
-  // Filtra anomalias pelo mesmo período definido no topo da aba Anomalias.
-  // Assim, o Consolidado não calcula elegibilidade usando a base inteira quando o usuário filtra por data.
-  let anomaliasFiltradas = anomalias.filter(a => dataMarcacaoMatchesPeriodo(a.data_marcacao, inicio, fim));
+  // Filtra somente ofensas CIA/COA dentro do período definido no topo da aba Anomalias.
+  // O Consolidado calcula elegibilidade pela soma CIA + COA do colaborador no período.
+  let anomaliasFiltradas = anomalias.filter(a => {
+    const tipo = asText(a.tipo).toUpperCase();
+    return (tipo === 'CIA' || tipo === 'COA') &&
+           dataMarcacaoMatchesPeriodo(a.data_marcacao, inicio, fim);
+  });
 
   // Agrega por colaborador, cruzando pelo EXT normalizado com a base de colaboradores
   const mapa = {};
@@ -5805,12 +5808,12 @@ function renderConsolidado() {
     const tipo = asText(a.tipo).toUpperCase();
     if (tipo === 'CIA') mapa[extAnomalia].cia++;
     if (tipo === 'COA') mapa[extAnomalia].coa++;
-    mapa[extAnomalia].total++;
+    mapa[extAnomalia].total = mapa[extAnomalia].cia + mapa[extAnomalia].coa;
   });
 
-  // Filtra por busca (nome, ext ou gestor) e por mais de 2 ofensas
+  // Filtra por busca (nome, ext ou gestor) e por 2 ou mais ofensas CIA + COA
   let dados = Object.values(mapa).filter(d => {
-    if (d.total <= 2) return false;
+    if (d.total < 2) return false;
     if (!busca) return true;
     return lower(d.nome || '').includes(busca) ||
            lower(d.ext || '').includes(busca) ||
@@ -5849,7 +5852,7 @@ function renderConsolidado() {
 
   // Renderiza tabela
   if (dados.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><p>Nenhum colaborador com mais de 2 ofensas no período</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><p>Nenhum colaborador com 2 ou mais ofensas CIA/COA no período</p></div></td></tr>`;
     if (countEl) countEl.textContent = '0 elegíveis';
     return;
   }
@@ -12907,16 +12910,18 @@ function fecharModalSchedDiaDetalhe() {
 
 // ════════════════════════════════════════
 //  DIT COMMAND CENTER
-//  Lazy load + cache local + Supabase opcional
+//  Lazy load + Google Sheets (Apps Script) + cache local
 // ════════════════════════════════════════
-const DIT_CACHE_KEY = 'srj2_dit_cache_v1';
-const DIT_MAX_REMOTE_DAYS = 180;
+const DIT_CACHE_KEY = 'srj2_dit_cache_v2_sheets';
+const DIT_SHEETS_API_URL = 'https://script.googleusercontent.com/a/macros/mercadolivre.com/echo?user_content_key=AUkAhnTBTt8Qhs3GLsFmoZvtV_ChwTcmY8eC8AJxIIR90VYyhc3q2oOQXFETS01VMKCt8iImwiyHaAF6WeHgyA5x8Pe-eZ4QGk6jcZ7fajQTwqJE-U27NHfGkPJ5xayOW-Y-D9m5a2qU3j4fE1YXb9zTo5TsflE8-80i-BH4saj236y-59i7fNVQJ_HqVsHPzdokPlahGzBIZ2envFeL8aehswA4TV_g9jux1ezruOvxoJcpi4XzrhUGDUtbsOf7_c_BGrIsU9Q_As1ESvru8BTqCrJGlkEeByjO7YB1ytUudMh9Fn-8xTo&lib=MkXNK3nAhjYim-spCH_wTppyzCCZHNADA';
+const DIT_SHEETS_PLANILHA_ID = '1PTaet2p5X85LOR13ND8y3ukWwTksW8oozIpkwiQKK24';
+const DIT_SHEETS_ABA = 'DIT';
 const DIT_DEMO_REGISTROS = [{"data":"2026-09-24","indicador":"DIT LM","categoria":"INSUCESSO","valor":317.0,"auxiliar":449645.0},{"data":"2026-09-24","indicador":"DIT LM","categoria":"POC","valor":156.0,"auxiliar":221277.0},{"data":"2026-09-24","indicador":"DIT LM","categoria":"PLACE","valor":80.0,"auxiliar":113475.0},{"data":"2026-09-24","indicador":"DIT LM","categoria":"Last Mile No Show","valor":72.0,"auxiliar":102128.0},{"data":"2026-09-24","indicador":"DIT LM","categoria":"DESCONTAINERIZADO","valor":61.0,"auxiliar":86525.0},{"data":"2026-09-24","indicador":"DIT LM","categoria":"NEX","valor":15.0,"auxiliar":21277.0},{"data":"2026-09-24","indicador":"DIT LM","categoria":"AVARIA","valor":3.0,"auxiliar":4255.0},{"data":"2026-09-24","indicador":"DIT LM","categoria":"AUDIT_CARRINHO","valor":1.0,"auxiliar":1418.0},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"Last Mile","valor":1643.0,"auxiliar":0.2711221122},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"Seller","valor":1414.0,"auxiliar":0.2333333333},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"Line Haul","valor":977.0,"auxiliar":0.1612211221},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"SVC","valor":522.0,"auxiliar":0.08613861386},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"First Mile","valor":498.0,"auxiliar":0.08217821782},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"FBM","valor":448.0,"auxiliar":0.07392739274},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"XD","valor":309.0,"auxiliar":0.05099009901},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"Place","valor":95.0,"auxiliar":0.01567656766},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"OP Consolidation","valor":70.0,"auxiliar":0.01155115512},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"XPT/LM","valor":57.0,"auxiliar":0.009405940594},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"Handshake FM","valor":22.0,"auxiliar":0.003630363036},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"LH/OP Consolidation","valor":4.0,"auxiliar":0.0006600660066},{"data":"2026-09-24","indicador":"LT_DELAY_CAUSE_L2","categoria":"LH AIR/OP Consolidation","valor":1.0,"auxiliar":0.0001650165017},{"data":"2026-09-24","indicador":"DIT SVC 5","categoria":"Falta de origem","valor":208.0,"auxiliar":0.398467433},{"data":"2026-09-24","indicador":"DIT SVC 5","categoria":"POC CCO","valor":129.0,"auxiliar":0.2471264368},{"data":"2026-09-24","indicador":"DIT SVC 5","categoria":"CHP","valor":79.0,"auxiliar":0.1513409962},{"data":"2026-09-24","indicador":"DIT SVC 5","categoria":"Não roteirizado","valor":27.0,"auxiliar":0.05172413793},{"data":"2026-09-24","indicador":"DIT SVC 5","categoria":"Não shippado na origem","valor":20.0,"auxiliar":0.03831417625},{"data":"2026-09-24","indicador":"DIT SVC 5","categoria":"buffered","valor":15.0,"auxiliar":0.02873563218},{"data":"2026-09-24","indicador":"DIT SVC 5","categoria":"Pacote desconteinerizado","valor":13.0,"auxiliar":0.02490421456},{"data":"2026-09-24","indicador":"DIT SVC 5","categoria":"Falha Operacional","valor":12.0,"auxiliar":0.02298850575},{"data":"2026-09-24","indicador":"DIT SVC 5","categoria":"Em tratativa PS","valor":10.0,"auxiliar":0.01915708812},{"data":"2026-09-24","indicador":"DIT SVC 5","categoria":"Insucesso em tratativa","valor":9.0,"auxiliar":0.01724137931},{"data":"2026-09-24","indicador":"Falha Operacional SVC","categoria":"POSSÍVEL BAIXA","valor":11.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Falha Operacional SVC","categoria":"PROCURAR PACOTE","valor":101.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Falha Operacional SVC","categoria":"SEGUIR COM ENTREGA","valor":16.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Falha Operacional SVC","categoria":"SEGUIR FLUXO DE DEVOLUÇÃO","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"ARENA","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRBA01","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRMG02","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRRJ02","valor":4.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRSC02","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRSP02","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRSP04","valor":2.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRSP09","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRSP11","valor":2.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRSP14","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRXES1","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRXSP10","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"BRXSP14","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"XPASC1","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Não shippado origem","categoria":"XSP4","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"ARENA","valor":9.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRMG02","valor":3.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRMG03","valor":2.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRMG04","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRRJ02","valor":25.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRSC02","valor":6.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRSP02","valor":6.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRSP04","valor":6.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRSP06","valor":4.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRSP10","valor":3.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRSP11","valor":7.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRSP14","valor":7.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRSP15","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRSP18","valor":5.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRSP19","valor":5.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRSP26","valor":2.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXES1","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXGO1","valor":2.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXPR2","valor":2.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXPR4","valor":3.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXRS1","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXSC2","valor":7.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXSP10","valor":37.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXSP11","valor":1.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXSP14","valor":9.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXSP16","valor":21.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXSP18","valor":8.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXSP5","valor":5.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"BRXSP7","valor":2.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"CAMPINAS","valor":4.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"XMG1","valor":6.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Origem Ofensora","categoria":"XSP4","valor":7.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"15/08/2026","valor":0.0,"auxiliar":1.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"18/08/2026","valor":1.0,"auxiliar":0.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"19/08/2026","valor":1.0,"auxiliar":0.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"21/08/2026","valor":0.0,"auxiliar":1.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"24/08/2026","valor":0.0,"auxiliar":1.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"25/08/2026","valor":0.0,"auxiliar":1.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"26/08/2026","valor":0.0,"auxiliar":1.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"27/08/2026","valor":1.0,"auxiliar":1.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"28/08/2026","valor":2.0,"auxiliar":2.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"29/08/2026","valor":1.0,"auxiliar":2.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"30/08/2026","valor":0.0,"auxiliar":4.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"31/08/2026","valor":1.0,"auxiliar":1.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"01/09/2026","valor":0.0,"auxiliar":6.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"02/09/2026","valor":2.0,"auxiliar":2.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"03/09/2026","valor":2.0,"auxiliar":3.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"04/09/2026","valor":3.0,"auxiliar":5.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"05/09/2026","valor":1.0,"auxiliar":6.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"06/09/2026","valor":1.0,"auxiliar":2.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"07/09/2026","valor":1.0,"auxiliar":1.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"08/09/2026","valor":1.0,"auxiliar":0.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"09/09/2026","valor":25.0,"auxiliar":7.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"10/09/2026","valor":24.0,"auxiliar":14.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"11/09/2026","valor":13.0,"auxiliar":40.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"12/09/2026","valor":7.0,"auxiliar":16.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"13/09/2026","valor":4.0,"auxiliar":6.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"14/09/2026","valor":6.0,"auxiliar":11.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"15/09/2026","valor":177.0,"auxiliar":12.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"16/09/2026","valor":141.0,"auxiliar":13.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"17/09/2026","valor":181.0,"auxiliar":13.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"18/09/2026","valor":146.0,"auxiliar":21.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"19/09/2026","valor":136.0,"auxiliar":19.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"20/09/2026","valor":40.0,"auxiliar":26.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"21/09/2026","valor":134.0,"auxiliar":17.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"22/09/2026","valor":245.0,"auxiliar":67.0},{"data":"2026-09-24","indicador":"Promessas Last Mile","categoria":"23/09/2026","valor":346.0,"auxiliar":200.0},{"data":"2026-09-24","indicador":"Total Geral DIT","categoria":"Count dit -1","valor":200.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Total Geral DIT","categoria":"Count dit +1","valor":322.0,"auxiliar":null},{"data":"2026-09-24","indicador":"Total Geral DIT","categoria":"Count dit total","valor":522.0,"auxiliar":null}];
 let ditDados = [];
 let ditFonte = 'carregando';
 let ditInicializado = false;
 let ditCarregando = false;
-let ditSupabaseDisponivel = null;
+let ditSheetsDisponivel = null;
 let ditCharts = {};
 let ditActiveView = 'overview';
 let ditStageSelecionado = 'first-mile';
@@ -13025,10 +13030,41 @@ function ditAtualizarFonteUi() {
   const dot = document.getElementById('dit-source-dot');
   if (!label || !dot) return;
   dot.className = 'dit-meta-dot';
-  if (ditFonte === 'supabase') label.textContent = 'Supabase · dados compartilhados';
-  else if (ditFonte === 'local') { label.textContent = 'Cache local · Supabase DIT indisponível'; dot.classList.add('local'); }
-  else if (ditFonte === 'demo') { label.textContent = 'Demonstração · base 24/09/2026'; dot.classList.add('demo'); }
-  else label.textContent = 'Carregando dados';
+  if (ditFonte === 'sheets') label.textContent = 'Google Sheets · aba DIT';
+  else if (ditFonte === 'local') { label.textContent = 'Cache local · planilha indisponível'; dot.classList.add('local'); }
+  else if (ditFonte === 'erro') { label.textContent = 'Planilha DIT indisponível'; dot.classList.add('demo'); }
+  else label.textContent = 'Carregando planilha DIT';
+}
+
+async function ditBuscarPlanilha() {
+  const separador = DIT_SHEETS_API_URL.includes('?') ? '&' : '?';
+  const url = `${DIT_SHEETS_API_URL}${separador}_ts=${Date.now()}`;
+  const response = await fetch(url, {
+    method: 'GET',
+    cache: 'no-store',
+    redirect: 'follow'
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status} ao consultar a planilha DIT.`);
+  const texto = await response.text();
+  let payload;
+  try { payload = JSON.parse(texto); }
+  catch (_) {
+    throw new Error('O Apps Script não retornou JSON válido. Verifique a implantação/acesso do Web App.');
+  }
+  if (payload?.ok === false) throw new Error(payload.erro || 'O Apps Script informou erro ao ler a aba DIT.');
+  if (!Array.isArray(payload?.dados)) throw new Error('Resposta sem o campo "dados" esperado.');
+
+  const registros = [];
+  let ignorados = 0;
+  payload.dados.forEach(row => {
+    const normalizado = ditNormalizarRegistro(row);
+    if (normalizado) registros.push(normalizado);
+    else ignorados++;
+  });
+
+  if (!registros.length) throw new Error('A aba DIT foi lida, mas nenhum registro válido foi encontrado.');
+  registros.sort((a,b) => a.data.localeCompare(b.data));
+  return { registros, ignorados, payload };
 }
 
 async function ditCarregarDados(force = false) {
@@ -13039,32 +13075,31 @@ async function ditCarregarDados(force = false) {
   ditAtualizarFonteUi();
 
   let remotos = [];
+  let erroPlanilha = null;
   try {
-    const limite = new Date();
-    limite.setDate(limite.getDate() - DIT_MAX_REMOTE_DAYS);
-    const limIso = new Date(limite.getTime() - limite.getTimezoneOffset() * 60000).toISOString().slice(0,10);
-    remotos = await buscarTodasLinhas(() => db.from('dit_snapshots')
-      .select('data_ref,indicador,categoria,valor,auxiliar')
-      .gte('data_ref', limIso)
-      .order('data_ref', { ascending:true }));
-    remotos = (remotos || []).map(r => ({ data:r.data_ref, indicador:r.indicador, categoria:r.categoria, valor:Number(r.valor || 0), auxiliar:r.auxiliar === null ? null : Number(r.auxiliar) }));
-    ditSupabaseDisponivel = true;
+    const retorno = await ditBuscarPlanilha();
+    remotos = retorno.registros;
+    ditSheetsDisponivel = true;
+    ditSalvarCacheLocal(remotos);
+    console.info(`DIT: ${remotos.length} registros carregados da aba ${DIT_SHEETS_ABA}.`, retorno.payload);
   } catch (error) {
-    console.warn('DIT: tabela dit_snapshots indisponível, usando cache local.', error);
-    ditSupabaseDisponivel = false;
+    erroPlanilha = error;
+    ditSheetsDisponivel = false;
+    console.warn('DIT: não foi possível carregar a planilha; tentando cache local.', error);
   }
 
   const locais = ditLerCacheLocal();
   if (remotos.length) {
     ditDados = remotos;
-    ditFonte = 'supabase';
-    ditSalvarCacheLocal(remotos);
+    ditFonte = 'sheets';
   } else if (locais.length) {
     ditDados = locais;
     ditFonte = 'local';
+    if (force) toast('Não consegui atualizar pela planilha. Exibindo o último cache salvo.', 'error');
   } else {
-    ditDados = DIT_DEMO_REGISTROS.slice();
-    ditFonte = 'demo';
+    ditDados = [];
+    ditFonte = 'erro';
+    if (erroPlanilha) toast('DIT sem dados: ' + (erroPlanilha.message || erroPlanilha), 'error');
   }
 
   ditInicializado = true;
@@ -13469,7 +13504,7 @@ function ditRenderCharts(rows, rowsAtual, datas) {
 async function ditRecarregar() {
   ditInicializado = false;
   await ditCarregarDados(true);
-  toast('DIT atualizado.', 'success');
+  if (ditFonte === 'sheets') toast('DIT atualizado pela planilha.', 'success');
 }
 
 function ditAbrirModalImportacao() {
@@ -13543,13 +13578,13 @@ async function ditSalvarImportacao() {
     if(delErr)throw delErr;
     const payload=ditImportRegistros.map(r=>({data_ref:r.data,indicador:r.indicador,categoria:r.categoria,valor:r.valor,auxiliar:r.auxiliar}));
     for(let i=0;i<payload.length;i+=500){const {error}=await db.from('dit_snapshots').insert(payload.slice(i,i+500));if(error)throw error;}
-    remotoOk=true; ditSupabaseDisponivel=true;
-  } catch(error) { console.warn('DIT: não foi possível persistir no Supabase. Cache local mantido.',error); ditSupabaseDisponivel=false; }
+    remotoOk=true; ditSheetsDisponivel=true;
+  } catch(error) { console.warn('DIT: não foi possível persistir no Supabase. Cache local mantido.',error); ditSheetsDisponivel=false; }
 
   const cache=ditLerCacheLocal().filter(r=>!datas.includes(r.data));
   const novo=[...cache,...ditImportRegistros].sort((a,b)=>a.data.localeCompare(b.data));
   ditSalvarCacheLocal(novo);
-  ditDados=novo; ditFonte=remotoOk?'supabase':'local'; ditInicializado=true;
+  ditDados=novo; ditFonte='local'; ditInicializado=true;
   ditFecharModalImportacao(); ditConfigurarDatasPadrao(); ditAplicarPreset(30,document.querySelector('.dit-range-btn[data-range="30"]'));
   toast(remotoOk?'Base DIT salva e compartilhada no Supabase.':'Base DIT salva neste navegador. Configure dit_snapshots para compartilhar com o time.',remotoOk?'success':'');
   setButtonLoading(btn,false);
