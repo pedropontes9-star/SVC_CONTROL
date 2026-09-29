@@ -10297,6 +10297,7 @@ function exportarFechamentoDiarioCSV() {
 }
 
 // ── Dashboard ──
+console.info('[SRJ2] Dashboard Fechamento BUILD v20 carregado');
 function normalizarDataFechamento(valor) {
   if (!valor) return '';
   if (valor instanceof Date && !Number.isNaN(valor.getTime())) return dataLocalParaIso(valor);
