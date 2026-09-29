@@ -502,6 +502,17 @@
   .fd-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
   .fd-dot.ok { background: #2e7d32; } .fd-dot.baixo { background: #c62828; } .fd-dot.neutro { background: #c4c8ce; }
   .fd-dash-justif { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+  .fd-dash-periodo { display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap; margin:-8px 0 18px; padding:11px 13px; background:#fff; border:1px solid rgba(45,50,119,.10); border-radius:14px; box-shadow:0 3px 12px rgba(45,50,119,.05); }
+  .fd-dash-periodo-group { display:flex; flex-direction:column; gap:4px; }
+  .fd-dash-periodo-label { font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:#667085; }
+  .fd-dash-periodo-btns { display:flex; gap:5px; flex-wrap:wrap; }
+  .fd-dash-periodo-btn { border:1px solid #d7ddea; background:#fff; color:#2D3277; border-radius:9px; padding:6px 10px; font:800 10px 'Inter',sans-serif; cursor:pointer; }
+  .fd-dash-periodo-btn:hover { background:#f5f8ff; border-color:#9bbcff; }
+  .fd-dash-periodo-btn.active { color:#fff; border-color:#2D3277; background:linear-gradient(135deg,#2D3277,#3483FA); box-shadow:0 3px 9px rgba(52,131,250,.22); }
+  .fd-dash-periodo input[type=date] { height:31px; border:1px solid #d7ddea; border-radius:9px; padding:5px 8px; font:700 10px 'Inter',sans-serif; color:#25324a; background:#fff; }
+  .fd-dash-periodo-info { margin-left:auto; align-self:center; color:#667085; font-size:10px; font-weight:700; }
+  @media (max-width:800px){ .fd-dash-periodo-info{width:100%;margin-left:0}.fd-dash-periodo{align-items:stretch} }
+
   .fd-justif-card { border-radius: 16px; padding: 14px 16px; background: #fff; box-shadow: var(--shadow); border: 1.5px solid rgba(45,50,119,.06); border-left: 5px solid var(--meli-action); }
   .fd-justif-card.definitivo { border-left-color: #00875A; }
   .fd-justif-head { display: flex; justify-content: space-between; align-items: center; font-weight: 800; color: var(--meli-blue); margin-bottom: 10px; }
@@ -1627,10 +1638,30 @@
           <label>Até</label>
           <input type="date" id="cons-filtro-data-fim" onchange="aplicarFiltroConsolidadoNoFiltroAnomalias()">
         </div>
-        <div class="search-input-wrap" style="min-width:220px">
+        <select id="cons-filtro-gestor" class="filter-select" onchange="renderConsolidado()" style="min-width:190px">
+          <option value="">Todos os gestores</option>
+        </select>
+        <select id="cons-filtro-ofensa" class="filter-select" onchange="renderConsolidado()" style="min-width:145px">
+          <option value="">CIA + COA</option>
+          <option value="cia">Com CIA</option>
+          <option value="coa">Com COA</option>
+          <option value="ambos">CIA e COA</option>
+          <option value="so_cia">Somente CIA</option>
+          <option value="so_coa">Somente COA</option>
+        </select>
+        <select id="cons-filtro-status" class="filter-select" onchange="renderConsolidado()" style="min-width:150px">
+          <option value="">Todos os status</option>
+          <option value="pendente">Pendente</option>
+          <option value="aplicada">Medida aplicada</option>
+        </select>
+        <select id="cons-filtro-medida" class="filter-select" onchange="renderConsolidado()" style="min-width:170px">
+          <option value="">Todas as próximas medidas</option>
+        </select>
+        <div class="search-input-wrap" style="min-width:220px; flex:1 1 260px">
           <span class="search-icon">🔍</span>
-          <input type="text" placeholder="Buscar colaborador ou gestor..." id="cons-busca" oninput="renderConsolidado()">
+          <input type="text" placeholder="Colaborador, EXT ou Groot ID..." id="cons-busca" oninput="renderConsolidado()">
         </div>
+        <button class="btn btn-secondary btn-sm" onclick="limparFiltrosConsolidado()">Limpar filtros</button>
         <button class="btn btn-secondary btn-sm" onclick="renderConsolidado()">↻ Atualizar</button>
         <span class="count-badge" id="cons-count">0 elegíveis</span>
       </div>
@@ -2347,7 +2378,7 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Data</th><th>Ciclo</th><th>Vol. Projetado</th><th>Vol. Atendido</th><th>Dispersão</th><th>FAG</th><th>OOT</th><th>TMEC</th></tr></thead>
+          <thead><tr><th>Data</th><th>Ciclo</th><th>Vol. Projetado</th><th>Vol. Processado</th><th>Dispersão</th><th>FAG</th><th>OOT</th><th>TMEC</th></tr></thead>
           <tbody id="tbody-fd-historico">
             <tr><td colspan="8"><div class="empty-state"><p>Nenhum ciclo lançado ainda</p></div></td></tr>
           </tbody>
@@ -2426,21 +2457,42 @@
       </div>
     </div>
 
+    <div class="fd-dash-periodo" id="fd-dash-periodo-bar">
+      <div class="fd-dash-periodo-group">
+        <div class="fd-dash-periodo-label">Período dos gráficos</div>
+        <div class="fd-dash-periodo-btns">
+          <button type="button" class="fd-dash-periodo-btn active" data-fd-periodo="7d" onclick="setFdDashPeriodo('7d',this)">7D</button>
+          <button type="button" class="fd-dash-periodo-btn" data-fd-periodo="15d" onclick="setFdDashPeriodo('15d',this)">15D</button>
+          <button type="button" class="fd-dash-periodo-btn" data-fd-periodo="30d" onclick="setFdDashPeriodo('30d',this)">30D</button>
+          <button type="button" class="fd-dash-periodo-btn" data-fd-periodo="mes" onclick="setFdDashPeriodo('mes',this)">Mês</button>
+        </div>
+      </div>
+      <div class="fd-dash-periodo-group">
+        <div class="fd-dash-periodo-label">De</div>
+        <input type="date" id="fd-dash-periodo-ini" onchange="onFdDashPeriodoCustom()">
+      </div>
+      <div class="fd-dash-periodo-group">
+        <div class="fd-dash-periodo-label">Até</div>
+        <input type="date" id="fd-dash-periodo-fim" onchange="onFdDashPeriodoCustom()">
+      </div>
+      <div class="fd-dash-periodo-info" id="fd-dash-periodo-info">—</div>
+    </div>
+
     <div id="fd-dash-conteudo">
     <div id="fd-dash-resumo" class="fd-dash-grid" style="margin-bottom:22px"></div>
 
     <p class="section-label">Por ciclo</p>
     <div id="fd-dash-ciclos" class="fd-dash-ciclos" style="margin-bottom:22px"></div>
 
-    <p class="section-label">Tendência — últimos 7 dias</p>
+    <p class="section-label" id="fd-dash-tendencia-titulo">Tendência — período selecionado</p>
     <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:22px">
       <div class="card" style="flex:1;min-width:340px;padding:18px 20px">
         <div class="fd-kpi-label" style="margin-bottom:10px">Indicadores (%)</div>
-        <div style="position:relative;height:240px"><canvas id="fd-dash-chart-indicadores"></canvas></div>
+        <div style="position:relative;height:270px"><canvas id="fd-dash-chart-indicadores"></canvas></div>
       </div>
       <div class="card" style="flex:1;min-width:340px;padding:18px 20px">
-        <div class="fd-kpi-label" style="margin-bottom:10px">Volume projetado x atendido</div>
-        <div style="position:relative;height:240px"><canvas id="fd-dash-chart-volume"></canvas></div>
+        <div class="fd-kpi-label" style="margin-bottom:10px">Volume projetado x processado</div>
+        <div style="position:relative;height:270px"><canvas id="fd-dash-chart-volume"></canvas></div>
       </div>
     </div>
 
@@ -5797,6 +5849,26 @@ function temMedidaAplicada(colaboradorId) {
   return historicoMedidas.some(m => m.colaborador_id === colaboradorId);
 }
 
+function atualizarSelectConsolidado_(id, valores, placeholder) {
+  const select = document.getElementById(id);
+  if (!select) return;
+  const atual = select.value || '';
+  const lista = [...new Set((valores || []).map(v => asText(v).trim()).filter(Boolean))]
+    .sort((a,b) => a.localeCompare(b, 'pt-BR', { sensitivity:'base' }));
+  select.innerHTML = `<option value="">${escapeHtml(placeholder)}</option>` +
+    lista.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+  if (lista.includes(atual)) select.value = atual;
+}
+
+function limparFiltrosConsolidado() {
+  ['cons-filtro-gestor','cons-filtro-ofensa','cons-filtro-status','cons-filtro-medida','cons-busca']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+  renderConsolidado();
+}
+
 // Função principal que renderiza a aba Consolidado
 function renderConsolidado() {
   const tbody = document.getElementById('tbody-consolidado');
@@ -5808,13 +5880,13 @@ function renderConsolidado() {
 
   // Filtra somente ofensas CIA/COA dentro do período definido no topo da aba Anomalias.
   // O Consolidado calcula elegibilidade pela soma CIA + COA do colaborador no período.
-  let anomaliasFiltradas = anomalias.filter(a => {
+  const anomaliasFiltradas = anomalias.filter(a => {
     const tipo = asText(a.tipo).toUpperCase();
     return (tipo === 'CIA' || tipo === 'COA') &&
            dataMarcacaoMatchesPeriodo(a.data_marcacao, inicio, fim);
   });
 
-  // Agrega por colaborador, cruzando pelo EXT normalizado com a base de colaboradores
+  // Agrega por colaborador, cruzando pelo EXT normalizado com a base de colaboradores.
   const mapa = {};
 
   anomaliasFiltradas.forEach(a => {
@@ -5842,25 +5914,67 @@ function renderConsolidado() {
     mapa[extAnomalia].total = mapa[extAnomalia].cia + mapa[extAnomalia].coa;
   });
 
-  // Filtra por busca (nome, ext ou gestor) e por 2 ou mais ofensas CIA + COA
-  let dados = Object.values(mapa).filter(d => {
-    if (d.total < 2) return false;
-    if (!busca) return true;
-    return lower(d.nome || '').includes(busca) ||
-           lower(d.ext || '').includes(busca) ||
-           lower(d.gestor || '').includes(busca);
-  });
+  // Base elegível: 2 ou mais ofensas CIA + COA.
+  // Informação de medida é adicionada ANTES dos filtros para permitir filtrar status/medida.
+  let baseElegivel = Object.values(mapa)
+    .filter(d => d.total >= 2)
+    .map(d => {
+      const registrosMedida = d.id
+        ? historicoMedidas.filter(m => m.colaborador_id === d.id)
+        : [];
+      const jaTemMedida = registrosMedida.length > 0;
+      const proxima = d.id ? determinarProximaMedida(d.id) : '—';
+      const ultima = registrosMedida.length ? (registrosMedida[0]?.tipo_medida || null) : null;
+      return {
+        ...d,
+        medidaAplicada: jaTemMedida,
+        proximaMedida: proxima,
+        ultimaMedida: ultima
+      };
+    });
 
-  // Adiciona informação de medida (somente para colaboradores cadastrados, com id válido)
-  dados = dados.map(d => {
-    const jaTemMedida = d.id ? temMedidaAplicada(d.id) : false;
-    const proxima = d.id ? determinarProximaMedida(d.id) : '—';
-    return {
-      ...d,
-      medidaAplicada: jaTemMedida,
-      proximaMedida: proxima,
-      ultimaMedida: d.id ? (historicoMedidas.find(m => m.colaborador_id === d.id)?.tipo_medida || null) : null
-    };
+  // Monta os filtros de forma dinâmica a partir dos elegíveis do período.
+  atualizarSelectConsolidado_(
+    'cons-filtro-gestor',
+    baseElegivel.map(d => d.gestor).filter(Boolean),
+    'Todos os gestores'
+  );
+  atualizarSelectConsolidado_(
+    'cons-filtro-medida',
+    baseElegivel.map(d => d.proximaMedida).filter(v => v && v !== '—'),
+    'Todas as próximas medidas'
+  );
+
+  const gestorFiltro = document.getElementById('cons-filtro-gestor')?.value || '';
+  const ofensaFiltro = document.getElementById('cons-filtro-ofensa')?.value || '';
+  const statusFiltro = document.getElementById('cons-filtro-status')?.value || '';
+  const medidaFiltro = document.getElementById('cons-filtro-medida')?.value || '';
+
+  // Aplica os filtros em cascata. Cards, contador e tabela usam exatamente este mesmo recorte.
+  let dados = baseElegivel.filter(d => {
+    if (gestorFiltro && asText(d.gestor) !== gestorFiltro) return false;
+
+    if (ofensaFiltro === 'cia' && d.cia <= 0) return false;
+    if (ofensaFiltro === 'coa' && d.coa <= 0) return false;
+    if (ofensaFiltro === 'ambos' && !(d.cia > 0 && d.coa > 0)) return false;
+    if (ofensaFiltro === 'so_cia' && !(d.cia > 0 && d.coa === 0)) return false;
+    if (ofensaFiltro === 'so_coa' && !(d.coa > 0 && d.cia === 0)) return false;
+
+    if (statusFiltro === 'pendente' && d.medidaAplicada) return false;
+    if (statusFiltro === 'aplicada' && !d.medidaAplicada) return false;
+
+    if (medidaFiltro && asText(d.proximaMedida) !== medidaFiltro) return false;
+
+    if (busca) {
+      const bateBusca =
+        lower(d.nome || '').includes(busca) ||
+        lower(d.ext || '').includes(busca) ||
+        lower(d.groot || '').includes(busca) ||
+        lower(d.gestor || '').includes(busca);
+      if (!bateBusca) return false;
+    }
+
+    return true;
   });
 
   // Ordenação
@@ -5883,12 +5997,17 @@ function renderConsolidado() {
 
   // Renderiza tabela
   if (dados.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><p>Nenhum colaborador com 2 ou mais ofensas CIA/COA no período</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><p>Nenhum colaborador encontrado com os filtros selecionados</p></div></td></tr>`;
     if (countEl) countEl.textContent = '0 elegíveis';
     return;
   }
 
-  if (countEl) countEl.textContent = `${dados.length} elegíveis`;
+  if (countEl) {
+    const filtrosAtivos = !!(gestorFiltro || ofensaFiltro || statusFiltro || medidaFiltro || busca);
+    countEl.textContent = filtrosAtivos
+      ? `${dados.length} de ${baseElegivel.length} elegíveis`
+      : `${dados.length} elegíveis`;
+  }
 
   tbody.innerHTML = dados.map(d => {
     const statusHTML = d.medidaAplicada
@@ -9581,7 +9700,7 @@ async function carregarFechamentoCiclos() {
     const data = await buscarTodasLinhas(() => db.from('fechamento_ciclos').select('*').order('data', { ascending: false }));
     fechamentoCiclos = (data || []).map(r => ({
       id: r.id,
-      data: r.data,
+      data: normalizarDataFechamento(r.data),
       ciclo: r.ciclo,
       volumeProjetado: r.volume_projetado,
       volumeAtendido: r.volume_atendido,
@@ -9609,7 +9728,7 @@ async function carregarFechamentosDiarios() {
     const data = await buscarTodasLinhas(() => db.from('fechamento_diario').select('*').order('data', { ascending: false }));
     fechamentosDiarios = (data || []).map(r => ({
       id: r.id,
-      data: r.data,
+      data: normalizarDataFechamento(r.data),
       status: r.status,
       fagDefinitivo: r.fag_definitivo,
       ootDefinitivo: r.oot_definitivo,
@@ -9639,6 +9758,7 @@ function inicializarTelaFechamentoDiario() {
   if (inputDia && !inputDia.value) inputDia.value = hojeIsoLocal();
   const inputDash = document.getElementById('fd-dash-data');
   if (inputDash && !inputDash.value) inputDash.value = hojeIsoLocal();
+  inicializarPeriodoDashboardFechamento(inputDash?.value || hojeIsoLocal());
   if (histIni && !histIni.value) {
     const seteDiasAtras = new Date(); seteDiasAtras.setDate(seteDiasAtras.getDate() - 6);
     histIni.value = dataLocalParaIso(seteDiasAtras);
@@ -9748,7 +9868,7 @@ function gerarFormularioCicloHtml() {
         <input type="number" id="fd-ciclo-projetado" placeholder="—" oninput="atualizarDispersaoCicloUnico()">
       </div>
       <div class="fd-volume-tile">
-        <div class="fd-kpi-label" style="margin-bottom:6px">Volume Atendido</div>
+        <div class="fd-kpi-label" style="margin-bottom:6px">Volume Processado</div>
         <input type="number" id="fd-ciclo-atendido" placeholder="—" oninput="atualizarDispersaoCicloUnico()">
       </div>
     </div>
@@ -9930,7 +10050,7 @@ function exportarFechamentoCiclosCSV() {
 
   if (!lista.length) { toast('Nenhum registro no período pra exportar.', 'error'); return; }
 
-  const cabecalho = ['Data', 'Ciclo', 'Volume Projetado', 'Volume Atendido', 'Dispersão (nº)', 'Dispersão (%)', 'FAG', 'Justificativa FAG', 'OOT', 'Justificativa OOT', 'TMEC', 'Justificativa TMEC', 'Registrado por'];
+  const cabecalho = ['Data', 'Ciclo', 'Volume Projetado', 'Volume Processado', 'Dispersão (nº)', 'Dispersão (%)', 'FAG', 'Justificativa FAG', 'OOT', 'Justificativa OOT', 'TMEC', 'Justificativa TMEC', 'Registrado por'];
   const corpo = lista.map(r => {
     const dataFmt = r.data.split('-').reverse().join('/');
     const d = calcularDispersao(r.volumeProjetado, r.volumeAtendido);
@@ -9967,7 +10087,8 @@ function gerarFormularioFechamentoDiaHtml(prefixo) {
 
 // Volume: SOMA dos ciclos do dia. FAG/OOT/TMEC: MÉDIA simples dos ciclos que têm valor.
 function calcularFechamentoDiaCalculado(data) {
-  const ciclosDoDia = fechamentoCiclos.filter(r => r.data === data);
+  const dataNorm = normalizarDataFechamento(data);
+  const ciclosDoDia = fechamentoCiclos.filter(r => normalizarDataFechamento(r.data) === dataNorm);
   const valoresDe = campo => ciclosDoDia.map(r => r[campo]).filter(v => v !== null && v !== undefined);
   const soma = campo => {
     const v = valoresDe(campo);
@@ -10016,7 +10137,7 @@ function renderCalculadaFechamentoDia(data) {
         <div class="fd-kpi-meta" style="margin-top:4px">soma dos ciclos</div>
       </div>
       <div class="fd-volume-tile">
-        <div class="fd-kpi-label" style="margin-bottom:6px">Volume Atendido</div>
+        <div class="fd-kpi-label" style="margin-bottom:6px">Volume Processado</div>
         <div class="fd-stat-big">${fmtNum(calc.volumeAtendido)}</div>
         <div class="fd-kpi-meta" style="margin-top:4px">soma dos ciclos</div>
       </div>
@@ -10037,7 +10158,8 @@ function renderComparacaoFechamentoDia(data) {
   if (!tbody) return;
 
   const calc = calcularFechamentoDiaCalculado(data);
-  const r = fechamentosDiarios.find(x => x.data === data);
+  const dataNorm = normalizarDataFechamento(data);
+  const r = fechamentosDiarios.find(x => normalizarDataFechamento(x.data) === dataNorm);
 
   const linhas = [
     ['FAG', calc.fag, r?.fagDefinitivo, METAS_FECHAMENTO.fag],
@@ -10074,7 +10196,8 @@ function onFdDiaDataChange() {
   const inputData = document.getElementById('fd-dia-data');
   if (!inputData || !document.getElementById('fd-dia-definitivo-fag')) return; // tela ainda não inicializada
   const data = inputData.value;
-  const r = fechamentosDiarios.find(x => x.data === data);
+  const dataNorm = normalizarDataFechamento(data);
+  const r = fechamentosDiarios.find(x => normalizarDataFechamento(x.data) === dataNorm);
 
   const tituloDia = document.getElementById('fd-dia-titulo');
   if (tituloDia) {
@@ -10147,7 +10270,7 @@ function exportarFechamentoDiarioCSV() {
 
   const cabecalho = [
     'Data', 'Status',
-    'Vol. Projetado (soma)', 'Vol. Atendido (soma)', 'FAG (Calculada)', 'OOT (Calculada)', 'TMEC (Calculada)',
+    'Vol. Projetado (soma)', 'Vol. Processado (soma)', 'FAG (Calculada)', 'OOT (Calculada)', 'TMEC (Calculada)',
     'FAG (Definitiva)', 'OOT (Definitiva)', 'TMEC (Definitiva)'
   ];
   const lista = [...fechamentosDiarios].sort((a, b) => a.data.localeCompare(b.data));
@@ -10174,6 +10297,104 @@ function exportarFechamentoDiarioCSV() {
 }
 
 // ── Dashboard ──
+function normalizarDataFechamento(valor) {
+  if (!valor) return '';
+  if (valor instanceof Date && !Number.isNaN(valor.getTime())) return dataLocalParaIso(valor);
+  const raw = String(valor).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0,10);
+  const br = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? raw : dataLocalParaIso(d);
+}
+
+let fdDashPeriodoPreset = '7d';
+
+function intervaloDiasIso(inicioIso, fimIso) {
+  const inicio = isoParaDataLocal(inicioIso);
+  const fim = isoParaDataLocal(fimIso);
+  const dias = [];
+  if (!inicio || !fim || inicio > fim) return dias;
+  const cursor = new Date(inicio);
+  while (cursor <= fim) {
+    dias.push(dataLocalParaIso(cursor));
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return dias;
+}
+
+function calcularInicioPeriodoFd(tipo, fimIso) {
+  const fim = isoParaDataLocal(fimIso || hojeIsoLocal());
+  if (tipo === 'mes') return `${fim.getFullYear()}-${String(fim.getMonth()+1).padStart(2,'0')}-01`;
+  const n = tipo === '15d' ? 15 : tipo === '30d' ? 30 : 7;
+  const ini = new Date(fim);
+  ini.setDate(ini.getDate() - (n - 1));
+  return dataLocalParaIso(ini);
+}
+
+function inicializarPeriodoDashboardFechamento(dataFim) {
+  const ini = document.getElementById('fd-dash-periodo-ini');
+  const fim = document.getElementById('fd-dash-periodo-fim');
+  if (!ini || !fim) return;
+  if (!fim.value) fim.value = dataFim || hojeIsoLocal();
+  if (!ini.value) ini.value = calcularInicioPeriodoFd(fdDashPeriodoPreset, fim.value);
+}
+
+function setFdDashPeriodo(tipo, btn) {
+  fdDashPeriodoPreset = tipo;
+  document.querySelectorAll('.fd-dash-periodo-btn').forEach(b => b.classList.toggle('active', b === btn));
+  const dataRef = document.getElementById('fd-dash-data')?.value || hojeIsoLocal();
+  const fim = document.getElementById('fd-dash-periodo-fim');
+  const ini = document.getElementById('fd-dash-periodo-ini');
+  if (fim) fim.value = dataRef;
+  if (ini) ini.value = calcularInicioPeriodoFd(tipo, dataRef);
+  renderGraficosDashboardFechamento(dataRef);
+}
+
+function onFdDashPeriodoCustom() {
+  fdDashPeriodoPreset = 'custom';
+  document.querySelectorAll('.fd-dash-periodo-btn').forEach(b => b.classList.remove('active'));
+  const dataRef = document.getElementById('fd-dash-data')?.value || hojeIsoLocal();
+  renderGraficosDashboardFechamento(dataRef);
+}
+
+function sincronizarPeriodoFdComData(dataRef) {
+  inicializarPeriodoDashboardFechamento(dataRef);
+  if (fdDashPeriodoPreset === 'custom') return;
+  const fim = document.getElementById('fd-dash-periodo-fim');
+  const ini = document.getElementById('fd-dash-periodo-ini');
+  if (fim) fim.value = dataRef;
+  if (ini) ini.value = calcularInicioPeriodoFd(fdDashPeriodoPreset, dataRef);
+}
+
+const fdDashLabelsPlugin = {
+  id: 'fdDashLabels',
+  afterDatasetsDraw(chart) {
+    if (!chart?.canvas?.id?.startsWith('fd-dash-chart-')) return;
+    const ctx = chart.ctx;
+    ctx.save();
+    chart.data.datasets.forEach((dataset, di) => {
+      if (dataset.fdSkipLabels) return;
+      const meta = chart.getDatasetMeta(di);
+      if (!meta || meta.hidden) return;
+      meta.data.forEach((el, i) => {
+        const raw = Array.isArray(dataset.data) ? dataset.data[i] : null;
+        const missing = Array.isArray(dataset.fdMissing) && dataset.fdMissing[i];
+        if ((raw === null || raw === undefined || !Number.isFinite(Number(raw))) && !missing) return;
+        let label = missing ? '—' : (dataset.fdPercent ? `${Number(raw).toLocaleString('pt-BR',{maximumFractionDigits:1})}%` : Number(raw).toLocaleString('pt-BR'));
+        const p = el.tooltipPosition ? el.tooltipPosition() : {x:el.x,y:el.y};
+        ctx.font = dataset.fdLabelFont || '800 10px Inter, sans-serif';
+        ctx.fillStyle = dataset.fdLabelColor || '#344054';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        const isBar = chart.config.type === 'bar';
+        ctx.fillText(label, p.x, isBar ? p.y - 5 : p.y - 8);
+      });
+    });
+    ctx.restore();
+  }
+};
+
 // Resultado "oficial" do dia: usa o Definitivo quando existe (campo a campo),
 // senão cai pro Calculado (média/soma dos ciclos). Volume vem sempre dos ciclos.
 let fdDashChartIndicadores = null;
@@ -10186,7 +10407,8 @@ function atualizarDashboardSeVisivel() {
 
 function obterResultadoDoDia(data) {
   const calc = calcularFechamentoDiaCalculado(data);
-  const r = fechamentosDiarios.find(x => x.data === data);
+  const dataNorm = normalizarDataFechamento(data);
+  const r = fechamentosDiarios.find(x => normalizarDataFechamento(x.data) === dataNorm);
   const temDefinitivo = !!r && (r.fagDefinitivo !== null || r.ootDefinitivo !== null || r.tmecDefinitivo !== null);
   return {
     data,
@@ -10205,6 +10427,7 @@ function renderDashboardFechamento() {
   if (!inputData) return;
   if (!inputData.value) inputData.value = hojeIsoLocal();
   const data = inputData.value;
+  sincronizarPeriodoFdComData(data);
   const res = obterResultadoDoDia(data);
 
   const titulo = document.getElementById('fd-dash-titulo');
@@ -10244,14 +10467,14 @@ function renderDashboardFechamento() {
         <div class="fd-kpi-meta">soma dos ${res.quantosCiclos} ciclo(s)</div>
       </div>
       <div class="fd-dash-tile">
-        <div class="fd-kpi-label">Volume Atendido</div>
+        <div class="fd-kpi-label">Volume Processado</div>
         <div class="fd-stat-big">${fmtNum(res.volumeAtendido)}</div>
         <div class="fd-kpi-meta">soma dos ${res.quantosCiclos} ciclo(s)</div>
       </div>
       <div class="fd-dash-tile">
         <div class="fd-kpi-label">Dispersão</div>
         <div style="margin-top:8px">${gerarDispersaoPillHtml(d)}</div>
-        <div class="fd-kpi-meta" style="margin-top:8px">atendido − projetado</div>
+        <div class="fd-kpi-meta" style="margin-top:8px">processado − projetado</div>
       </div>
       ${tileInd('FAG', res.fag, METAS_FECHAMENTO.fag)}
       ${tileInd('OOT', res.oot, METAS_FECHAMENTO.oot)}
@@ -10273,7 +10496,7 @@ function renderDashboardFechamento() {
         <div class="fd-dash-ciclo">
           <div class="fd-dash-ciclo-head"><span>${ICONES_CICLO_FECHAMENTO[ciclo]} ${ciclo}</span>${gerarDispersaoPillHtml(dc)}</div>
           <div class="fd-dash-mini"><span>Projetado</span><strong>${fmtNum(c.volumeProjetado)}</strong></div>
-          <div class="fd-dash-mini"><span>Atendido</span><strong>${fmtNum(c.volumeAtendido)}</strong></div>
+          <div class="fd-dash-mini"><span>Processado</span><strong>${fmtNum(c.volumeAtendido)}</strong></div>
           <div class="fd-dash-mini"><span><span class="fd-dot ${dot(c.fag, METAS_FECHAMENTO.fag)}"></span>FAG</span><strong>${val(c.fag)}</strong></div>
           <div class="fd-dash-mini"><span><span class="fd-dot ${dot(c.oot, METAS_FECHAMENTO.oot)}"></span>OOT</span><strong>${val(c.oot)}</strong></div>
           <div class="fd-dash-mini"><span><span class="fd-dot ${dot(c.tmec, METAS_FECHAMENTO.tmec)}"></span>TMEC</span><strong>${val(c.tmec)}</strong></div>
@@ -10324,7 +10547,8 @@ function renderJustificativasDashboardFechamento(data) {
   });
 
   // Justificativas do fechamento definitivo
-  const r = fechamentosDiarios.find(x => x.data === data);
+  const dataNorm = normalizarDataFechamento(data);
+  const r = fechamentosDiarios.find(x => normalizarDataFechamento(x.data) === dataNorm);
   if (r) {
     const itens = indicadores
       .map(ind => {
@@ -10374,29 +10598,84 @@ function exportarDashboardFechamentoPNG() {
 }
 
 function renderGraficosDashboardFechamento(dataFim) {
-  const dias = [];
-  const fim = isoParaDataLocal(dataFim);
-  for (let i = 6; i >= 0; i--) {
-    const dt = new Date(fim); dt.setDate(dt.getDate() - i);
-    dias.push(dataLocalParaIso(dt));
-  }
+  const iniInput = document.getElementById('fd-dash-periodo-ini');
+  const fimInput = document.getElementById('fd-dash-periodo-fim');
+  inicializarPeriodoDashboardFechamento(dataFim);
+
+  let inicioIso = normalizarDataFechamento(iniInput?.value || calcularInicioPeriodoFd('7d', dataFim));
+  let fimIso = normalizarDataFechamento(fimInput?.value || dataFim);
+  if (inicioIso > fimIso) [inicioIso, fimIso] = [fimIso, inicioIso];
+
+  const dias = intervaloDiasIso(inicioIso, fimIso);
   const resultados = dias.map(obterResultadoDoDia);
-  const labels = dias.map(dia => dia.split('-').slice(1).reverse().join('/'));
+  const labels = dias.map(dia => dia.slice(5).split('-').reverse().join('/'));
+  const diasComVolume = resultados.filter(r => r.volumeProjetado !== null || r.volumeAtendido !== null).length;
+
+  const info = document.getElementById('fd-dash-periodo-info');
+  if (info) info.textContent = `${dias.length} dia(s) · ${diasComVolume} com volume lançado`;
+  const tituloTrend = document.getElementById('fd-dash-tendencia-titulo');
+  if (tituloTrend) tituloTrend.textContent = `Tendência — ${inicioIso.split('-').reverse().join('/')} a ${fimIso.split('-').reverse().join('/')}`;
 
   const canvasInd = document.getElementById('fd-dash-chart-indicadores');
   if (canvasInd && window.Chart) {
     if (fdDashChartIndicadores) { fdDashChartIndicadores.destroy(); fdDashChartIndicadores = null; }
     const linha = (label, campo, cor) => ({
-      label, data: resultados.map(r => r[campo]), borderColor: cor, backgroundColor: cor + '22',
-      tension: .35, spanGaps: true, pointRadius: 4, pointHoverRadius: 6, borderWidth: 2.5
+      label,
+      data: resultados.map(r => r[campo]),
+      borderColor: cor,
+      backgroundColor: cor + '18',
+      tension: .30,
+      spanGaps: false,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      borderWidth: 2.5,
+      fdPercent: true,
+      fdLabelColor: cor,
+      fdLabelFont: '800 10px Inter, sans-serif'
     });
+    const meta = (label, valor, cor) => ({
+      label: `${label} ${valor}%`,
+      data: dias.map(() => valor),
+      borderColor: cor,
+      backgroundColor: 'transparent',
+      borderWidth: 1.4,
+      borderDash: [6, 5],
+      pointRadius: 0,
+      pointHoverRadius: 0,
+      tension: 0,
+      fdSkipLabels: true
+    });
+
     fdDashChartIndicadores = new Chart(canvasInd, {
       type: 'line',
-      data: { labels, datasets: [linha('FAG', 'fag', '#3483FA'), linha('OOT', 'oot', '#00875A'), linha('TMEC', 'tmec', '#FF7A00')] },
+      data: {
+        labels,
+        datasets: [
+          linha('FAG', 'fag', '#3483FA'),
+          linha('OOT', 'oot', '#00875A'),
+          linha('TMEC', 'tmec', '#FF7A00'),
+          meta('Meta FAG', METAS_FECHAMENTO.fag, '#3483FA'),
+          meta('Meta OOT', METAS_FECHAMENTO.oot, '#00875A'),
+          meta('Meta TMEC', METAS_FECHAMENTO.tmec, '#FF7A00')
+        ]
+      },
+      plugins: [fdDashLabelsPlugin],
       options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } },
-        scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%', font: { size: 11 } } }, x: { ticks: { font: { size: 11 } } } }
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: { top: 20, right: 10, left: 4, bottom: 0 } },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { boxWidth: 10, usePointStyle: true, padding: 12, font: { size: 10, weight: '700' }, color:'#475467' }
+          },
+          tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y == null ? '—' : ctx.parsed.y.toLocaleString('pt-BR',{maximumFractionDigits:2}) + '%'}` } }
+        },
+        scales: {
+          y: { min: 0, max: 100, ticks: { callback: v => v + '%', font: { size: 10, weight:'700' }, color:'#475467' } },
+          x: { ticks: { autoSkip: labels.length > 15, maxTicksLimit: 15, font: { size: 10, weight:'700' }, color:'#475467' }, grid:{display:false} }
+        }
       }
     });
   }
@@ -10404,19 +10683,58 @@ function renderGraficosDashboardFechamento(dataFim) {
   const canvasVol = document.getElementById('fd-dash-chart-volume');
   if (canvasVol && window.Chart) {
     if (fdDashChartVolume) { fdDashChartVolume.destroy(); fdDashChartVolume = null; }
+
+    const projRaw = resultados.map(r => r.volumeProjetado);
+    const procRaw = resultados.map(r => r.volumeAtendido);
+    const projMissing = projRaw.map(v => v === null || v === undefined || !Number.isFinite(Number(v)));
+    const procMissing = procRaw.map(v => v === null || v === undefined || !Number.isFinite(Number(v)));
+
     fdDashChartVolume = new Chart(canvasVol, {
       type: 'bar',
       data: {
         labels,
         datasets: [
-          { label: 'Projetado', data: resultados.map(r => r.volumeProjetado), backgroundColor: '#2D327799', borderRadius: 8 },
-          { label: 'Atendido', data: resultados.map(r => r.volumeAtendido), backgroundColor: '#3483FA', borderRadius: 8 }
+          {
+            label: 'Projetado',
+            data: projRaw.map((v,i) => projMissing[i] ? 0 : Number(v)),
+            fdMissing: projMissing,
+            fdLabelColor:'#2D3277',
+            backgroundColor: '#2D327799',
+            borderRadius: 7,
+            maxBarThickness: 36
+          },
+          {
+            label: 'Processado',
+            data: procRaw.map((v,i) => procMissing[i] ? 0 : Number(v)),
+            fdMissing: procMissing,
+            fdLabelColor:'#1265c7',
+            backgroundColor: '#3483FA',
+            borderRadius: 7,
+            maxBarThickness: 36
+          }
         ]
       },
+      plugins: [fdDashLabelsPlugin],
       options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } },
-        scales: { y: { beginAtZero: true, ticks: { font: { size: 11 } } }, x: { ticks: { font: { size: 11 } } } }
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: { padding: { top: 20, right: 8, left: 4, bottom: 0 } },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, usePointStyle:true, padding:12, font: { size: 10, weight:'700' }, color:'#475467' } },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const miss = ctx.dataset.fdMissing?.[ctx.dataIndex];
+                return `${ctx.dataset.label}: ${miss ? 'sem dado' : Number(ctx.raw).toLocaleString('pt-BR')}`;
+              }
+            }
+          }
+        },
+        scales: {
+          y: { beginAtZero: true, ticks: { font: { size: 10, weight:'700' }, color:'#475467', callback:v=>Number(v).toLocaleString('pt-BR') } },
+          x: { ticks: { autoSkip: labels.length > 15, maxTicksLimit: 15, font: { size: 10, weight:'700' }, color:'#475467' }, grid:{display:false} }
+        }
       }
     });
   }
