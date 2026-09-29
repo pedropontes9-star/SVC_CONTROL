@@ -9702,8 +9702,8 @@ async function carregarFechamentoCiclos() {
       id: r.id,
       data: normalizarDataFechamento(r.data),
       ciclo: r.ciclo,
-      volumeProjetado: r.volume_projetado,
-      volumeAtendido: r.volume_atendido,
+      volumeProjetado: normalizarVolumeFechamento(r.volume_projetado),
+      volumeAtendido: normalizarVolumeFechamento(r.volume_atendido),
       fag: r.fag,
       oot: r.oot,
       tmec: r.tmec,
@@ -9900,8 +9900,8 @@ function calcularDispersao(projetado, atendido) {
 }
 
 function atualizarDispersaoCicloUnico() {
-  const projetado = document.getElementById('fd-ciclo-projetado').value;
-  const atendido = document.getElementById('fd-ciclo-atendido').value;
+  const projetado = normalizarVolumeFechamento(document.getElementById('fd-ciclo-projetado').value);
+  const atendido = normalizarVolumeFechamento(document.getElementById('fd-ciclo-atendido').value);
   const el = document.getElementById('fd-ciclo-dispersao');
   if (!el) return;
   el.innerHTML = gerarDispersaoPillHtml(calcularDispersao(projetado, atendido));
@@ -9970,15 +9970,17 @@ async function salvarFechamentoCiclo() {
   const erro = validarIndicadoresEJustificativas(prefixo);
   if (erro) { toast(erro, 'error'); return; }
 
-  const projetado = document.getElementById(`${prefixo}-projetado`).value;
-  const atendido = document.getElementById(`${prefixo}-atendido`).value;
+  const projetadoRaw = document.getElementById(`${prefixo}-projetado`).value;
+  const atendidoRaw = document.getElementById(`${prefixo}-atendido`).value;
+  const projetado = normalizarVolumeFechamento(projetadoRaw);
+  const atendido = normalizarVolumeFechamento(atendidoRaw);
   const indicadores = coletarIndicadores(prefixo);
 
   try {
     const dbData = {
       data, ciclo,
-      volume_projetado: projetado === '' ? null : Number(projetado),
-      volume_atendido: atendido === '' ? null : Number(atendido),
+      volume_projetado: projetado,
+      volume_atendido: atendido,
       fag: indicadores.fag, oot: indicadores.oot, tmec: indicadores.tmec,
       justificativa_fag: indicadores.justificativaFag,
       justificativa_oot: indicadores.justificativaOot,
@@ -10089,7 +10091,10 @@ function gerarFormularioFechamentoDiaHtml(prefixo) {
 function calcularFechamentoDiaCalculado(data) {
   const dataNorm = normalizarDataFechamento(data);
   const ciclosDoDia = fechamentoCiclos.filter(r => normalizarDataFechamento(r.data) === dataNorm);
-  const valoresDe = campo => ciclosDoDia.map(r => r[campo]).filter(v => v !== null && v !== undefined);
+  const valoresDe = campo => ciclosDoDia
+    .map(r => campo === 'volumeProjetado' || campo === 'volumeAtendido' ? normalizarVolumeFechamento(r[campo]) : r[campo])
+    .filter(v => v !== null && v !== undefined && Number.isFinite(Number(v)))
+    .map(Number);
   const soma = campo => {
     const v = valoresDe(campo);
     return v.length ? v.reduce((a, b) => a + b, 0) : null;
@@ -10297,7 +10302,7 @@ function exportarFechamentoDiarioCSV() {
 }
 
 // ── Dashboard ──
-console.info('[SRJ2] Dashboard Fechamento BUILD v20 carregado');
+console.info('[SRJ2] Dashboard Fechamento BUILD v21 carregado');
 function normalizarDataFechamento(valor) {
   if (!valor) return '';
   if (valor instanceof Date && !Number.isNaN(valor.getTime())) return dataLocalParaIso(valor);
@@ -10307,6 +10312,55 @@ function normalizarDataFechamento(valor) {
   if (br) return `${br[3]}-${br[2]}-${br[1]}`;
   const d = new Date(raw);
   return Number.isNaN(d.getTime()) ? raw : dataLocalParaIso(d);
+}
+
+
+// Volumes são contagens inteiras de pacotes. Alguns lançamentos antigos foram
+// gravados com ponto/vírgula como separador de milhar (ex.: 57.894 ou 57,894),
+// e acabavam sendo interpretados como 57,894 no JavaScript. Esta função
+// converte esses formatos para a contagem correta sem quebrar inteiros normais.
+function normalizarVolumeFechamento(valor) {
+  if (valor === null || valor === undefined || valor === '') return null;
+
+  // Se já chegou como número do Supabase.
+  if (typeof valor === 'number') {
+    if (!Number.isFinite(valor)) return null;
+    if (Number.isInteger(valor)) return valor;
+
+    // Pacote não existe em fração. Números decimais abaixo de 1.000 são
+    // legado com separador de milhar: 57.894 => 57.894 pacotes.
+    if (Math.abs(valor) < 1000) return Math.round(valor * 1000);
+    return Math.round(valor);
+  }
+
+  let raw = String(valor).trim().replace(/\s+/g, '');
+  if (!raw) return null;
+
+  // 57.894 / 30.403 / 8.959: separador de milhar pt-BR.
+  if (/^-?\d{1,3}(?:\.\d{3})+$/.test(raw)) {
+    const n = Number(raw.replace(/\./g, ''));
+    return Number.isFinite(n) ? Math.round(n) : null;
+  }
+
+  // 57,894 / 30,403: também aceita vírgula usada como milhar em dados legados.
+  if (/^-?\d{1,3}(?:,\d{3})+$/.test(raw)) {
+    const n = Number(raw.replace(/,/g, ''));
+    return Number.isFinite(n) ? Math.round(n) : null;
+  }
+
+  // Formatos com ambos os separadores, escolhendo o último como decimal apenas
+  // para conseguir ler a string. Ao final o volume é sempre inteiro.
+  if (raw.includes('.') && raw.includes(',')) {
+    if (raw.lastIndexOf(',') > raw.lastIndexOf('.')) raw = raw.replace(/\./g, '').replace(',', '.');
+    else raw = raw.replace(/,/g, '');
+  } else if (raw.includes(',')) {
+    raw = raw.replace(',', '.');
+  }
+
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return null;
+  if (!Number.isInteger(n) && Math.abs(n) < 1000) return Math.round(n * 1000);
+  return Math.round(n);
 }
 
 let fdDashPeriodoPreset = '7d';
@@ -10486,7 +10540,7 @@ function renderDashboardFechamento() {
   const ciclosEl = document.getElementById('fd-dash-ciclos');
   if (ciclosEl) {
     ciclosEl.innerHTML = CICLOS_FECHAMENTO.map(ciclo => {
-      const c = fechamentoCiclos.find(x => x.data === data && x.ciclo === ciclo);
+      const c = fechamentoCiclos.find(x => normalizarDataFechamento(x.data) === normalizarDataFechamento(data) && x.ciclo === ciclo);
       if (!c) {
         return `<div class="fd-dash-ciclo vazio"><div class="fd-dash-ciclo-head"><span>${ICONES_CICLO_FECHAMENTO[ciclo]} ${ciclo}</span></div><div style="font-size:12px;color:var(--text-hint)">Não lançado</div></div>`;
       }
@@ -10527,7 +10581,7 @@ function renderJustificativasDashboardFechamento(data) {
 
   // Justificativas de cada ciclo
   CICLOS_FECHAMENTO.forEach(ciclo => {
-    const c = fechamentoCiclos.find(x => x.data === data && x.ciclo === ciclo);
+    const c = fechamentoCiclos.find(x => normalizarDataFechamento(x.data) === normalizarDataFechamento(data) && x.ciclo === ciclo);
     if (!c) return;
     const itens = indicadores
       .map(ind => {
@@ -10685,8 +10739,8 @@ function renderGraficosDashboardFechamento(dataFim) {
   if (canvasVol && window.Chart) {
     if (fdDashChartVolume) { fdDashChartVolume.destroy(); fdDashChartVolume = null; }
 
-    const projRaw = resultados.map(r => r.volumeProjetado);
-    const procRaw = resultados.map(r => r.volumeAtendido);
+    const projRaw = resultados.map(r => normalizarVolumeFechamento(r.volumeProjetado));
+    const procRaw = resultados.map(r => normalizarVolumeFechamento(r.volumeAtendido));
     const projMissing = projRaw.map(v => v === null || v === undefined || !Number.isFinite(Number(v)));
     const procMissing = procRaw.map(v => v === null || v === undefined || !Number.isFinite(Number(v)));
 
@@ -10700,6 +10754,7 @@ function renderGraficosDashboardFechamento(dataFim) {
             data: projRaw.map((v,i) => projMissing[i] ? 0 : Number(v)),
             fdMissing: projMissing,
             fdLabelColor:'#2D3277',
+            fdLabelFont:'800 11px Inter, sans-serif',
             backgroundColor: '#2D327799',
             borderRadius: 7,
             maxBarThickness: 36
@@ -10709,6 +10764,7 @@ function renderGraficosDashboardFechamento(dataFim) {
             data: procRaw.map((v,i) => procMissing[i] ? 0 : Number(v)),
             fdMissing: procMissing,
             fdLabelColor:'#1265c7',
+            fdLabelFont:'800 11px Inter, sans-serif',
             backgroundColor: '#3483FA',
             borderRadius: 7,
             maxBarThickness: 36
