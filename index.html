@@ -923,6 +923,30 @@
   .dit-empty-detail strong { color:#003B7A; }
   .dit-rank-card .dit-rank-list { max-height: 198px; }
 
+
+/* ════════════════════════════════════════
+   CENTRAL DE MEDIDAS v24
+════════════════════════════════════════ */
+#page-medidas{padding-bottom:34px;background:#f1f2f4;min-height:100vh}
+.med24-hero{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:22px 26px;margin-bottom:18px;border-radius:18px;background:linear-gradient(115deg,#16204c 0%,#243b85 58%,#3483FA 100%);color:#fff;box-shadow:0 12px 28px rgba(30,53,120,.18);border-left:7px solid #FFE600;overflow:hidden;position:relative}
+.med24-hero:after{content:'MED';position:absolute;right:24px;bottom:-26px;font-size:96px;font-weight:900;letter-spacing:-8px;color:rgba(255,255,255,.045);pointer-events:none}
+.med24-kicker,.med24-table-kicker{font-size:9px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#FFE600}
+.med24-hero h2{font-size:24px;line-height:1.1;margin:5px 0 6px;color:#fff}.med24-hero p{max-width:830px;font-size:11px;line-height:1.45;color:rgba(255,255,255,.82);margin:0}
+.med24-hero-actions{display:flex;gap:8px;flex-wrap:wrap;z-index:1}.med24-btn{height:34px;border-radius:9px;border:1px solid rgba(255,255,255,.22);padding:0 12px;font-weight:800;font-size:10px;cursor:pointer;color:#fff;background:rgba(255,255,255,.10);backdrop-filter:blur(4px)}.med24-btn:hover{background:rgba(255,255,255,.18)}.med24-btn.manual{background:#FFE600;color:#172554;border-color:#FFE600}
+.med24-section-head{display:flex;align-items:center;justify-content:space-between;margin:0 0 14px;padding:0 2px}.med24-section-head>span{font-size:11px;font-weight:900;letter-spacing:.07em;color:#26336f}
+.med24-tabs{display:flex;padding:4px;background:#fff;border:1px solid #dbe1ec;border-radius:999px;box-shadow:0 4px 12px rgba(45,50,119,.08)}.med24-tabs .med-tab-btn{border:0;background:transparent;color:#1f2a68;font-size:10px;font-weight:800;padding:8px 18px;border-radius:999px;cursor:pointer}.med24-tabs .med-tab-btn.active{color:#fff;background:linear-gradient(135deg,#2D3277,#3483FA);box-shadow:0 3px 8px rgba(52,131,250,.28)}
+.med24-score-grid{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:12px;margin-bottom:14px}.med24-score{background:#fff;border:1px solid #e4e8f0;border-radius:15px;padding:14px 15px;min-height:88px;box-shadow:0 5px 13px rgba(31,42,104,.06);position:relative;overflow:hidden}.med24-score:before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--score,#3483FA)}.med24-score-label{font-size:9px;font-weight:900;letter-spacing:.055em;text-transform:uppercase;color:#667085}.med24-score-value{font-size:27px;font-weight:900;color:#15213f;margin-top:5px}.med24-score-sub{font-size:9px;color:#98a2b3;margin-top:2px}
+.med24-filter-card{background:#fff;border:1px solid #e1e5ee;border-radius:15px;padding:14px 16px;margin-bottom:14px;box-shadow:0 4px 12px rgba(31,42,104,.05)}.med24-filter-card.compact{margin-bottom:14px}.med24-filter-title{font-size:10px;font-weight:900;color:#26336f;margin-bottom:10px}.med24-filter-grid{display:grid;grid-template-columns:130px 130px minmax(220px,1fr) 150px minmax(280px,1.4fr);gap:10px;align-items:end}.med24-filter-grid.hist{grid-template-columns:minmax(220px,.7fr) 160px minmax(320px,1.3fr)}
+.med24-field{display:flex;flex-direction:column;gap:5px}.med24-field label{font-size:9px;font-weight:800;color:#667085}.med24-field input,.med24-field select,.med24-field textarea{width:100%;border:1px solid #d8dee9;border-radius:9px;background:#fff;color:#25324a;padding:8px 10px;font:600 11px Inter,Arial,sans-serif;outline:none}.med24-field input:focus,.med24-field select:focus,.med24-field textarea:focus{border-color:#3483FA;box-shadow:0 0 0 3px rgba(52,131,250,.10)}.med24-field textarea{resize:vertical}.med24-search{display:flex;align-items:center;border:1px solid #d8dee9;border-radius:9px;padding-left:9px;background:#fff}.med24-search:focus-within{border-color:#3483FA;box-shadow:0 0 0 3px rgba(52,131,250,.10)}.med24-search input{border:0;box-shadow:none!important;padding-left:7px}.med24-filter-actions{display:flex;gap:6px;margin-top:10px}.med24-filter-actions button{border:1px solid #cdd6e5;background:#fff;color:#285cc4;border-radius:8px;padding:6px 11px;font:800 9px Inter;cursor:pointer}.med24-filter-actions button:hover{background:#f3f7ff}.med24-filter-actions button.clear{color:#667085}
+.med24-table-card{background:#fff;border:1px solid #e1e5ee;border-radius:16px;overflow:hidden;box-shadow:0 6px 16px rgba(31,42,104,.06)}.med24-table-head{padding:14px 17px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e9ecf2}.med24-table-head .med24-table-kicker{color:#8992a6}.med24-table-head strong{display:block;color:#202b67;font-size:14px;margin-top:2px}.med24-table-sub{font-size:9px;color:#98a2b3;margin-top:3px}.med24-count{font-size:10px;font-weight:800;color:#2D3277;background:#eef4ff;border:1px solid #d8e6ff;border-radius:999px;padding:7px 10px}.med24-table-wrap{max-height:580px}.med24-table thead th{position:sticky;top:0;z-index:2;background:#f3f5fb;color:#252d72;font-size:9px;font-weight:900;letter-spacing:.03em;padding:10px 12px;border-bottom:1px solid #dce1eb}.med24-table tbody td{padding:9px 12px;font-size:10px;color:#344054;border-bottom:1px solid #eef0f4;vertical-align:middle}.med24-table tbody tr:hover{background:#fafcff}.med24-table tbody tr:last-child td{border-bottom:0}
+.med24-person{display:inline-flex;flex-direction:column;gap:2px;min-width:210px;padding:7px 10px;border-radius:10px;border-left:4px solid #3483FA;background:#f4f8ff}.med24-person strong{font-size:10.5px;color:#172554;line-height:1.2}.med24-person span{font-size:8.5px;color:#7b8495}.med24-person.cia{border-color:#1d6fdc;background:#eef5ff}.med24-person.coa{border-color:#8357d5;background:#f5f0ff}.med24-person.outros{border-color:#e49b13;background:#fff7e7}.med24-person.multi{border-left-color:#2D3277;background:linear-gradient(90deg,#eef5ff,#f7f2ff 55%,#fff8e9)}
+.med24-origin{display:inline-flex;align-items:center;justify-content:center;min-width:54px;padding:5px 8px;border-radius:999px;font-size:9px;font-weight:900}.med24-origin.cia{color:#075fb9;background:#eaf4ff}.med24-origin.coa{color:#7041bd;background:#f1eaff}.med24-origin.outros{color:#9a6500;background:#fff3d6}.med24-origin.zero{color:#98a2b3;background:#f2f4f7}.med24-applied{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 8px;font-size:9px;font-weight:800}.med24-applied.feedback{background:#e9f3ff;color:#1766bd}.med24-applied.warning{background:#fff0e5;color:#b45700}.med24-status{display:flex;gap:5px;flex-wrap:wrap}.med24-status-chip{font-size:8.5px;font-weight:900;border-radius:999px;padding:5px 7px}.med24-status-chip.cia{background:#eaf4ff;color:#075fb9}.med24-status-chip.coa{background:#f1eaff;color:#7041bd}.med24-status-chip.manual{background:#fff3d6;color:#9a6500}.med24-status-chip.ok{background:#e9f7ef;color:#08783f}
+.med24-action{border:0;border-radius:9px;background:linear-gradient(135deg,#2D3277,#3483FA);color:#fff;padding:7px 13px;font-size:9px;font-weight:900;cursor:pointer;box-shadow:0 4px 9px rgba(52,131,250,.20)}.med24-action:hover{filter:brightness(1.05)}.med24-rule{margin-top:10px;padding:9px 12px;border:1px solid #e1e6ef;border-radius:10px;background:#f8f9fc;color:#667085;font-size:9px}.med-empty{padding:35px;text-align:center;color:#98a2b3;font-size:11px}
+.med24-manual-shell{display:grid;grid-template-columns:minmax(260px,.65fr) minmax(520px,1.35fr);gap:16px}.med24-manual-intro,.med24-manual-card{background:#fff;border:1px solid #e1e5ee;border-radius:16px;padding:20px;box-shadow:0 6px 16px rgba(31,42,104,.06)}.med24-manual-intro{display:flex;gap:14px;align-items:flex-start;background:linear-gradient(145deg,#172554,#243b85);color:#fff}.med24-manual-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:#FFE600;color:#172554;font-size:25px;font-weight:900;flex:0 0 auto}.med24-manual-intro .med24-table-kicker{color:#FFE600}.med24-manual-intro h3{margin:5px 0 8px;font-size:17px}.med24-manual-intro p{font-size:10px;line-height:1.55;color:rgba(255,255,255,.78)}.med24-manual-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.med24-field.span2{grid-column:span 2}.med24-manual-actions{display:flex;justify-content:flex-end;margin-top:14px}.med24-primary,.med24-secondary{border:0;border-radius:9px;padding:9px 14px;font:800 10px Inter;cursor:pointer}.med24-primary{background:linear-gradient(135deg,#2D3277,#3483FA);color:#fff}.med24-secondary{background:#f0f2f6;color:#465169}
+.med24-modal{max-width:620px!important;padding:0!important;overflow:hidden;border-radius:18px!important}.med24-modal-head{padding:17px 20px;background:linear-gradient(120deg,#172554,#2D3277);display:flex;justify-content:space-between;align-items:flex-start;color:#fff}.med24-modal-head h3{margin:3px 0 0;color:#fff}.med24-modal-close{border:0;background:rgba(255,255,255,.12);color:#fff;width:30px;height:30px;border-radius:8px;font-size:20px;cursor:pointer}.med24-modal-person{padding:14px 20px 8px;display:flex;flex-direction:column}.med24-modal-person strong{font-size:16px;color:#172554}.med24-modal-person span{font-size:9px;color:#7a8496;margin-top:3px}.med24-modal-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:8px 20px 14px}.med24-modal-metrics>div{background:#f6f8fc;border:1px solid #e5e9f1;border-radius:10px;padding:8px}.med24-modal-metrics span{display:block;font-size:7.5px;font-weight:800;text-transform:uppercase;color:#98a2b3}.med24-modal-metrics strong{display:block;margin-top:3px;font-size:11px;color:#25324a}.med24-modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;padding:0 20px 16px}.med24-modal-actions{display:flex;justify-content:flex-end;gap:8px;padding:13px 20px;background:#f7f8fb;border-top:1px solid #e8ebf1}
+@media(max-width:1100px){.med24-score-grid{grid-template-columns:repeat(3,1fr)}.med24-filter-grid{grid-template-columns:repeat(2,1fr)}.med24-field.search{grid-column:span 2}.med24-manual-shell{grid-template-columns:1fr}.med24-hero{align-items:flex-start;flex-direction:column}.med24-hero-actions{width:100%}}
+@media(max-width:700px){.med24-score-grid{grid-template-columns:1fr 1fr}.med24-tabs{width:100%;overflow:auto}.med24-section-head{align-items:flex-start;gap:10px;flex-direction:column}.med24-filter-grid,.med24-filter-grid.hist,.med24-manual-grid{grid-template-columns:1fr}.med24-field.search,.med24-field.span2{grid-column:auto}.med24-modal-metrics{grid-template-columns:1fr 1fr}}
+
 </style>
 </head>
 <body>
@@ -1700,86 +1724,100 @@
      CENTRAL DE MEDIDAS ADMINISTRATIVAS
 ════════════════════════════════════════ -->
 <div id="page-medidas" class="page">
-  <div class="med-hero">
-    <div>
-      <div class="med-hero-kicker">HCM · Tratativas</div>
+  <div class="med24-hero">
+    <div class="med24-hero-copy">
+      <div class="med24-kicker">HCM · TRATATIVAS</div>
       <h2>⚖️ Central de Medidas Administrativas</h2>
-      <p>Uma única fila por colaborador, com trilhas independentes por origem. CIA, COA, ABS e Outros nunca somam entre si para definir a progressão da medida.</p>
+      <p>Fila única dos ofensores. CIA, COA e Outros permanecem independentes; Feedback e Advertência são registrados por trilha.</p>
     </div>
-    <div class="med-hero-actions">
-      <button class="btn btn-sm" id="btn-medidas-meu-time" onclick="medidasFiltrarMeuTime()">👤 Meu time</button>
-      <button class="btn btn-sm" id="btn-medidas-manual-top" onclick="setMedidasSubTab('manual')">＋ Aplicação manual</button>
-      <button class="btn btn-sm" onclick="recarregarCentralMedidas()">↻ Atualizar</button>
+    <div class="med24-hero-actions">
+      <button class="med24-btn ghost" id="btn-medidas-meu-time" onclick="medidasFiltrarMeuTime()">👤 Meu time</button>
+      <button class="med24-btn manual" id="btn-medidas-manual-top" onclick="setMedidasSubTab('manual')">＋ Subir medida manual</button>
+      <button class="med24-btn ghost" onclick="recarregarCentralMedidas()">↻ Atualizar</button>
     </div>
   </div>
 
-  <div class="med-tabs">
-    <button class="med-tab-btn active" data-med-tab="pendentes" onclick="setMedidasSubTab('pendentes',this)">Pendentes</button>
-    <button class="med-tab-btn" data-med-tab="historico" onclick="setMedidasSubTab('historico',this)">Aplicadas / Histórico</button>
-    <button class="med-tab-btn" data-med-tab="manual" onclick="setMedidasSubTab('manual',this)">Aplicação manual</button>
+  <div class="med24-section-head">
+    <span>VISUALIZAÇÃO</span>
+    <div class="med24-tabs">
+      <button class="med-tab-btn active" data-med-tab="pendentes" onclick="setMedidasSubTab('pendentes',this)">Pendentes</button>
+      <button class="med-tab-btn" data-med-tab="historico" onclick="setMedidasSubTab('historico',this)">Histórico</button>
+      <button class="med-tab-btn" data-med-tab="manual" onclick="setMedidasSubTab('manual',this)">Aplicação manual</button>
+    </div>
   </div>
 
   <div id="medidas-tab-pendentes">
-    <div class="stats-row" id="medidas-scorecards"></div>
+    <div class="med24-score-grid" id="medidas-scorecards"></div>
 
-    <div class="med-filter-card">
-      <div class="med-filter-row">
-        <div class="med-filter-group"><label>De</label><input type="date" id="med-filtro-inicio" onchange="renderCentralMedidas()"></div>
-        <div class="med-filter-group"><label>Até</label><input type="date" id="med-filtro-fim" onchange="renderCentralMedidas()"></div>
-        <div class="med-filter-group"><label>Gestor</label><select id="med-filtro-gestor" onchange="renderCentralMedidas()"><option value="">Todos os gestores</option></select></div>
-        <div class="med-filter-group"><label>Origem</label><select id="med-filtro-origem" onchange="renderCentralMedidas()"><option value="">Todas</option><option value="CIA">CIA</option><option value="COA">COA</option><option value="ABS">ABS</option><option value="OUTROS">Outros</option></select></div>
-        <div class="med-filter-group"><label>Status</label><select id="med-filtro-status" onchange="renderCentralMedidas()"><option value="">Todos</option><option value="pendente">Com pendência</option><option value="tratado">Sem pendência</option></select></div>
-        <div class="med-filter-group grow"><label>Busca</label><input type="text" id="med-filtro-busca" placeholder="Nome, EXT, matrícula ou Groot..." oninput="renderCentralMedidas()"></div>
-        <button class="btn btn-secondary btn-sm" onclick="medidasDefinirPeriodo('7d')">7D</button>
-        <button class="btn btn-secondary btn-sm" onclick="medidasDefinirPeriodo('30d')">30D</button>
-        <button class="btn btn-secondary btn-sm" onclick="medidasDefinirPeriodo('mes')">Mês</button>
-        <button class="btn btn-secondary btn-sm" onclick="limparFiltrosMedidas()">Limpar</button>
+    <div class="med24-filter-card">
+      <div class="med24-filter-title">Filtros da fila</div>
+      <div class="med24-filter-grid">
+        <div class="med24-field"><label>De</label><input type="date" id="med-filtro-inicio" onchange="renderCentralMedidas()"></div>
+        <div class="med24-field"><label>Até</label><input type="date" id="med-filtro-fim" onchange="renderCentralMedidas()"></div>
+        <div class="med24-field wide"><label>Gestor</label><select id="med-filtro-gestor" onchange="renderCentralMedidas()"><option value="">Todos os gestores</option></select></div>
+        <div class="med24-field"><label>Origem</label><select id="med-filtro-origem" onchange="renderCentralMedidas()"><option value="">Todas</option><option value="CIA">CIA</option><option value="COA">COA</option><option value="OUTROS">Outros</option></select></div>
+        <div class="med24-field search"><label>Busca</label><div class="med24-search"><span>🔎</span><input type="text" id="med-filtro-busca" placeholder="Nome, EXT, matrícula ou Groot..." oninput="renderCentralMedidas()"></div></div>
+      </div>
+      <div class="med24-filter-actions">
+        <button onclick="medidasDefinirPeriodo('7d')">7D</button>
+        <button onclick="medidasDefinirPeriodo('30d')">30D</button>
+        <button onclick="medidasDefinirPeriodo('mes')">Mês</button>
+        <button class="clear" onclick="limparFiltrosMedidas()">Limpar filtros</button>
       </div>
     </div>
 
-    <div class="card">
-      <div class="search-bar" style="border-bottom:1px solid var(--border)">
-        <strong style="color:#2D3277">Fila de tratativas</strong>
-        <span class="count-badge" id="medidas-count">0 colaboradores</span>
+    <div class="med24-table-card">
+      <div class="med24-table-head">
+        <div>
+          <div class="med24-table-kicker">TRATATIVAS</div>
+          <strong>Fila de ofensores</strong>
+          <div class="med24-table-sub">Aparecem somente colaboradores com CIA/COA elegível ou medida manual no período.</div>
+        </div>
+        <span class="med24-count" id="medidas-count">0 ofensores</span>
       </div>
-      <div class="table-wrap">
-        <table>
+      <div class="table-wrap med24-table-wrap">
+        <table class="med24-table">
           <thead><tr>
-            <th>Colaborador</th><th>Gestor</th><th>CIA</th><th>COA</th><th>ABS</th><th>Outros</th><th>Pendências</th><th>Última medida</th><th style="text-align:right">Ação</th>
+            <th>Colaborador</th><th>Gestor</th><th>CIA</th><th>COA</th><th>Outros</th><th>Feedbacks</th><th>Advertências</th><th>Situação</th><th style="text-align:right">Ação</th>
           </tr></thead>
-          <tbody id="tbody-medidas"><tr><td colspan="9"><div class="med-empty">Carregando central...</div></td></tr></tbody>
+          <tbody id="tbody-medidas"><tr><td colspan="9"><div class="med-empty">Carregando ofensores...</div></td></tr></tbody>
         </table>
       </div>
     </div>
-    <div class="med-note" style="margin-top:10px">Regra atual CIA/COA: a origem fica elegível com 2 ou mais ocorrências no período selecionado. ABS e outras fontes já possuem trilha própria, mas serão alimentadas automaticamente quando conectarmos essas páginas à Central.</div>
+    <div class="med24-rule"><b>Regra atual:</b> CIA ou COA entra na fila a partir de 2 ocorrências no período. Medidas manuais entram pela origem <b>Outros</b> (ou pela trilha escolhida), sem somar CIA e COA entre si.</div>
   </div>
 
   <div id="medidas-tab-historico" style="display:none">
-    <div class="med-filter-card">
-      <div class="med-filter-row">
-        <div class="med-filter-group"><label>Gestor</label><select id="med-hist-gestor" onchange="renderHistoricoMedidasCentral()"><option value="">Todos os gestores</option></select></div>
-        <div class="med-filter-group"><label>Origem</label><select id="med-hist-origem" onchange="renderHistoricoMedidasCentral()"><option value="">Todas</option><option value="CIA">CIA</option><option value="COA">COA</option><option value="ABS">ABS</option><option value="OUTROS">Outros</option><option value="LEGADO">Legado</option></select></div>
-        <div class="med-filter-group grow"><label>Busca</label><input type="text" id="med-hist-busca" placeholder="Colaborador, EXT ou medida..." oninput="renderHistoricoMedidasCentral()"></div>
+    <div class="med24-filter-card compact">
+      <div class="med24-filter-title">Histórico de medidas</div>
+      <div class="med24-filter-grid hist">
+        <div class="med24-field wide"><label>Gestor</label><select id="med-hist-gestor" onchange="renderHistoricoMedidasCentral()"><option value="">Todos os gestores</option></select></div>
+        <div class="med24-field"><label>Origem</label><select id="med-hist-origem" onchange="renderHistoricoMedidasCentral()"><option value="">Todas</option><option value="CIA">CIA</option><option value="COA">COA</option><option value="OUTROS">Outros</option><option value="LEGADO">Legado</option></select></div>
+        <div class="med24-field search"><label>Busca</label><div class="med24-search"><span>🔎</span><input type="text" id="med-hist-busca" placeholder="Colaborador, EXT, motivo..." oninput="renderHistoricoMedidasCentral()"></div></div>
       </div>
     </div>
-    <div class="card"><div class="table-wrap"><table>
-      <thead><tr><th>Data</th><th>Colaborador</th><th>Gestor</th><th>Origem</th><th>Medida</th><th>Ocorrências</th><th>Período</th><th>Motivo / Observação</th><th>Aplicado por</th></tr></thead>
+    <div class="med24-table-card"><div class="table-wrap med24-table-wrap"><table class="med24-table">
+      <thead><tr><th>Data</th><th>Colaborador</th><th>Gestor</th><th>Origem</th><th>Medida</th><th>Motivo / Observação</th><th>Aplicado por</th></tr></thead>
       <tbody id="tbody-medidas-historico"></tbody>
     </table></div></div>
   </div>
 
   <div id="medidas-tab-manual" style="display:none">
-    <div class="med-manual-card">
-      <div class="section-label" style="margin-bottom:14px">Aplicação manual</div>
-      <div class="med-manual-grid">
-        <div class="form-group"><label>Colaborador</label><select id="med-manual-colaborador" onchange="atualizarSugestaoMedidaManual()"></select></div>
-        <div class="form-group"><label>Origem / trilha</label><select id="med-manual-origem" onchange="atualizarSugestaoMedidaManual()"><option value="CIA">CIA</option><option value="COA">COA</option><option value="ABS">ABS</option><option value="OUTROS">Outros</option></select></div>
-        <div class="form-group"><label>Medida</label><select id="med-manual-tipo"></select></div>
-        <div class="form-group"><label>Motivo</label><input type="text" id="med-manual-motivo" placeholder="Ex.: reincidência, conduta, procedimento..."></div>
+    <div class="med24-manual-shell">
+      <div class="med24-manual-intro">
+        <div class="med24-manual-icon">＋</div>
+        <div><div class="med24-table-kicker">LANÇAMENTO MANUAL</div><h3>Subir uma medida fora de CIA/COA</h3><p>Exemplo: LOG quebrou um pacote. Selecione o colaborador, escolha <b>Outros</b>, defina Feedback ou Advertência e descreva o motivo.</p></div>
       </div>
-      <div class="form-group" style="margin-top:12px"><label>Observação</label><textarea id="med-manual-observacao" rows="4" placeholder="Contexto da aplicação manual..." style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;resize:vertical"></textarea></div>
-      <div class="form-actions" style="margin-top:14px"><button class="btn btn-primary" id="btn-med-manual-salvar" onclick="salvarMedidaManual()">Registrar medida</button></div>
-      <div class="med-note" style="margin-top:10px">A aplicação manual entra na mesma trilha escolhida. Ex.: uma medida manual em CIA afeta somente a progressão de CIA daquele colaborador.</div>
+      <div class="med24-manual-card">
+        <div class="med24-manual-grid">
+          <div class="med24-field span2"><label>Colaborador</label><select id="med-manual-colaborador" onchange="atualizarSugestaoMedidaManual()"></select></div>
+          <div class="med24-field"><label>Origem</label><select id="med-manual-origem" onchange="atualizarSugestaoMedidaManual()"><option value="OUTROS" selected>Outros</option><option value="CIA">CIA</option><option value="COA">COA</option></select></div>
+          <div class="med24-field"><label>Medida</label><select id="med-manual-tipo"></select></div>
+          <div class="med24-field span2"><label>Motivo</label><input type="text" id="med-manual-motivo" placeholder="Ex.: Quebra de pacote durante operação"></div>
+          <div class="med24-field span2"><label>Observação</label><textarea id="med-manual-observacao" rows="4" placeholder="Descreva o contexto da tratativa..."></textarea></div>
+        </div>
+        <div class="med24-manual-actions"><button class="med24-primary" id="btn-med-manual-salvar" onclick="salvarMedidaManual()">Registrar medida manual</button></div>
+      </div>
     </div>
   </div>
 </div>
@@ -3387,20 +3425,25 @@
 
 <!-- Modal Aplicar Medida Administrativa -->
 <div class="modal-overlay" id="modal-aplicar-medida" onclick="fecharModalMedida()">
-  <div class="modal" style="max-width:560px" onclick="event.stopPropagation()">
-    <h3>Aplicar Medida Administrativa</h3>
-    <div style="margin:10px 0 4px"><strong id="medida-colaborador-nome" style="font-size:16px;color:#172554"></strong><div id="medida-colaborador-meta" style="font-size:11px;color:#667085;margin-top:3px"></div></div>
-    <div class="med-modal-context">
+  <div class="modal med24-modal" onclick="event.stopPropagation()">
+    <div class="med24-modal-head">
+      <div><div class="med24-table-kicker">TRATATIVA</div><h3>Aplicar Medida Administrativa</h3></div>
+      <button class="med24-modal-close" onclick="fecharModalMedida()">×</button>
+    </div>
+    <div class="med24-modal-person"><strong id="medida-colaborador-nome"></strong><span id="medida-colaborador-meta"></span></div>
+    <div class="med24-modal-metrics">
       <div><span>Período</span><strong id="medida-periodo">—</strong></div>
-      <div><span>Ocorrências da origem</span><strong id="medida-total-ofensas">0</strong></div>
+      <div><span>Ocorrências</span><strong id="medida-total-ofensas">0</strong></div>
+      <div><span>Feedbacks dados</span><strong id="medida-feedback-count">0</strong></div>
+      <div><span>Advertências dadas</span><strong id="medida-advertencia-count">0</strong></div>
     </div>
-    <div class="form-grid" style="grid-template-columns:1fr 1fr;margin-bottom:10px">
-      <div class="form-group"><label>Origem da medida</label><select id="medida-origem" onchange="atualizarModalMedidaPorOrigem()"><option value="CIA">CIA</option><option value="COA">COA</option><option value="ABS">ABS</option><option value="OUTROS">Outros</option></select></div>
-      <div class="form-group"><label>Medida</label><select id="medida-tipo"></select><span class="field-hint" id="medida-sugestao"></span></div>
+    <div class="med24-modal-grid">
+      <div class="med24-field"><label>Origem</label><select id="medida-origem" onchange="atualizarModalMedidaPorOrigem()"><option value="CIA">CIA</option><option value="COA">COA</option><option value="OUTROS">Outros</option></select></div>
+      <div class="med24-field"><label>Medida</label><select id="medida-tipo"></select><span class="field-hint" id="medida-sugestao"></span></div>
+      <div class="med24-field span2"><label>Motivo</label><input type="text" id="medida-motivo" placeholder="Motivo da tratativa"></div>
+      <div class="med24-field span2"><label>Observação (opcional)</label><textarea id="medida-observacao" rows="3" placeholder="Contexto do feedback ou advertência..."></textarea></div>
     </div>
-    <div class="form-group"><label>Motivo</label><input type="text" id="medida-motivo" placeholder="Motivo da tratativa"></div>
-    <div class="form-group" style="margin-top:10px"><label>Observação (opcional)</label><textarea id="medida-observacao" rows="3" placeholder="Descreva o feedback ou justificativa..." style="width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;resize:vertical;font-family:inherit"></textarea></div>
-    <div class="modal-actions"><button class="btn btn-secondary btn-sm" onclick="fecharModalMedida()">Cancelar</button><button class="btn btn-primary btn-sm" id="btn-confirmar-medida" onclick="confirmarAplicarMedida()">Confirmar e Registrar</button></div>
+    <div class="med24-modal-actions"><button class="med24-secondary" onclick="fecharModalMedida()">Cancelar</button><button class="med24-primary" id="btn-confirmar-medida" onclick="confirmarAplicarMedida()">Confirmar e registrar</button></div>
   </div>
 </div>
 
@@ -4595,10 +4638,7 @@ let consolidadoSortDirection = 'desc';
 // Ordem progressiva das medidas
 const ORDEM_MEDIDAS = [
   'Feedback',
-  'Advertência',
-  'Suspensão 1 dia',
-  'Suspensão 3 dias',
-  'Justa Causa'
+  'Advertência'
 ];
 
 // Instâncias dos gráficos do Dashboard de Anomalias
@@ -6114,7 +6154,7 @@ function renderConsolidado() {
       : `<span style="color:var(--danger-text)">Não cadastrado</span>`;
 
     const btnHTML = d.id
-      ? `<button class="btn btn-primary btn-sm" onclick="abrirModalAplicarMedida('${d.id}')">Aplicar Medida</button>`
+      ? `<button class="btn btn-primary btn-sm" onclick="abrirColaboradorNaCentralMedidas('${d.id}')">Ver na Central</button>`
       : `<span style="color:var(--text-hint);font-size:12px">Colaborador não cadastrado</span>`;
 
     return `
@@ -6148,35 +6188,59 @@ function sortConsolidado(column) {
 // ════════════════════════════════════════
 //  CENTRAL DE MEDIDAS ADMINISTRATIVAS
 // ════════════════════════════════════════
-const MEDIDA_ORIGENS = ['CIA','COA','ABS','OUTROS'];
+// CENTRAL DE MEDIDAS v24
+// ════════════════════════════════════════
+const MEDIDA_ORIGENS = ['CIA','COA','OUTROS'];
 let medidasSubTabAtual = 'pendentes';
 let medidasInicializadas = false;
 let medidasContextoModal = null;
 
 function medidaOrigemRegistro(m) {
   const o = asText(m?.origem || '').trim().toUpperCase();
-  if (MEDIDA_ORIGENS.includes(o)) return o;
+  if (['CIA','COA','OUTROS','ABS'].includes(o)) return o;
   const obs = asText(m?.observacao || '');
   const hit = obs.match(/\[ORIGEM:(CIA|COA|ABS|OUTROS)\]/i);
   return hit ? hit[1].toUpperCase() : 'LEGADO';
 }
 
 function medidasDaTrilha(colaboradorId, origem) {
-  return historicoMedidas
+  return (historicoMedidas || [])
     .filter(m => String(m.colaborador_id) === String(colaboradorId) && medidaOrigemRegistro(m) === origem)
-    .sort((a,b) => String(b.created_at || b.data_aplicacao || '').localeCompare(String(a.created_at || a.data_aplicacao || '')));
+    .sort((a,b) => String(b.data_aplicacao || b.created_at || '').localeCompare(String(a.data_aplicacao || a.created_at || '')));
+}
+
+function medidasResumoAplicadas(colaboradorId, origem=null) {
+  const lista=(historicoMedidas||[]).filter(m=>String(m.colaborador_id)===String(colaboradorId) && (!origem || medidaOrigemRegistro(m)===origem));
+  return {
+    feedback: lista.filter(m=>normalizarTextoComparacao(m.tipo_medida)==='feedback').length,
+    advertencia: lista.filter(m=>normalizarTextoComparacao(m.tipo_medida).startsWith('advert')).length
+  };
 }
 
 function determinarProximaMedidaPorOrigem(colaboradorId, origem) {
-  const qtd = medidasDaTrilha(colaboradorId, origem).length;
-  return ORDEM_MEDIDAS[Math.min(qtd, ORDEM_MEDIDAS.length - 1)] || ORDEM_MEDIDAS[0];
+  const r=medidasResumoAplicadas(colaboradorId,origem);
+  return (r.feedback===0 && r.advertencia===0) ? 'Feedback' : 'Advertência';
+}
+
+function medidaDataRegistroIso(m){
+  const raw=m?.data_aplicacao || m?.created_at || '';
+  if(!raw)return '';
+  const n=normalizarDataFechamento(raw);
+  return /^\d{4}-\d{2}-\d{2}$/.test(n)?n:String(raw).slice(0,10);
+}
+
+function medidaEstaNoPeriodo(m,inicio,fim){
+  const d=medidaDataRegistroIso(m);
+  return !!d && d>=inicio && d<=fim;
 }
 
 function medidaAplicadaNoPeriodo(colaboradorId, origem, inicio, fim) {
   return medidasDaTrilha(colaboradorId, origem).some(m => {
-    const mi = normalizarDataFechamento(m.periodo_inicio || '');
-    const mf = normalizarDataFechamento(m.periodo_fim || '');
-    return mi === inicio && mf === fim;
+    if(m.manual) return medidaEstaNoPeriodo(m,inicio,fim);
+    const mi=normalizarDataFechamento(m.periodo_inicio||'');
+    const mf=normalizarDataFechamento(m.periodo_fim||'');
+    if(mi && mf) return mi>=inicio && mf<=fim;
+    return medidaEstaNoPeriodo(m,inicio,fim);
   });
 }
 
@@ -6196,37 +6260,35 @@ function medidasContarAnomaliasPorColaborador(inicio, fim) {
 
 function medidasPopularSelect(id, valores, placeholder) {
   const el=document.getElementById(id); if(!el)return;
-  const atual=el.value || '';
+  const atual=el.value||'';
   const vals=[...new Set((valores||[]).map(v=>asText(v).trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));
   el.innerHTML=`<option value="">${escapeHtml(placeholder)}</option>`+vals.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
-  if(vals.includes(atual)) el.value=atual;
+  if(vals.includes(atual))el.value=atual;
 }
 
-function medidasPeriodoAtual() {
-  const fim = document.getElementById('med-filtro-fim')?.value || hojeIsoLocal();
-  const ini = document.getElementById('med-filtro-inicio')?.value || (()=>{const d=isoParaDataLocal(fim);d.setDate(d.getDate()-6);return dataLocalParaIso(d)})();
-  return ini <= fim ? {inicio:ini,fim} : {inicio:fim,fim:ini};
+function medidasPeriodoAtual(){
+  const fim=document.getElementById('med-filtro-fim')?.value||hojeIsoLocal();
+  const ini=document.getElementById('med-filtro-inicio')?.value||(()=>{const d=isoParaDataLocal(fim);d.setDate(d.getDate()-6);return dataLocalParaIso(d)})();
+  return ini<=fim?{inicio:ini,fim}:{inicio:fim,fim:ini};
 }
 
-function medidasDefinirPeriodo(tipo) {
-  const fim=hojeIsoLocal(); const d=isoParaDataLocal(fim);
-  if(tipo==='7d') d.setDate(d.getDate()-6);
-  if(tipo==='30d') d.setDate(d.getDate()-29);
-  if(tipo==='mes') d.setDate(1);
-  const ini=dataLocalParaIso(d);
-  const a=document.getElementById('med-filtro-inicio'), b=document.getElementById('med-filtro-fim');
-  if(a)a.value=ini; if(b)b.value=fim; renderCentralMedidas();
+function medidasDefinirPeriodo(tipo){
+  const fim=hojeIsoLocal(),d=isoParaDataLocal(fim);
+  if(tipo==='7d')d.setDate(d.getDate()-6);
+  if(tipo==='30d')d.setDate(d.getDate()-29);
+  if(tipo==='mes')d.setDate(1);
+  const a=document.getElementById('med-filtro-inicio'),b=document.getElementById('med-filtro-fim');
+  if(a)a.value=dataLocalParaIso(d);if(b)b.value=fim;renderCentralMedidas();
 }
 
 function limparFiltrosMedidas(){
-  ['med-filtro-gestor','med-filtro-origem','med-filtro-status','med-filtro-busca'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['med-filtro-gestor','med-filtro-origem','med-filtro-busca'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   medidasDefinirPeriodo('7d');
 }
 
 function medidasFiltrarMeuTime(){
-  const nome=asText(usuarioAtual?.nome).trim();
-  const select=document.getElementById('med-filtro-gestor');
-  if(!select || !nome)return;
+  const nome=asText(usuarioAtual?.nome).trim(),select=document.getElementById('med-filtro-gestor');
+  if(!select||!nome)return;
   const opt=Array.from(select.options).find(o=>normalizarNomeGestor(o.value)===normalizarNomeGestor(nome));
   if(opt){select.value=opt.value;renderCentralMedidas();toast('Filtro aplicado ao seu time.','success');}
   else toast('Seu nome não aparece como gestor na base de Headcount.','error');
@@ -6236,177 +6298,225 @@ function setMedidasSubTab(tab,btnEl){
   medidasSubTabAtual=tab;
   document.querySelectorAll('.med-tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.medTab===tab));
   ['pendentes','historico','manual'].forEach(t=>{const e=document.getElementById('medidas-tab-'+t);if(e)e.style.display=t===tab?'':'none';});
-  if(tab==='historico') renderHistoricoMedidasCentral();
-  if(tab==='manual') popularFormularioMedidaManual();
+  if(tab==='historico')renderHistoricoMedidasCentral();
+  if(tab==='manual')popularFormularioMedidaManual();
 }
 
 function inicializarCentralMedidas(){
-  const ini=document.getElementById('med-filtro-inicio'), fim=document.getElementById('med-filtro-fim');
-  if(ini && !ini.value){const d=new Date();d.setDate(d.getDate()-6);ini.value=dataLocalParaIso(d);}
-  if(fim && !fim.value)fim.value=hojeIsoLocal();
-  medidasInicializadas=true;
-  renderCentralMedidas();
-  renderHistoricoMedidasCentral();
-  popularFormularioMedidaManual();
+  const ini=document.getElementById('med-filtro-inicio'),fim=document.getElementById('med-filtro-fim');
+  if(ini&&!ini.value){const d=new Date();d.setDate(d.getDate()-6);ini.value=dataLocalParaIso(d);}
+  if(fim&&!fim.value)fim.value=hojeIsoLocal();
+  medidasInicializadas=true;renderCentralMedidas();renderHistoricoMedidasCentral();popularFormularioMedidaManual();
 }
 
 async function recarregarCentralMedidas(){
-  await Promise.all([carregarHistoricoMedidas(), carregarAnomalias({silencioso:true,renderizar:false})]);
-  renderCentralMedidas(); renderHistoricoMedidasCentral();
-  toast('Central de Medidas atualizada.','success');
+  await Promise.all([carregarHistoricoMedidas(),carregarAnomalias({silencioso:true,renderizar:false})]);
+  renderCentralMedidas();renderHistoricoMedidasCentral();toast('Central de Medidas atualizada.','success');
 }
 
 function construirBaseCentralMedidas(){
   const {inicio,fim}=medidasPeriodoAtual();
   const counts=medidasContarAnomaliasPorColaborador(inicio,fim);
   const ativos=(heads||[]).filter(h=>lower(h.status||'ativo')==='ativo');
+
   return ativos.map(h=>{
-    const c=counts.get(normalizeExt(h.ext)) || {CIA:0,COA:0};
-    const qtd={CIA:c.CIA||0,COA:c.COA||0,ABS:0,OUTROS:0};
-    const pendencias=MEDIDA_ORIGENS.filter(o=>{
-      if(o==='ABS'||o==='OUTROS') return false;
-      return qtd[o]>=2 && !medidaAplicadaNoPeriodo(h.id,o,inicio,fim);
-    });
-    const trilhas=MEDIDA_ORIGENS.flatMap(o=>medidasDaTrilha(h.id,o));
-    trilhas.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
-    return {...h,medQtd:qtd,medPendencias:pendencias,medUltima:trilhas[0]||null};
-  });
+    const c=counts.get(normalizeExt(h.ext))||{CIA:0,COA:0};
+    const manuaisPeriodo=(historicoMedidas||[]).filter(m=>String(m.colaborador_id)===String(h.id)&&m.manual===true&&['CIA','COA','OUTROS'].includes(medidaOrigemRegistro(m))&&medidaEstaNoPeriodo(m,inicio,fim));
+    const manualPorOrigem={CIA:0,COA:0,OUTROS:0};
+    manuaisPeriodo.forEach(m=>manualPorOrigem[medidaOrigemRegistro(m)]++);
+
+    const fontes=[];
+    if((c.CIA||0)>=2 || manualPorOrigem.CIA>0)fontes.push('CIA');
+    if((c.COA||0)>=2 || manualPorOrigem.COA>0)fontes.push('COA');
+    if(manualPorOrigem.OUTROS>0)fontes.push('OUTROS');
+    if(!fontes.length)return null;
+
+    const qtd={CIA:c.CIA||0,COA:c.COA||0,OUTROS:manualPorOrigem.OUTROS};
+    const pendencias=[];
+    if(qtd.CIA>=2&&!medidaAplicadaNoPeriodo(h.id,'CIA',inicio,fim))pendencias.push('CIA');
+    if(qtd.COA>=2&&!medidaAplicadaNoPeriodo(h.id,'COA',inicio,fim))pendencias.push('COA');
+
+    const trilhas=['CIA','COA','OUTROS'].flatMap(o=>medidasDaTrilha(h.id,o));
+    trilhas.sort((a,b)=>String(b.data_aplicacao||b.created_at||'').localeCompare(String(a.data_aplicacao||a.created_at||'')));
+    const resumo=medidasResumoAplicadas(h.id);
+    return {...h,medQtd:qtd,medFontes:fontes,medPendencias:pendencias,medUltima:trilhas[0]||null,medFeedbacks:resumo.feedback,medAdvertencias:resumo.advertencia};
+  }).filter(Boolean);
 }
 
 function atualizarScorecardsCentralMedidas(lista){
-  const el=document.getElementById('medidas-scorecards'); if(!el)return;
-  const pendentes=lista.filter(x=>x.medPendencias.length).length;
-  const cia=lista.reduce((s,x)=>s+(x.medPendencias.includes('CIA')?1:0),0);
-  const coa=lista.reduce((s,x)=>s+(x.medPendencias.includes('COA')?1:0),0);
-  const aplicadas=historicoMedidas.filter(m=>medidaOrigemRegistro(m)!=='LEGADO').length;
+  const el=document.getElementById('medidas-scorecards');if(!el)return;
+  const pendCIA=lista.filter(x=>x.medPendencias.includes('CIA')).length;
+  const pendCOA=lista.filter(x=>x.medPendencias.includes('COA')).length;
+  const feedback=lista.reduce((s,x)=>s+x.medFeedbacks,0);
+  const advert=lista.reduce((s,x)=>s+x.medAdvertencias,0);
   el.innerHTML=`
-    <div class="stat-card"><div class="stat-label">Colaboradores pendentes</div><div class="stat-value" style="color:#c62828">${pendentes}</div><div class="stat-sub">no recorte atual</div></div>
-    <div class="stat-card"><div class="stat-label">Pendências CIA</div><div class="stat-value" style="color:#003B7A">${cia}</div><div class="stat-sub">trilha independente</div></div>
-    <div class="stat-card"><div class="stat-label">Pendências COA</div><div class="stat-value" style="color:#7B2FBE">${coa}</div><div class="stat-sub">trilha independente</div></div>
-    <div class="stat-card"><div class="stat-label">Medidas registradas</div><div class="stat-value" style="color:#08783f">${aplicadas}</div><div class="stat-sub">histórico categorizado</div></div>`;
+    <div class="med24-score" style="--score:#2D3277"><div class="med24-score-label">Ofensores no recorte</div><div class="med24-score-value">${lista.length}</div><div class="med24-score-sub">somente quem exige acompanhamento</div></div>
+    <div class="med24-score" style="--score:#3483FA"><div class="med24-score-label">Pendências CIA</div><div class="med24-score-value">${pendCIA}</div><div class="med24-score-sub">CIA ≥ 2 no período</div></div>
+    <div class="med24-score" style="--score:#8357d5"><div class="med24-score-label">Pendências COA</div><div class="med24-score-value">${pendCOA}</div><div class="med24-score-sub">COA ≥ 2 no período</div></div>
+    <div class="med24-score" style="--score:#1766bd"><div class="med24-score-label">Feedbacks já dados</div><div class="med24-score-value">${feedback}</div><div class="med24-score-sub">para os ofensores exibidos</div></div>
+    <div class="med24-score" style="--score:#e47700"><div class="med24-score-label">Advertências já dadas</div><div class="med24-score-value">${advert}</div><div class="med24-score-sub">para os ofensores exibidos</div></div>`;
 }
 
-function medBadgeOrigem(origem,valor){
-  const cls=origem==='CIA'?'med-source-cia':origem==='COA'?'med-source-coa':origem==='ABS'?'med-source-abs':'med-source-outros';
-  return `<span class="med-source-badge ${cls}">${origem==='OUTROS'?'Outros':origem} · ${valor}</span>`;
+function med24OrigemChip(origem,valor){
+  const cls=origem==='CIA'?'cia':origem==='COA'?'coa':'outros';
+  return `<span class="med24-origin ${valor?' '+cls:' zero'}">${origem==='OUTROS'?'Outros':origem} · ${valor||0}</span>`;
+}
+
+function med24PessoaClasse(x){
+  if(x.medFontes.length>1)return 'multi';
+  return x.medFontes[0]==='CIA'?'cia':x.medFontes[0]==='COA'?'coa':'outros';
 }
 
 function renderCentralMedidas(){
-  const tbody=document.getElementById('tbody-medidas'); if(!tbody)return;
+  const tbody=document.getElementById('tbody-medidas');if(!tbody)return;
   let base=construirBaseCentralMedidas();
   medidasPopularSelect('med-filtro-gestor',base.map(x=>x.gestor),'Todos os gestores');
-  medidasPopularSelect('med-hist-gestor',base.map(x=>x.gestor),'Todos os gestores');
+  medidasPopularSelect('med-hist-gestor',heads.map(x=>x.gestor),'Todos os gestores');
   const gestor=document.getElementById('med-filtro-gestor')?.value||'';
   const origem=document.getElementById('med-filtro-origem')?.value||'';
-  const status=document.getElementById('med-filtro-status')?.value||'';
   const busca=lower(document.getElementById('med-filtro-busca')?.value||'');
   let lista=base.filter(x=>{
-    if(gestor && asText(x.gestor)!==gestor)return false;
-    if(origem && !(x.medQtd[origem]>0 || x.medPendencias.includes(origem) || medidasDaTrilha(x.id,origem).length))return false;
-    if(status==='pendente'&&!x.medPendencias.length)return false;
-    if(status==='tratado'&&x.medPendencias.length)return false;
-    if(busca && ![x.nome,x.ext,x.matriculaTpl,x.groot,x.gestor].some(v=>lower(v||'').includes(busca)))return false;
+    if(gestor&&asText(x.gestor)!==gestor)return false;
+    if(origem&&!x.medFontes.includes(origem))return false;
+    if(busca&&![x.nome,x.ext,x.matriculaTpl,x.groot,x.gestor].some(v=>lower(v||'').includes(busca)))return false;
     return true;
   });
-  // Fila de tratativas primeiro; depois nomes com histórico no período/contexto.
   lista.sort((a,b)=>(b.medPendencias.length-a.medPendencias.length)||asText(a.nome).localeCompare(asText(b.nome),'pt-BR'));
   atualizarScorecardsCentralMedidas(lista);
-  const count=document.getElementById('medidas-count'); if(count)count.textContent=`${lista.length} colaborador(es) · ${lista.reduce((s,x)=>s+x.medPendencias.length,0)} pendência(s)`;
-  if(!lista.length){tbody.innerHTML='<tr><td colspan="9"><div class="med-empty">Nenhum colaborador encontrado nesse recorte.</div></td></tr>';return;}
+  const pendTotal=lista.reduce((s,x)=>s+x.medPendencias.length,0);
+  const count=document.getElementById('medidas-count');if(count)count.textContent=`${lista.length} ofensor(es) · ${pendTotal} pendência(s)`;
+  if(!lista.length){tbody.innerHTML='<tr><td colspan="9"><div class="med-empty">Nenhum ofensor encontrado nesse recorte.</div></td></tr>';return;}
+
   tbody.innerHTML=lista.map(x=>{
-    const ultima=x.medUltima ? `${medidaOrigemRegistro(x.medUltima)} · ${escapeHtml(x.medUltima.tipo_medida||'—')}` : '—';
-    const pend=x.medPendencias.length ? x.medPendencias.map(o=>`<span class="med-source-badge med-pendente">${o}</span>`).join(' ') : '<span class="med-source-badge med-ok">Sem pendência</span>';
+    const status=x.medPendencias.length
+      ? x.medPendencias.map(o=>`<span class="med24-status-chip ${o.toLowerCase()}">${o} pendente</span>`).join('')
+      : (x.medFontes.includes('OUTROS')?'<span class="med24-status-chip manual">Manual registrado</span>':'<span class="med24-status-chip ok">Tratado</span>');
     const podeAplicar=pode('aplicar_medidas');
+    const fonteBadges=x.medFontes.map(o=>`<span class="med24-status-chip ${o==='OUTROS'?'manual':o.toLowerCase()}">${o==='OUTROS'?'OUTROS':o}</span>`).join('');
     return `<tr>
-      <td><div class="med-person"><strong>${escapeHtml(x.nome||'—')}</strong><span>${escapeHtml(x.ext||'—')} · ${escapeHtml(x.matriculaTpl||'sem matrícula')}</span></div></td>
-      <td>${escapeHtml(x.gestor||'—')}</td>
-      <td>${medBadgeOrigem('CIA',x.medQtd.CIA)}</td><td>${medBadgeOrigem('COA',x.medQtd.COA)}</td><td>${medBadgeOrigem('ABS',x.medQtd.ABS)}</td><td>${medBadgeOrigem('OUTROS',x.medQtd.OUTROS)}</td>
-      <td><div class="med-origin-list">${pend}</div></td><td>${ultima}</td>
-      <td style="text-align:right">${podeAplicar?`<button class="btn btn-primary btn-sm" onclick="abrirModalAplicarMedida('${x.id}')">Tratar</button>`:'<span style="font-size:10px;color:#98a2b3">Somente leitura</span>'}</td>
+      <td><div class="med24-person ${med24PessoaClasse(x)}"><strong>${escapeHtml(x.nome||'—')}</strong><span>${escapeHtml(x.ext||'—')} · ${escapeHtml(x.matriculaTpl||'sem matrícula')} &nbsp; ${fonteBadges}</span></div></td>
+      <td><strong style="color:#44506a">${escapeHtml(x.gestor||'—')}</strong></td>
+      <td>${med24OrigemChip('CIA',x.medQtd.CIA)}</td>
+      <td>${med24OrigemChip('COA',x.medQtd.COA)}</td>
+      <td>${med24OrigemChip('OUTROS',x.medQtd.OUTROS)}</td>
+      <td><span class="med24-applied feedback">💬 ${x.medFeedbacks}</span></td>
+      <td><span class="med24-applied warning">⚠️ ${x.medAdvertencias}</span></td>
+      <td><div class="med24-status">${status}</div></td>
+      <td style="text-align:right">${podeAplicar?`<button class="med24-action" onclick="abrirModalAplicarMedida('${x.id}')">Tratar</button>`:'<span style="font-size:9px;color:#98a2b3">Somente leitura</span>'}</td>
     </tr>`;
   }).join('');
 }
 
 function preencherSelectTiposMedida(selectId,sugerida){
-  const el=document.getElementById(selectId); if(!el)return;
+  const el=document.getElementById(selectId);if(!el)return;
   el.innerHTML=ORDEM_MEDIDAS.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
   if(ORDEM_MEDIDAS.includes(sugerida))el.value=sugerida;
 }
 
 function abrirModalAplicarMedida(colaboradorId,origemPreferida){
-  const h=heads.find(x=>String(x.id)===String(colaboradorId)); if(!h){toast('Colaborador não encontrado.','error');return;}
+  const h=heads.find(x=>String(x.id)===String(colaboradorId));if(!h){toast('Colaborador não encontrado.','error');return;}
   const base=construirBaseCentralMedidas().find(x=>String(x.id)===String(colaboradorId));
   const {inicio,fim}=medidasPeriodoAtual();
-  const origem=origemPreferida || base?.medPendencias?.[0] || 'CIA';
+  const origem=origemPreferida||base?.medPendencias?.[0]||base?.medFontes?.[0]||'OUTROS';
   medidasContextoModal={colaboradorId:h.id,inicio,fim,base};
   document.getElementById('medida-colaborador-nome').textContent=h.nome||'Colaborador';
   document.getElementById('medida-colaborador-meta').textContent=`${h.gestor||'Sem gestor'} · EXT ${h.ext||'—'} · Groot ${h.groot||'—'}`;
   document.getElementById('medida-periodo').textContent=`${inicio.split('-').reverse().join('/')} → ${fim.split('-').reverse().join('/')}`;
-  const sel=document.getElementById('medida-origem'); if(sel)sel.value=origem;
-  document.getElementById('medida-motivo').value=''; document.getElementById('medida-observacao').value='';
-  atualizarModalMedidaPorOrigem(); document.getElementById('modal-aplicar-medida').classList.add('open');
+  const sel=document.getElementById('medida-origem');if(sel)sel.value=['CIA','COA','OUTROS'].includes(origem)?origem:'OUTROS';
+  document.getElementById('medida-motivo').value='';document.getElementById('medida-observacao').value='';
+  atualizarModalMedidaPorOrigem();document.getElementById('modal-aplicar-medida').classList.add('open');
 }
 
 function atualizarModalMedidaPorOrigem(){
   if(!medidasContextoModal)return;
-  const origem=document.getElementById('medida-origem')?.value||'CIA';
-  const h=heads.find(x=>String(x.id)===String(medidasContextoModal.colaboradorId)); if(!h)return;
-  const qtd=medidasContextoModal.base?.medQtd?.[origem] || 0;
+  const origem=document.getElementById('medida-origem')?.value||'OUTROS';
+  const h=heads.find(x=>String(x.id)===String(medidasContextoModal.colaboradorId));if(!h)return;
+  const qtd=medidasContextoModal.base?.medQtd?.[origem]||0;
+  const resumo=medidasResumoAplicadas(h.id,origem);
+  document.getElementById('medida-total-ofensas').textContent=(origem==='CIA'||origem==='COA')?qtd:(qtd||'manual');
+  document.getElementById('medida-feedback-count').textContent=resumo.feedback;
+  document.getElementById('medida-advertencia-count').textContent=resumo.advertencia;
   const sugerida=determinarProximaMedidaPorOrigem(h.id,origem);
-  document.getElementById('medida-total-ofensas').textContent = (origem==='CIA'||origem==='COA') ? qtd : 'manual';
   preencherSelectTiposMedida('medida-tipo',sugerida);
-  const s=document.getElementById('medida-sugestao'); if(s)s.textContent=`Sugestão da trilha ${origem}: ${sugerida}`;
+  const s=document.getElementById('medida-sugestao');if(s)s.textContent=`Sugestão da trilha ${origem}: ${sugerida}`;
 }
 
 function fecharModalMedida(){document.getElementById('modal-aplicar-medida')?.classList.remove('open');medidasContextoModal=null;}
 
 async function inserirMedidaCentral(payload){
   const {error}=await db.from('historico_medidas').insert([payload]);
-  if(error){
-    const msg=asText(error.message||error);
-    if(/origem|gestor|motivo|quantidade_ocorrencias|periodo_inicio|periodo_fim|manual/i.test(msg)){
-      throw new Error('A tabela historico_medidas ainda não recebeu a migração da Central de Medidas. Execute o SQL Medidas_Central_Migracao.sql no Supabase e tente novamente.');
-    }
-    throw error;
-  }
+  if(error){const msg=asText(error.message||error);if(/origem|gestor|motivo|quantidade_ocorrencias|periodo_inicio|periodo_fim|manual/i.test(msg))throw new Error('A tabela historico_medidas ainda não recebeu a migração da Central de Medidas.');throw error;}
 }
 
 async function confirmarAplicarMedida(){
   if(!medidasContextoModal)return;
-  const h=heads.find(x=>String(x.id)===String(medidasContextoModal.colaboradorId)); if(!h)return;
+  const h=heads.find(x=>String(x.id)===String(medidasContextoModal.colaboradorId));if(!h)return;
   const origem=document.getElementById('medida-origem').value;
   const tipo=document.getElementById('medida-tipo').value;
   const motivo=document.getElementById('medida-motivo').value.trim();
   const obs=document.getElementById('medida-observacao').value.trim();
-  const qtd=medidasContextoModal.base?.medQtd?.[origem] || 0;
-  const btn=document.getElementById('btn-confirmar-medida'); setButtonLoading(btn,true,'Salvando...');
+  const qtd=medidasContextoModal.base?.medQtd?.[origem]||0;
+  const btn=document.getElementById('btn-confirmar-medida');setButtonLoading(btn,true,'Salvando...');
   try{
-    await inserirMedidaCentral({colaborador_id:h.id,colaborador_nome:h.nome,ext:h.ext,groot_id:h.groot,tipo_medida:tipo,status:'Aplicada',observacao:obs||null,registrado_por:usuarioAtual?.nome||usuarioAtual?.usuario||'Sistema',origem,gestor:h.gestor||null,motivo:motivo||null,quantidade_ocorrencias:qtd,periodo_inicio:medidasContextoModal.inicio,periodo_fim:medidasContextoModal.fim,manual:false});
-    await carregarHistoricoMedidas(); fecharModalMedida(); renderCentralMedidas(); renderHistoricoMedidasCentral(); toast(`Medida ${tipo} registrada na trilha ${origem}.`,'success');
+    await inserirMedidaCentral({colaborador_id:h.id,colaborador_nome:h.nome,ext:h.ext,groot_id:h.groot,tipo_medida:tipo,status:'Aplicada',observacao:obs||null,registrado_por:usuarioAtual?.nome||usuarioAtual?.usuario||'Sistema',origem,gestor:h.gestor||null,motivo:motivo||null,quantidade_ocorrencias:qtd||null,periodo_inicio:medidasContextoModal.inicio,periodo_fim:medidasContextoModal.fim,manual:origem==='OUTROS'});
+    await carregarHistoricoMedidas();fecharModalMedida();renderCentralMedidas();renderHistoricoMedidasCentral();toast(`${tipo} registrado em ${origem}.`,'success');
   }catch(e){console.error(e);toast(e.message||String(e),'error');}finally{setButtonLoading(btn,false);}
 }
 
 function popularFormularioMedidaManual(){
-  const sel=document.getElementById('med-manual-colaborador'); if(sel){const atual=sel.value;sel.innerHTML='<option value="">Selecione...</option>'+heads.filter(h=>lower(h.status||'ativo')==='ativo').sort((a,b)=>asText(a.nome).localeCompare(asText(b.nome),'pt-BR')).map(h=>`<option value="${h.id}">${escapeHtml(h.nome)} · ${escapeHtml(h.gestor||'sem gestor')}</option>`).join('');if(atual)sel.value=atual;}
+  const sel=document.getElementById('med-manual-colaborador');
+  if(sel){const atual=sel.value;sel.innerHTML='<option value="">Selecione o colaborador...</option>'+heads.filter(h=>lower(h.status||'ativo')==='ativo').sort((a,b)=>asText(a.nome).localeCompare(asText(b.nome),'pt-BR')).map(h=>`<option value="${h.id}">${escapeHtml(h.nome)} · ${escapeHtml(h.gestor||'sem gestor')}</option>`).join('');if(atual)sel.value=atual;}
+  const origem=document.getElementById('med-manual-origem');if(origem&&!origem.value)origem.value='OUTROS';
   atualizarSugestaoMedidaManual();
 }
-function atualizarSugestaoMedidaManual(){const cid=document.getElementById('med-manual-colaborador')?.value;const origem=document.getElementById('med-manual-origem')?.value||'OUTROS';preencherSelectTiposMedida('med-manual-tipo',cid?determinarProximaMedidaPorOrigem(cid,origem):ORDEM_MEDIDAS[0]);}
+function atualizarSugestaoMedidaManual(){
+  const cid=document.getElementById('med-manual-colaborador')?.value;
+  const origem=document.getElementById('med-manual-origem')?.value||'OUTROS';
+  preencherSelectTiposMedida('med-manual-tipo',cid?determinarProximaMedidaPorOrigem(cid,origem):'Feedback');
+}
 
 async function salvarMedidaManual(){
   if(!pode('aplicar_medidas')){toast('Seu perfil não pode aplicar medidas.','error');return;}
-  const cid=document.getElementById('med-manual-colaborador')?.value; const h=heads.find(x=>String(x.id)===String(cid)); if(!h){toast('Selecione um colaborador.','error');return;}
-  const origem=document.getElementById('med-manual-origem').value, tipo=document.getElementById('med-manual-tipo').value, motivo=document.getElementById('med-manual-motivo').value.trim(), obs=document.getElementById('med-manual-observacao').value.trim();
+  const cid=document.getElementById('med-manual-colaborador')?.value;const h=heads.find(x=>String(x.id)===String(cid));if(!h){toast('Selecione um colaborador.','error');return;}
+  const origem=document.getElementById('med-manual-origem').value;
+  const tipo=document.getElementById('med-manual-tipo').value;
+  const motivo=document.getElementById('med-manual-motivo').value.trim();
+  const obs=document.getElementById('med-manual-observacao').value.trim();
+  if(!motivo){toast('Informe o motivo da medida manual.','error');return;}
   const btn=document.getElementById('btn-med-manual-salvar');setButtonLoading(btn,true,'Salvando...');
-  try{await inserirMedidaCentral({colaborador_id:h.id,colaborador_nome:h.nome,ext:h.ext,groot_id:h.groot,tipo_medida:tipo,status:'Aplicada',observacao:obs||null,registrado_por:usuarioAtual?.nome||usuarioAtual?.usuario||'Sistema',origem,gestor:h.gestor||null,motivo:motivo||null,quantidade_ocorrencias:null,periodo_inicio:null,periodo_fim:null,manual:true});await carregarHistoricoMedidas();renderCentralMedidas();renderHistoricoMedidasCentral();document.getElementById('med-manual-motivo').value='';document.getElementById('med-manual-observacao').value='';toast(`Aplicação manual registrada em ${origem}.`,'success');}catch(e){console.error(e);toast(e.message||String(e),'error');}finally{setButtonLoading(btn,false);}
+  try{
+    await inserirMedidaCentral({colaborador_id:h.id,colaborador_nome:h.nome,ext:h.ext,groot_id:h.groot,tipo_medida:tipo,status:'Aplicada',observacao:obs||null,registrado_por:usuarioAtual?.nome||usuarioAtual?.usuario||'Sistema',origem,gestor:h.gestor||null,motivo,quantidade_ocorrencias:null,periodo_inicio:null,periodo_fim:null,manual:true});
+    await carregarHistoricoMedidas();renderCentralMedidas();renderHistoricoMedidasCentral();document.getElementById('med-manual-motivo').value='';document.getElementById('med-manual-observacao').value='';toast(`${tipo} manual registrado em ${origem}.`,'success');
+  }catch(e){console.error(e);toast(e.message||String(e),'error');}finally{setButtonLoading(btn,false);}
 }
 
 function renderHistoricoMedidasCentral(){
-  const tbody=document.getElementById('tbody-medidas-historico'); if(!tbody)return;
+  const tbody=document.getElementById('tbody-medidas-historico');if(!tbody)return;
   medidasPopularSelect('med-hist-gestor',heads.map(h=>h.gestor),'Todos os gestores');
-  const gestor=document.getElementById('med-hist-gestor')?.value||'', origem=document.getElementById('med-hist-origem')?.value||'', busca=lower(document.getElementById('med-hist-busca')?.value||'');
-  const lista=(historicoMedidas||[]).filter(m=>{const o=medidaOrigemRegistro(m);const g=asText(m.gestor||heads.find(h=>String(h.id)===String(m.colaborador_id))?.gestor);if(gestor&&g!==gestor)return false;if(origem&&o!==origem)return false;if(busca&&![m.colaborador_nome,m.ext,m.tipo_medida,m.motivo,m.observacao,g].some(v=>lower(v||'').includes(busca)))return false;return true;});
-  if(!lista.length){tbody.innerHTML='<tr><td colspan="9"><div class="med-empty">Nenhuma medida registrada com esses filtros.</div></td></tr>';return;}
-  tbody.innerHTML=lista.map(m=>{const o=medidaOrigemRegistro(m);const g=asText(m.gestor||heads.find(h=>String(h.id)===String(m.colaborador_id))?.gestor)||'—';const dt=m.data_aplicacao||m.created_at;const d=dt?new Date(dt).toLocaleDateString('pt-BR'):'—';const periodo=m.periodo_inicio&&m.periodo_fim?`${normalizarDataFechamento(m.periodo_inicio).split('-').reverse().join('/')} → ${normalizarDataFechamento(m.periodo_fim).split('-').reverse().join('/')}`:(m.manual?'Manual':'—');const det=[m.motivo,m.observacao].filter(Boolean).join(' · ')||'—';return `<tr><td>${d}</td><td><strong>${escapeHtml(m.colaborador_nome||'—')}</strong><div style="font-size:10px;color:#98a2b3">${escapeHtml(m.ext||'—')}</div></td><td>${escapeHtml(g)}</td><td><span class="med-source-badge ${o==='CIA'?'med-source-cia':o==='COA'?'med-source-coa':o==='ABS'?'med-source-abs':'med-source-outros'}">${o}</span></td><td><strong>${escapeHtml(m.tipo_medida||'—')}</strong></td><td>${m.quantidade_ocorrencias??'—'}</td><td>${periodo}</td><td>${escapeHtml(det)}</td><td>${escapeHtml(m.registrado_por||'—')}</td></tr>`;}).join('');
+  const gestor=document.getElementById('med-hist-gestor')?.value||'';
+  const origem=document.getElementById('med-hist-origem')?.value||'';
+  const busca=lower(document.getElementById('med-hist-busca')?.value||'');
+  const lista=(historicoMedidas||[]).filter(m=>{
+    const o=medidaOrigemRegistro(m),g=asText(m.gestor||heads.find(h=>String(h.id)===String(m.colaborador_id))?.gestor);
+    if(!['CIA','COA','OUTROS','LEGADO'].includes(o))return false;
+    if(gestor&&g!==gestor)return false;if(origem&&o!==origem)return false;
+    if(busca&&![m.colaborador_nome,m.ext,m.tipo_medida,m.motivo,m.observacao,g].some(v=>lower(v||'').includes(busca)))return false;
+    return true;
+  });
+  if(!lista.length){tbody.innerHTML='<tr><td colspan="7"><div class="med-empty">Nenhuma medida registrada com esses filtros.</div></td></tr>';return;}
+  tbody.innerHTML=lista.map(m=>{
+    const o=medidaOrigemRegistro(m),g=asText(m.gestor||heads.find(h=>String(h.id)===String(m.colaborador_id))?.gestor)||'—';
+    const dt=m.data_aplicacao||m.created_at,d=dt?new Date(dt).toLocaleDateString('pt-BR'):'—';
+    const det=[m.motivo,m.observacao].filter(Boolean).join(' · ')||'—';
+    const cls=o==='CIA'?'cia':o==='COA'?'coa':'outros';
+    return `<tr><td>${d}</td><td><div class="med24-person ${cls}"><strong>${escapeHtml(m.colaborador_nome||'—')}</strong><span>${escapeHtml(m.ext||'—')}</span></div></td><td>${escapeHtml(g)}</td><td><span class="med24-origin ${cls}">${o}</span></td><td><strong>${escapeHtml(m.tipo_medida||'—')}</strong></td><td>${escapeHtml(det)}</td><td>${escapeHtml(m.registrado_por||'—')}</td></tr>`;
+  }).join('');
+}
+
+function abrirColaboradorNaCentralMedidas(colaboradorId){
+  const h=heads.find(x=>String(x.id)===String(colaboradorId));
+  switchTab('medidas',document.getElementById('tab-medidas'));
+  setTimeout(()=>{const b=document.getElementById('med-filtro-busca');if(b&&h){b.value=h.nome||h.ext||'';renderCentralMedidas();}},50);
 }
 
 // ════════════════════════════════════════
@@ -10710,110 +10820,73 @@ const fdDashLabelsPlugin = {
   id: 'fdDashLabels',
   afterDatasetsDraw(chart) {
     if (!chart?.canvas?.id?.startsWith('fd-dash-chart-')) return;
-
     const ctx = chart.ctx;
     const isIndicadores = chart.canvas.id === 'fd-dash-chart-indicadores' && chart.config.type === 'line';
 
-    const drawRoundRect = (x, y, w, h, r) => {
-      const rr = Math.min(r, w / 2, h / 2);
-      ctx.beginPath();
-      ctx.moveTo(x + rr, y);
-      ctx.arcTo(x + w, y, x + w, y + h, rr);
-      ctx.arcTo(x + w, y + h, x, y + h, rr);
-      ctx.arcTo(x, y + h, x, y, rr);
-      ctx.arcTo(x, y, x + w, y, rr);
-      ctx.closePath();
-    };
+    const roundRect=(x,y,w,h,r)=>{const rr=Math.min(r,w/2,h/2);ctx.beginPath();ctx.moveTo(x+rr,y);ctx.arcTo(x+w,y,x+w,y+h,rr);ctx.arcTo(x+w,y+h,x,y+h,rr);ctx.arcTo(x,y+h,x,y,rr);ctx.arcTo(x,y,x+w,y,rr);ctx.closePath();};
+    const overlaps=(a,b,p=4)=>!(a.r+p<b.l||a.l-p>b.r||a.b+p<b.t||a.t-p>b.b);
 
-    const drawPillLabel = (x, y, text, color, placement, pointX, pointY) => {
-      ctx.save();
-      ctx.font = '800 11px Inter, sans-serif';
-      const padX = 8;
-      const h = 22;
-      const textW = ctx.measureText(text).width;
-      const w = Math.max(42, textW + padX * 2);
-      const left = x - w / 2;
-      const top = y - h / 2;
+    if(isIndicadores){
+      const area=chart.chartArea;
+      const datasets=chart.data.datasets.map((ds,di)=>({ds,di,meta:chart.getDatasetMeta(di)})).filter(x=>!x.ds.fdSkipLabels&&x.ds.fdPercent&&!x.meta.hidden);
+      const placed=[];
+      const n=chart.data.labels.length;
+      for(let i=0;i<n;i++){
+        const items=datasets.map(x=>{
+          const raw=x.ds.data?.[i],el=x.meta.data?.[i];
+          if(raw===null||raw===undefined||!Number.isFinite(Number(raw))||!el)return null;
+          const p=el.tooltipPosition?el.tooltipPosition():{x:el.x,y:el.y};
+          return {...x,raw:Number(raw),p,label:`${Number(raw).toLocaleString('pt-BR',{maximumFractionDigits:1})}%`};
+        }).filter(Boolean).sort((a,b)=>b.raw-a.raw);
 
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 1.8;
-      ctx.beginPath();
-      ctx.moveTo(pointX, pointY);
-      if (placement === 'bottom') {
-        ctx.lineTo(x, top);
-      } else {
-        ctx.lineTo(x, top + h);
+        items.forEach(item=>{
+          const name=(item.ds.label||'').toUpperCase();
+          const cor=item.ds.fdLabelColor||item.ds.borderColor||'#344054';
+          ctx.font='800 10px Inter, sans-serif';
+          const w=Math.max(40,ctx.measureText(item.label).width+14),h=21;
+          let cands;
+          if(name.includes('OOT')) cands=[{dx:0,dy:-34},{dx:0,dy:-58},{dx:34,dy:-30},{dx:-34,dy:-30},{dx:0,dy:30}];
+          else if(name.includes('TMEC')) cands=[{dx:0,dy:28},{dx:0,dy:52},{dx:34,dy:28},{dx:-34,dy:28},{dx:0,dy:-26}];
+          else cands=[{dx:0,dy:-18},{dx:0,dy:30},{dx:34,dy:-20},{dx:-34,dy:-20},{dx:0,dy:-48}];
+          let chosen=null;
+          for(const c of cands){
+            let cx=item.p.x+c.dx,cy=item.p.y+c.dy;
+            cx=Math.max(w/2+4,Math.min(chart.width-w/2-4,cx));
+            cy=Math.max(h/2+5,Math.min(area.bottom-h/2-3,cy));
+            const box={l:cx-w/2,r:cx+w/2,t:cy-h/2,b:cy+h/2,cx,cy};
+            if(!placed.some(p=>overlaps(box,p,3))){chosen=box;break;}
+          }
+          if(!chosen){
+            let cx=Math.max(w/2+4,Math.min(chart.width-w/2-4,item.p.x));
+            let cy=Math.max(h/2+5,Math.min(area.bottom-h/2-3,item.p.y-18));
+            chosen={l:cx-w/2,r:cx+w/2,t:cy-h/2,b:cy+h/2,cx,cy};
+          }
+          placed.push(chosen);
+
+          ctx.save();
+          ctx.strokeStyle=cor;ctx.lineWidth=1.25;ctx.globalAlpha=.85;
+          ctx.beginPath();ctx.moveTo(item.p.x,item.p.y);
+          const endY=chosen.cy<item.p.y?chosen.b:chosen.t;ctx.lineTo(chosen.cx,endY);ctx.stroke();ctx.globalAlpha=1;
+          ctx.fillStyle='#fff';ctx.shadowColor='rgba(17,24,39,.10)';ctx.shadowBlur=4;ctx.shadowOffsetY=1;roundRect(chosen.l,chosen.t,w,h,6);ctx.fill();ctx.shadowColor='transparent';
+          ctx.strokeStyle=cor;ctx.lineWidth=1.4;roundRect(chosen.l,chosen.t,w,h,6);ctx.stroke();
+          ctx.fillStyle=cor;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='800 10px Inter, sans-serif';ctx.fillText(item.label,chosen.cx,chosen.cy+.5);ctx.restore();
+        });
       }
-      ctx.stroke();
-
-      ctx.fillStyle = '#ffffff';
-      drawRoundRect(left, top, w, h, 7);
-      ctx.fill();
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 1.5;
-      drawRoundRect(left, top, w, h, 7);
-      ctx.stroke();
-
-      ctx.fillStyle = color;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(text, x, y + 0.5);
-      ctx.restore();
-    };
+      return;
+    }
 
     ctx.save();
-    chart.data.datasets.forEach((dataset, di) => {
-      if (dataset.fdSkipLabels) return;
-      const meta = chart.getDatasetMeta(di);
-      if (!meta || meta.hidden) return;
-
-      meta.data.forEach((el, i) => {
-        const raw = Array.isArray(dataset.data) ? dataset.data[i] : null;
-        const missing = Array.isArray(dataset.fdMissing) && dataset.fdMissing[i];
-        if ((raw === null || raw === undefined || !Number.isFinite(Number(raw))) && !missing) return;
-
-        const label = missing
-          ? '—'
-          : (dataset.fdPercent
-              ? `${Number(raw).toLocaleString('pt-BR', { maximumFractionDigits: 1, minimumFractionDigits: 0 })}%`
-              : Number(raw).toLocaleString('pt-BR'));
-
-        const p = el.tooltipPosition ? el.tooltipPosition() : { x: el.x, y: el.y };
-        const isBar = chart.config.type === 'bar';
-
-        if (isIndicadores && dataset.fdPercent) {
-          const cor = dataset.fdLabelColor || dataset.borderColor || '#344054';
-          const nome = (dataset.label || '').toUpperCase();
-          let placement = 'top';
-          let offset = 18;
-          if (nome.includes('OOT')) {
-            placement = 'top';
-            offset = 34;
-          } else if (nome.includes('TMEC')) {
-            placement = 'bottom';
-            offset = 22;
-          } else if (nome.includes('FAG')) {
-            placement = 'top';
-            offset = 18;
-          }
-
-          const cx = p.x;
-          const cy = placement === 'bottom' ? p.y + offset : p.y - offset;
-          drawPillLabel(cx, cy, label, cor, placement, p.x, p.y);
-          return;
-        }
-
-        ctx.font = dataset.fdLabelFont || '800 10px Inter, sans-serif';
-        ctx.fillStyle = dataset.fdLabelColor || '#344054';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        ctx.fillText(label, p.x, isBar ? p.y - 5 : p.y - 8);
+    chart.data.datasets.forEach((dataset,di)=>{
+      if(dataset.fdSkipLabels)return;const meta=chart.getDatasetMeta(di);if(!meta||meta.hidden)return;
+      meta.data.forEach((el,i)=>{
+        const raw=Array.isArray(dataset.data)?dataset.data[i]:null;const missing=Array.isArray(dataset.fdMissing)&&dataset.fdMissing[i];
+        if((raw===null||raw===undefined||!Number.isFinite(Number(raw)))&&!missing)return;
+        const label=missing?'—':(dataset.fdPercent?`${Number(raw).toLocaleString('pt-BR',{maximumFractionDigits:1})}%`:Number(raw).toLocaleString('pt-BR'));
+        const p=el.tooltipPosition?el.tooltipPosition():{x:el.x,y:el.y};ctx.font=dataset.fdLabelFont||'800 10px Inter, sans-serif';ctx.fillStyle=dataset.fdLabelColor||'#344054';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(label,p.x,chart.config.type==='bar'?p.y-5:p.y-8);
       });
-    });
-    ctx.restore();
+    });ctx.restore();
   }
 };
-
 // Resultado "oficial" do dia: usa o Definitivo quando existe (campo a campo),
 // senão cai pro Calculado (média/soma dos ciclos). Volume vem sempre dos ciclos.
 let fdDashChartIndicadores = null;
@@ -11082,7 +11155,7 @@ function renderGraficosDashboardFechamento(dataFim) {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        layout: { padding: { top: 42, right: 18, left: 8, bottom: 28 } },
+        layout: { padding: { top: 50, right: 22, left: 10, bottom: 34 } },
         interaction: { mode: 'index', intersect: false },
         plugins: {
           legend: {
