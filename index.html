@@ -4261,12 +4261,10 @@ async function aplicarSessao(session) {
     aplicarControleAcesso();
 
     if (!appInicializado) {
-      await carregarDadosDoBanco();
+      // Não carrega mais tudo de uma vez. Cada aba carrega só o que precisa.
       iniciarAutoRefreshAnomalias();
       assinarRealtimeAnomalias();
       appInicializado = true;
-    } else {
-      await carregarDadosDoBanco();
     }
 
     const aba = primeiraAbaPermitida();
@@ -4938,9 +4936,58 @@ document.addEventListener('keydown', function(event) {
 });
 
 // ════════════════════════════════════════
-//  NAVEGAÇÃO / ABAS
+//  CARREGAMENTO LAZY POR ABA
 // ════════════════════════════════════════
-function switchTab(tab, btn) {
+let dadosEssenciaisCarregados = false;
+
+async function carregarDadosEssenciais() {
+  if (dadosEssenciaisCarregados) return;
+  try {
+    const dataTurnos = await buscarTodasLinhas(() => db.from('turnos').select('*').order('nome'));
+    turnos = (dataTurnos || []).map(t => ({
+      id: t.id, nome: t.nome, inicio: t.inicio, fim: t.fim,
+      cor: t.cor || '#3483FA', escala: t.escala
+    }));
+
+    const dataHeads = await buscarTodasLinhas(() => db.from('colaboradores').select('*').order('nome'));
+    heads = (dataHeads || []).map(h => ({
+      id: h.id, nome: h.nome, groot: h.groot_id, cpf: h.cpf,
+      matriculaTpl: h.matricula_3pl, funcao: h.funcao, ext: h.ext,
+      tpl: h.tpl, turnoId: h.turno_id, grupo: normalizarGrupoFolga(h.grupo),
+      gestor: h.gestor, status: h.status || 'ativo'
+    }));
+
+    dadosEssenciaisCarregados = true;
+    atualizarSelectTurnos();
+    popularSelectFuncaoHC();
+  } catch (error) {
+    console.error('Erro ao carregar dados essenciais:', error);
+    toast('Erro ao carregar turnos/colaboradores: ' + (error.message || error), 'error');
+  }
+}
+
+async function carregarDadosScheduling() {
+  try {
+    const dataScheds = await buscarTodasLinhas(() => db.from('schedulings').select('*').order('data_inicio', { ascending: false }));
+    schedulings = (dataScheds || []).map(s => ({
+      id: s.id, numero: s.numero, turnoId: s.turno_id, grupo: s.grupo || null,
+      heads: s.heads, dataInicio: s.data_inicio, dataFim: s.data_fim, obs: s.obs || ''
+    }));
+
+    try {
+      const dataSchedColab = await buscarTodasLinhas(() => db.from('scheduling_colaboradores').select('*'));
+      schedulingColaboradores = (dataSchedColab || []).map(l => ({
+        id: l.id, schedulingId: l.scheduling_id, colaboradorId: l.colaborador_id
+      }));
+    } catch (err) {
+      schedulingColaboradores = [];
+    }
+  } catch (error) {
+    console.error('Erro ao carregar schedulings:', error);
+  }
+}
+
+async function switchTab(tab, btn) {
   if (usuarioAtual && !podeAcessarTab(tab)) {
     toast('Seu perfil não tem acesso a esta aba.', 'error');
     tab = primeiraAbaPermitida();
@@ -4963,20 +5010,18 @@ function switchTab(tab, btn) {
     renderHome();
   }
 
-  if (tab === 'anomalias') {
-    carregarAnomalias({ silencioso: true, renderizar: true });
-  }
-
-  if (tab === 'medidas') {
-    inicializarCentralMedidas();
+  // Abas que precisam de turnos + colaboradores
+  if (['turnos', 'headcount', 'scheduling', 'abs', 'diaristas', 'fechamento-diario'].includes(tab)) {
+    await carregarDadosEssenciais();
   }
 
   if (tab === 'scheduling') {
+    await carregarDadosScheduling();
     renderSchedulings();
     if (schedulingSubTab === 'calendario') renderCalendarioScheduling();
   }
 
-  if (tab === 'abs') {
+  if (tab === 'anomalias') {
     renderAbsenteismo();
   }
 
