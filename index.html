@@ -4,13 +4,47 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SRJ2 — Gestão Operacional</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" defer></script>
+<!-- xlsx, Chart.js e html2canvas carregados sob demanda (lazy) para reduzir o peso inicial -->
+<script>
+  // Loader genérico para bibliotecas pesadas
+  window.loadScript = function(src) {
+    return new Promise((resolve, reject) => {
+      if (document.querySelector(`script[src="${src}"]`)) {
+        resolve();
+        return;
+      }
+      const s = document.createElement('script');
+      s.src = src;
+      s.async = true;
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('Falha ao carregar: ' + src));
+      document.head.appendChild(s);
+    });
+  };
+
+  window.ensureXLSX = async function() {
+    if (window.XLSX) return;
+    await window.loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+  };
+
+  window.ensureChart = async function() {
+    if (window.Chart) return;
+    await window.loadScript('https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js');
+  };
+
+  window.ensureHtml2Canvas = async function() {
+    if (window.html2canvas) return;
+    await window.loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+  };
+</script>
 <style>
   :root {
     --meli-yellow: #FFE600;
@@ -4919,6 +4953,12 @@ function switchTab(tab, btn) {
   const page = document.getElementById('page-' + tab);
   if (page) page.classList.add('active');
 
+  // Lazy-load de bibliotecas pesadas conforme a aba
+  const precisaChart = ['dit', 'anomalias', 'insucesso', 'insucesso-xpt', 'monitor'].includes(tab);
+  const precisaXLSX = ['revisao-ponto', 'monitor', 'dit', 'headcount'].includes(tab);
+  if (precisaChart) ensureChart().catch(e => console.warn('Chart.js:', e));
+  if (precisaXLSX) ensureXLSX().catch(e => console.warn('XLSX:', e));
+
   if (tab === 'home') {
     renderHome();
   }
@@ -5827,13 +5867,15 @@ function renderAnomalias() {
 // ════════════════════════════════════════
 //  SUB-ABAS: INDICADOR / DASHBOARD (Anomalias)
 // ════════════════════════════════════════
-function exportarDashboardAnomaliasPNG() {
+async function exportarDashboardAnomaliasPNG() {
   const el = document.getElementById('anom-dash-grid');
   if (!el || el.style.display === 'none') {
     toast('Não há gráficos para exportar no período filtrado.', 'error');
     return;
   }
-  if (typeof html2canvas === 'undefined') {
+  try {
+    await ensureHtml2Canvas();
+  } catch (e) {
     toast('Biblioteca de exportação não carregou. Verifique sua conexão.', 'error');
     return;
   }
@@ -14515,6 +14557,7 @@ async function ditSalvarImportacao() {
 async function ditExportarPNG() {
   const alvo=document.getElementById('dit-capture-area'); if(!alvo)return;
   try {
+    await ensureHtml2Canvas();
     toast('Gerando imagem do DIT...','');
     const canvas=await html2canvas(alvo,{scale:1.5,backgroundColor:'#EBEBEB',useCORS:true});
     const a=document.createElement('a'); a.download=`DIT_SRJ2_${document.getElementById('dit-snapshot-label')?.textContent?.replace(/\//g,'-')||'snapshot'}.png`; a.href=canvas.toDataURL('image/png'); a.click();
