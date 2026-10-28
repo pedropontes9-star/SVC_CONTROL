@@ -1971,7 +1971,7 @@
       </button>
       <span class="count-badge" id="insucesso-count">0 registros</span>
     </div>
-    <p id="insucesso-periodo-info" style="font-size:11px;color:var(--text-muted);margin:6px 0 0">Escolha a data inicial e final e clique em <strong>Aplicar</strong>. Para consultar um único dia, use a mesma data nos dois campos.</p>
+    <p id="insucesso-periodo-info" style="font-size:11px;color:var(--text-muted);margin:6px 0 0">Exibindo somente as últimas 24h. Para consultar períodos maiores, use a <strong>exportação</strong>.</p>
 
     <div class="table-wrap">
       <table>
@@ -2066,12 +2066,10 @@
         <span class="search-icon">🔍</span>
         <input type="text" placeholder="Buscar por transportadora, motorista ou nº do pacote..." id="busca-insucesso-xpt" oninput="filtrarInsucessosXptDoInicio()">
       </div>
-      <select id="insucesso-xpt-periodo-select" onchange="onMudarPeriodoInsucessoXpt(this.value)" title="Período carregado — quanto maior, mais lento e mais dado consumido" style="min-width:160px">
-        <option value="30" selected>Período: últimos 30 dias</option>
-        <option value="60">Período: últimos 60 dias</option>
-        <option value="90">Período: últimos 90 dias</option>
-        <option value="180">Período: últimos 180 dias</option>
-        <option value="todos">Período: tudo (pode ficar lento)</option>
+      <select id="insucesso-xpt-periodo-select" onchange="onMudarPeriodoInsucessoXpt(this.value)" title="Período carregado na tela" style="min-width:160px">
+        <option value="1" selected>Últimas 24h</option>
+        <option value="7">Últimos 7 dias</option>
+        <option value="30">Últimos 30 dias</option>
       </select>
       <button class="btn btn-secondary btn-sm" onclick="abrirModalExportarInsucessoXpt()" style="height:34px;display:inline-flex;align-items:center;gap:6px;">
         <span>⬇️ Exportar CSV</span>
@@ -7831,13 +7829,9 @@ function garantirPeriodoInsucessoPadrao() {
   let dataIni = inputIni?.value || insucessoDataInicioAtual;
   let dataFim = inputFim?.value || insucessoDataFimAtual;
 
-  // Mantém um recorte inicial leve, mas sem presets fixos: o usuário pode trocar livremente.
+  // Por padrão carrega apenas as últimas 24h (hoje).
   if (!dataFim) dataFim = hojeIsoLocal();
-  if (!dataIni) {
-    const d = new Date(dataFim + 'T12:00:00');
-    d.setDate(d.getDate() - 29);
-    dataIni = dataLocalParaIso(d);
-  }
+  if (!dataIni) dataIni = hojeIsoLocal(); // últimas 24h = dia atual
 
   if (inputIni && !inputIni.value) inputIni.value = dataIni;
   if (inputFim && !inputFim.value) inputFim.value = dataFim;
@@ -7850,8 +7844,8 @@ function atualizarInfoPeriodoInsucesso(dataIni, dataFim) {
   const fmt = iso => iso ? iso.split('-').reverse().join('/') : '—';
   const unicoDia = dataIni && dataFim && dataIni === dataFim;
   el.innerHTML = unicoDia
-    ? `Exibindo somente <strong>${fmt(dataIni)}</strong>. Altere as datas acima para consultar outro período.`
-    : `Período carregado: <strong>${fmt(dataIni)}</strong> até <strong>${fmt(dataFim)}</strong>. A consulta busca somente esse intervalo no banco.`;
+    ? `Exibindo somente as últimas 24h (<strong>${fmt(dataIni)}</strong>). Para ver mais dados, use a exportação.`
+    : `Período carregado: <strong>${fmt(dataIni)}</strong> até <strong>${fmt(dataFim)}</strong>.`;
 }
 
 async function carregarInsucessos(dataIni = null, dataFim = null) {
@@ -8415,51 +8409,82 @@ function csvEscape(valor) {
   return texto;
 }
 
-function gerarExportacaoInsucessoCSV() {
+async function gerarExportacaoInsucessoCSV() {
   const dataIni = document.getElementById('insucesso-export-data-ini').value;
   const dataFim = document.getElementById('insucesso-export-data-fim').value;
 
   if (!dataIni || !dataFim) { toast('Informe o período (data inicial e final).', 'error'); return; }
   if (dataIni > dataFim) { toast('A data inicial não pode ser depois da data final.', 'error'); return; }
 
-  if (insucessoDataInicioAtual && insucessoDataFimAtual && (dataIni < insucessoDataInicioAtual || dataFim > insucessoDataFimAtual)) {
-    const fmt = iso => iso.split('-').reverse().join('/');
-    toast(`A tela está com ${fmt(insucessoDataInicioAtual)} até ${fmt(insucessoDataFimAtual)} carregado. Aplique primeiro o período que deseja exportar na tela principal.`, 'error');
-    return;
+  const btn = document.getElementById('btn-gerar-exportacao-insucesso');
+  setButtonLoading(btn, true, 'Gerando...');
+
+  try {
+    // Busca direto no banco, independente do que está carregado na tela
+    const TAMANHO_PAGINA = 1000;
+    let todasLinhas = [];
+    let inicio = 0;
+
+    while (true) {
+      const { data, error } = await db.from('insucessos')
+        .select('*')
+        .gte('data_registro', dataIni)
+        .lte('data_registro', dataFim)
+        .order('criado_em', { ascending: false })
+        .range(inicio, inicio + TAMANHO_PAGINA - 1);
+
+      if (error) throw error;
+      todasLinhas = todasLinhas.concat(data || []);
+      if (!data || data.length < TAMANHO_PAGINA) break;
+      inicio += TAMANHO_PAGINA;
+    }
+
+    if (!todasLinhas.length) { toast('Nenhum registro encontrado nesse período.', 'error'); return; }
+
+    const linhas = todasLinhas.map(i => ({
+      tipo: i.tipo === 'devolucao' ? 'devolucao' : 'insucesso',
+      transportadora: i.transportadora,
+      motorista: i.motorista,
+      pacote: i.pacote,
+      bulky: !!i.bulky,
+      avariado: !!i.avariado,
+      dataRegistro: i.data_registro,
+      registradoPor: i.registrado_por,
+      criadoEm: i.criado_em
+    })).sort((a, b) => new Date(a.criadoEm) - new Date(b.criadoEm));
+
+    const cabecalho = ['Tipo', 'Data', 'Hora', 'Transportadora', 'Motorista', 'Pacote', 'Bulky', 'Avariado', 'Registrado por'];
+    const corpo = linhas.map(i => {
+      const dataFmt = i.dataRegistro ? i.dataRegistro.split('-').reverse().join('/') : '';
+      const horaFmt = i.criadoEm ? new Date(i.criadoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+      return [labelTipoInsucesso(i.tipo), dataFmt, horaFmt, i.transportadora, i.motorista, i.pacote, i.bulky ? 'Sim' : 'Não', i.avariado ? 'Sim' : 'Não', i.registradoPor || ''].map(csvEscape).join(',');
+    });
+
+    const csv = '\uFEFF' + [cabecalho.join(','), ...corpo].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `insucessos_devolucoes_${dataIni}_a_${dataFim}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast(`Relatório gerado com ${linhas.length} pacote${linhas.length !== 1 ? 's' : ''}.`, 'success');
+    fecharModalExportarInsucesso();
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao gerar exportação: ' + (error.message || error), 'error');
+  } finally {
+    setButtonLoading(btn, false);
   }
-
-  const linhas = insucessos
-    .filter(i => i.dataRegistro >= dataIni && i.dataRegistro <= dataFim)
-    .sort((a, b) => new Date(a.criadoEm) - new Date(b.criadoEm));
-
-  if (!linhas.length) { toast('Nenhum registro encontrado nesse período.', 'error'); return; }
-
-  const cabecalho = ['Tipo', 'Data', 'Hora', 'Transportadora', 'Motorista', 'Pacote', 'Bulky', 'Avariado', 'Registrado por'];
-  const corpo = linhas.map(i => {
-    const dataFmt = i.dataRegistro ? i.dataRegistro.split('-').reverse().join('/') : '';
-    const horaFmt = i.criadoEm ? new Date(i.criadoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
-    return [labelTipoInsucesso(i.tipo), dataFmt, horaFmt, i.transportadora, i.motorista, i.pacote, i.bulky ? 'Sim' : 'Não', i.avariado ? 'Sim' : 'Não', i.registradoPor || ''].map(csvEscape).join(',');
-  });
-
-  const csv = '\uFEFF' + [cabecalho.join(','), ...corpo].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `insucessos_devolucoes_${dataIni}_a_${dataFim}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
-  toast(`Relatório gerado com ${linhas.length} pacote${linhas.length !== 1 ? 's' : ''}.`, 'success');
-  fecharModalExportarInsucesso();
 }
 
 // ════════════════════════════════════════
 //  INSUCESSO / DEVOLUÇÃO - XPT — mesma lógica do SVC, tabela e DOM próprios
 // ════════════════════════════════════════
-let insucessoXptPeriodoAtual = 30; // dias; null = tudo. Controlado pelo seletor de período na tela.
+let insucessoXptPeriodoAtual = 1; // dias. Por padrão só últimas 24h.
 
 async function carregarInsucessosXpt(diasAtras = insucessoXptPeriodoAtual) {
   insucessoXptPeriodoAtual = diasAtras;
@@ -9012,48 +9037,77 @@ function fecharModalExportarInsucessoXpt() {
   document.getElementById('modal-exportar-insucesso-xpt').classList.remove('open');
 }
 
-function gerarExportacaoInsucessoXptCSV() {
+async function gerarExportacaoInsucessoXptCSV() {
   const dataIni = document.getElementById('insucesso-xpt-export-data-ini').value;
   const dataFim = document.getElementById('insucesso-xpt-export-data-fim').value;
 
   if (!dataIni || !dataFim) { toast('Informe o período (data inicial e final).', 'error'); return; }
   if (dataIni > dataFim) { toast('A data inicial não pode ser depois da data final.', 'error'); return; }
 
-  if (insucessoXptPeriodoAtual) {
-    const inicioCarregado = new Date();
-    inicioCarregado.setDate(inicioCarregado.getDate() - insucessoXptPeriodoAtual);
-    if (dataIni < dataLocalParaIso(inicioCarregado)) {
-      toast(`Só há dados carregados dos últimos ${insucessoXptPeriodoAtual} dias. Amplie o período no seletor "Período carregado" acima da tabela antes de exportar um intervalo maior.`, 'error');
-      return;
+  const btn = document.getElementById('btn-gerar-exportacao-insucesso-xpt');
+  setButtonLoading(btn, true, 'Gerando...');
+
+  try {
+    const TAMANHO_PAGINA = 1000;
+    let todasLinhas = [];
+    let inicio = 0;
+
+    while (true) {
+      const { data, error } = await db.from('insucessos_xpt')
+        .select('*')
+        .gte('data_registro', dataIni)
+        .lte('data_registro', dataFim)
+        .order('criado_em', { ascending: false })
+        .range(inicio, inicio + TAMANHO_PAGINA - 1);
+
+      if (error) throw error;
+      todasLinhas = todasLinhas.concat(data || []);
+      if (!data || data.length < TAMANHO_PAGINA) break;
+      inicio += TAMANHO_PAGINA;
     }
+
+    if (!todasLinhas.length) { toast('Nenhum registro encontrado nesse período.', 'error'); return; }
+
+    const linhas = todasLinhas.map(i => ({
+      tipo: i.tipo === 'devolucao' ? 'devolucao' : 'insucesso',
+      transportadora: i.transportadora,
+      motorista: i.motorista,
+      pacote: i.pacote,
+      bulky: !!i.bulky,
+      avariado: !!i.avariado,
+      duplicado: !!i.duplicado,
+      recusado: !!i.recusado,
+      dataRegistro: i.data_registro,
+      registradoPor: i.registrado_por,
+      criadoEm: i.criado_em
+    })).sort((a, b) => new Date(a.criadoEm) - new Date(b.criadoEm));
+
+    const cabecalho = ['Tipo', 'Data', 'Hora', 'Transportadora', 'Motorista', 'Pacote', 'Bulky', 'Avariado', 'Duplicado', 'Recusado', 'Registrado por'];
+    const corpo = linhas.map(i => {
+      const dataFmt = i.dataRegistro ? i.dataRegistro.split('-').reverse().join('/') : '';
+      const horaFmt = i.criadoEm ? new Date(i.criadoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+      return [labelTipoInsucesso(i.tipo), dataFmt, horaFmt, i.transportadora, i.motorista, i.pacote, i.bulky ? 'Sim' : 'Não', i.avariado ? 'Sim' : 'Não', i.duplicado ? 'Sim' : 'Não', i.recusado ? 'Sim' : 'Não', i.registradoPor || ''].map(csvEscape).join(',');
+    });
+
+    const csv = '\uFEFF' + [cabecalho.join(','), ...corpo].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `insucessos_devolucoes_xpt_${dataIni}_a_${dataFim}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast(`Relatório gerado com ${linhas.length} pacote${linhas.length !== 1 ? 's' : ''}.`, 'success');
+    fecharModalExportarInsucessoXpt();
+  } catch (error) {
+    console.error(error);
+    toast('Erro ao gerar exportação: ' + (error.message || error), 'error');
+  } finally {
+    setButtonLoading(btn, false);
   }
-
-  const linhas = insucessosXpt
-    .filter(i => i.dataRegistro >= dataIni && i.dataRegistro <= dataFim)
-    .sort((a, b) => new Date(a.criadoEm) - new Date(b.criadoEm));
-
-  if (!linhas.length) { toast('Nenhum registro encontrado nesse período.', 'error'); return; }
-
-  const cabecalho = ['Tipo', 'Data', 'Hora', 'Transportadora', 'Motorista', 'Pacote', 'Bulky', 'Avariado', 'Duplicado', 'Recusado', 'Registrado por'];
-  const corpo = linhas.map(i => {
-    const dataFmt = i.dataRegistro ? i.dataRegistro.split('-').reverse().join('/') : '';
-    const horaFmt = i.criadoEm ? new Date(i.criadoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
-    return [labelTipoInsucesso(i.tipo), dataFmt, horaFmt, i.transportadora, i.motorista, i.pacote, i.bulky ? 'Sim' : 'Não', i.avariado ? 'Sim' : 'Não', i.duplicado ? 'Sim' : 'Não', i.recusado ? 'Sim' : 'Não', i.registradoPor || ''].map(csvEscape).join(',');
-  });
-
-  const csv = '\uFEFF' + [cabecalho.join(','), ...corpo].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `insucessos_devolucoes_xpt_${dataIni}_a_${dataFim}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-
-  toast(`Relatório gerado com ${linhas.length} pacote${linhas.length !== 1 ? 's' : ''}.`, 'success');
-  fecharModalExportarInsucessoXpt();
 }
 
 // ════════════════════════════════════════
