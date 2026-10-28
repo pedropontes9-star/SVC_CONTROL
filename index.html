@@ -182,6 +182,43 @@
   .toast.success { background: var(--success-text); }
   .toast.error   { background: var(--danger-text); }
 
+  .loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(255,255,255,.85);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+  .loading-box {
+    background: white;
+    padding: 28px 36px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.12);
+    text-align: center;
+    min-width: 220px;
+  }
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #eee;
+    border-top-color: var(--meli-action);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 14px;
+  }
+  .loading-box p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 500;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 500; display: none; align-items: center; justify-content: center; }
   .modal-overlay.open { display: flex; }
   .modal { background: var(--surface); border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,.18); width: 100%; max-width: 440px; padding: 24px; }
@@ -3721,6 +3758,14 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Indicador de carregamento do banco -->
+<div id="loading-overlay" class="loading-overlay" style="display:none;">
+  <div class="loading-box">
+    <div class="loading-spinner"></div>
+    <p>Carregando dados do banco...</p>
+  </div>
+</div>
+
 <script>
 // ════════════════════════════════════════
 //  CONFIGURAÇÃO E CONEXÃO SUPABASE
@@ -4792,6 +4837,19 @@ function setCarregando(elementoId, status) {
   el.classList.toggle('form-grid-loading', !!status);
 }
 
+function mostrarLoading(mensagem = 'Carregando dados do banco...') {
+  const overlay = document.getElementById('loading-overlay');
+  if (!overlay) return;
+  const p = overlay.querySelector('p');
+  if (p) p.textContent = mensagem;
+  overlay.style.display = 'flex';
+}
+
+function esconderLoading() {
+  const overlay = document.getElementById('loading-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
 // Busca TODAS as linhas de uma tabela, contornando o limite padrão de 1000
 // linhas por chamada do Supabase. "factory" deve retornar uma query nova
 // a cada chamada (sem .range() ainda aplicado).
@@ -5012,16 +5070,33 @@ async function switchTab(tab, btn) {
 
   // Abas que precisam de turnos + colaboradores
   if (['turnos', 'headcount', 'scheduling', 'abs', 'diaristas', 'fechamento-diario'].includes(tab)) {
-    await carregarDadosEssenciais();
+    mostrarLoading('Carregando turnos e colaboradores...');
+    try {
+      await carregarDadosEssenciais();
+    } finally {
+      esconderLoading();
+    }
   }
 
   if (tab === 'scheduling') {
-    await carregarDadosScheduling();
-    renderSchedulings();
-    if (schedulingSubTab === 'calendario') renderCalendarioScheduling();
+    mostrarLoading('Carregando schedulings...');
+    try {
+      await carregarDadosScheduling();
+      renderSchedulings();
+      if (schedulingSubTab === 'calendario') renderCalendarioScheduling();
+    } finally {
+      esconderLoading();
+    }
   }
 
   if (tab === 'anomalias') {
+    mostrarLoading('Carregando anomalias...');
+    try {
+      await carregarAnomalias({ silencioso: true, renderizar: true });
+    } finally {
+      esconderLoading();
+    }
+  }
     renderAbsenteismo();
   }
 
@@ -5042,7 +5117,12 @@ async function switchTab(tab, btn) {
   }
 
   if (tab === 'dit') {
-    ditInicializarDashboard();
+    mostrarLoading('Carregando DIT...');
+    try {
+      ditInicializarDashboard();
+    } finally {
+      esconderLoading();
+    }
   }
 
   if (tab === 'yms') {
