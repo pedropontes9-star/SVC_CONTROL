@@ -67,8 +67,19 @@
   body { background: var(--meli-bg); color: var(--text); font-family: 'Inter', -apple-system, sans-serif; min-height: 100vh; }
 
   .header { background: var(--meli-yellow); padding: 0 24px; height: 52px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 0 rgba(0,0,0,0.10); position: sticky; top: 0; z-index: 200; }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font: inherit;
+  }
+  .header-brand:hover h1 { text-decoration: underline; }
   .logo-box { background: var(--meli-blue); color: #fff; padding: 4px 9px; border-radius: 4px; font-size: 12px; font-weight: 700; letter-spacing: .03em; }
-  .header h1 { font-size: 16px; font-weight: 600; color: var(--meli-blue); }
+  .header h1 { font-size: 16px; font-weight: 600; color: var(--meli-blue); margin: 0; }
   .header-divider { width: 1px; height: 20px; background: rgba(45,50,119,.25); }
   .header-sub { font-size: 12px; color: var(--meli-blue); opacity: .7; font-weight: 500; }
 
@@ -1053,8 +1064,10 @@
 
 <header class="header">
   <button class="menu-toggle" type="button" onclick="abrirMenuLateral()" aria-label="Abrir menu de navegação" title="Menu">☰</button>
-  <div class="logo-box">SRJ2</div>
-  <h1>Gestão Operacional</h1>
+  <button class="header-brand" type="button" onclick="switchTab('home', document.getElementById('tab-home'))" title="Ir para a Home">
+    <div class="logo-box">SRJ2</div>
+    <h1>Gestão Operacional</h1>
+  </button>
   <div class="header-divider"></div>
   <span class="header-sub">SVC SRJ2 — 3PL / MELI</span>
   <div class="header-user">
