@@ -5073,6 +5073,8 @@ async function switchTab(tab, btn) {
     mostrarLoading('Carregando turnos e colaboradores...');
     try {
       await carregarDadosEssenciais();
+      if (tab === 'headcount') renderHeads();
+      if (tab === 'turnos') renderTurnos();
     } finally {
       esconderLoading();
     }
@@ -5103,19 +5105,43 @@ async function switchTab(tab, btn) {
   }
 
   if (tab === 'abs') {
-    renderAbsenteismo();
+    mostrarLoading('Carregando absenteísmo...');
+    try {
+      await carregarAbsenteismo();
+      renderAbsenteismo();
+    } finally {
+      esconderLoading();
+    }
   }
 
   if (tab === 'insucesso') {
-    renderInsucessos();
+    mostrarLoading('Carregando insucessos...');
+    try {
+      await carregarInsucessos();
+      renderInsucessos();
+    } finally {
+      esconderLoading();
+    }
   }
 
   if (tab === 'insucesso-xpt') {
-    renderInsucessosXpt();
+    mostrarLoading('Carregando insucessos XPT...');
+    try {
+      await carregarInsucessosXpt();
+      renderInsucessosXpt();
+    } finally {
+      esconderLoading();
+    }
   }
 
   if (tab === 'diaristas') {
-    renderDiaristas();
+    mostrarLoading('Carregando diaristas...');
+    try {
+      await carregarDiaristas();
+      renderDiaristas();
+    } finally {
+      esconderLoading();
+    }
   }
 
   if (tab === 'fechamento-diario') {
