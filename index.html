@@ -4314,7 +4314,7 @@ async function aplicarSessao(session) {
 
     const aba = primeiraAbaPermitida();
     const btn = document.querySelector(`.tab-btn[data-tab="${aba}"]`);
-    switchTab(aba, btn);
+    await switchTab(aba, btn);
   } catch (error) {
     console.error(error);
     await db.auth.signOut();
@@ -5097,6 +5097,12 @@ async function switchTab(tab, btn) {
       esconderLoading();
     }
   }
+
+  if (tab === 'medidas') {
+    inicializarCentralMedidas();
+  }
+
+  if (tab === 'abs') {
     renderAbsenteismo();
   }
 
