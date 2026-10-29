@@ -5074,8 +5074,10 @@ async function switchTab(tab, btn) {
   // Lazy-load de bibliotecas pesadas conforme a aba
   const precisaChart = ['dit', 'anomalias', 'insucesso', 'insucesso-xpt', 'monitor', 'fechamento-diario'].includes(tab);
   const precisaXLSX = ['revisao-ponto', 'monitor', 'dit', 'headcount'].includes(tab);
+  const precisaHtml2Canvas = ['fechamento-diario'].includes(tab);
   if (precisaChart) ensureChart().catch(e => console.warn('Chart.js:', e));
   if (precisaXLSX) ensureXLSX().catch(e => console.warn('XLSX:', e));
+  if (precisaHtml2Canvas) ensureHtml2Canvas().catch(e => console.warn('html2canvas:', e));
 
   if (tab === 'home') {
     renderHome();
@@ -11391,16 +11393,39 @@ function renderJustificativasDashboardFechamento(data) {
     : '<div class="fd-justif-vazio">Nenhuma justificativa registrada nesse dia — todos os indicadores lançados atingiram 100% ou ainda não foram lançados.</div>';
 }
 
-function exportarDashboardFechamentoPNG() {
+async function exportarDashboardFechamentoPNG() {
   const el = document.getElementById('fd-tab-dash');
-  if (!el) return;
-  if (typeof html2canvas === 'undefined') {
-    toast('Biblioteca de exportação não carregou. Verifique sua conexão.', 'error');
+  if (!el) {
+    toast('Dashboard do fechamento não encontrado.', 'error');
     return;
   }
-  const data = document.getElementById('fd-dash-data')?.value || hojeIsoLocal();
-  toast('Gerando imagem do dashboard...', '');
-  html2canvas(el, { backgroundColor: '#EBEBEB', scale: 2, useCORS: true }).then(canvas => {
+
+  const btn = document.querySelector('button[onclick="exportarDashboardFechamentoPNG()"]');
+  const textoOriginal = btn ? btn.innerHTML : '';
+
+  try {
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Gerando PNG...';
+    }
+
+    toast('Preparando exportação do dashboard...', '');
+    await ensureHtml2Canvas();
+
+    if (typeof window.html2canvas !== 'function') {
+      throw new Error('html2canvas não ficou disponível após o carregamento.');
+    }
+
+    const data = document.getElementById('fd-dash-data')?.value || hojeIsoLocal();
+    const canvas = await window.html2canvas(el, {
+      backgroundColor: '#EBEBEB',
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      scrollX: 0,
+      scrollY: -window.scrollY
+    });
+
     const link = document.createElement('a');
     link.download = `dashboard-fechamento-${data}.png`;
     link.href = canvas.toDataURL('image/png');
@@ -11408,10 +11433,15 @@ function exportarDashboardFechamentoPNG() {
     link.click();
     document.body.removeChild(link);
     toast('Dashboard exportado com sucesso!', 'success');
-  }).catch(err => {
-    console.error(err);
-    toast('Erro ao exportar o dashboard: ' + (err.message || err), 'error');
-  });
+  } catch (err) {
+    console.error('Erro exportação Fechamento Diário:', err);
+    toast('Erro ao carregar/usar a biblioteca de exportação: ' + (err?.message || err), 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = textoOriginal || '🖼️ Exportar Dashboard';
+    }
+  }
 }
 
 function renderGraficosDashboardFechamento(dataFim) {
