@@ -2540,6 +2540,8 @@
     <button class="fd-subtab-pill fd-subtab-btn active" onclick="setFechamentoDiarioSubTab('ciclo', this)">📋 Visão de Ciclo</button>
     <button class="fd-subtab-pill fd-subtab-btn" onclick="setFechamentoDiarioSubTab('dia', this)">📅 Fechamento do Dia</button>
     <button class="fd-subtab-pill fd-subtab-btn" onclick="setFechamentoDiarioSubTab('dash', this)">📈 Dashboard</button>
+    <button class="fd-subtab-pill" type="button" onclick="recarregarFechamentoDiario()" title="Buscar novamente os dados no Supabase">↻ Atualizar dados</button>
+    <span id="fd-load-status" style="align-self:center;font-size:11px;font-weight:700;color:var(--text-muted);padding:0 8px"></span>
   </div>
 
   <!-- ── VISÃO DE CICLO ── -->
@@ -5070,7 +5072,7 @@ async function switchTab(tab, btn) {
   if (page) page.classList.add('active');
 
   // Lazy-load de bibliotecas pesadas conforme a aba
-  const precisaChart = ['dit', 'anomalias', 'insucesso', 'insucesso-xpt', 'monitor'].includes(tab);
+  const precisaChart = ['dit', 'anomalias', 'insucesso', 'insucesso-xpt', 'monitor', 'fechamento-diario'].includes(tab);
   const precisaXLSX = ['revisao-ponto', 'monitor', 'dit', 'headcount'].includes(tab);
   if (precisaChart) ensureChart().catch(e => console.warn('Chart.js:', e));
   if (precisaXLSX) ensureXLSX().catch(e => console.warn('XLSX:', e));
@@ -5156,7 +5158,28 @@ async function switchTab(tab, btn) {
   }
 
   if (tab === 'fechamento-diario') {
-    inicializarTelaFechamentoDiario();
+    mostrarLoading('Carregando fechamento diário...');
+    try {
+      await Promise.all([
+        carregarFechamentoCiclos(),
+        carregarFechamentosDiarios(),
+        ensureChart()
+      ]);
+      inicializarTelaFechamentoDiario();
+      const dashFd = document.getElementById('fd-tab-dash');
+      if (dashFd && dashFd.style.display !== 'none') renderDashboardFechamento();
+      console.info(`[Fechamento Diário] ${fechamentoCiclos.length} ciclo(s) e ${fechamentosDiarios.length} fechamento(s) carregados.`);
+      const fdStatus = document.getElementById('fd-load-status');
+      if (fdStatus) {
+        fdStatus.textContent = `${fechamentoCiclos.length} ciclos · ${fechamentosDiarios.length} fechamentos`;
+        fdStatus.style.color = (fechamentoCiclos.length || fechamentosDiarios.length) ? 'var(--success-text)' : 'var(--warn-text)';
+      }
+    } catch (error) {
+      console.error('Erro ao carregar Fechamento Diário:', error);
+      toast('Erro ao carregar Fechamento Diário: ' + (error.message || error), 'error');
+    } finally {
+      esconderLoading();
+    }
   }
 
   if (tab === 'dit') {
@@ -10405,6 +10428,42 @@ async function carregarFechamentosDiarios() {
     }
     console.error(error);
     toast('Erro ao buscar fechamento diário: ' + (error.message || error), 'error');
+  }
+}
+
+async function recarregarFechamentoDiario() {
+  mostrarLoading('Atualizando Fechamento Diário...');
+  const status = document.getElementById('fd-load-status');
+  try {
+    await Promise.all([
+      carregarFechamentoCiclos(),
+      carregarFechamentosDiarios(),
+      ensureChart()
+    ]);
+
+    inicializarTelaFechamentoDiario();
+    const dashFd = document.getElementById('fd-tab-dash');
+    if (dashFd && dashFd.style.display !== 'none') renderDashboardFechamento();
+
+    if (status) {
+      status.textContent = `${fechamentoCiclos.length} ciclos · ${fechamentosDiarios.length} fechamentos`;
+      status.style.color = (fechamentoCiclos.length || fechamentosDiarios.length) ? 'var(--success-text)' : 'var(--warn-text)';
+    }
+
+    if (fechamentoCiclos.length || fechamentosDiarios.length) {
+      toast(`Fechamento atualizado: ${fechamentoCiclos.length} ciclo(s) e ${fechamentosDiarios.length} fechamento(s).`, 'success');
+    } else {
+      toast('A consulta ao Fechamento terminou, mas não retornou registros. Verifique RLS/policies das tabelas fechamento_ciclos e fechamento_diario.', 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar Fechamento Diário:', error);
+    if (status) {
+      status.textContent = 'falha ao carregar';
+      status.style.color = 'var(--danger-text)';
+    }
+    toast('Erro ao atualizar Fechamento Diário: ' + (error.message || error), 'error');
+  } finally {
+    esconderLoading();
   }
 }
 
